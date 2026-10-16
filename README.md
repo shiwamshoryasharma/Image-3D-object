@@ -117,32 +117,26 @@ fully offline.
 ## 🧠 How it works
 
 ```mermaid
-flowchart LR
-    subgraph UI["Frontend · React 19 + Vite"]
-        A["Reference slots<br/>drag and drop"] --> B["Generation settings"]
-        B --> C[Live progress]
-        C --> D["3D viewer · stats · GLB"]
+flowchart TB
+    subgraph UI["Frontend · React + Three.js"]
+        direction LR
+        A["Reference slots<br/>drag and drop"] --> B["Generation<br/>settings"] --> C["Live progress<br/>9 stages + ETA"] --> D["3D viewer<br/>stats · GLB export"]
     end
-
-    subgraph API["Backend · FastAPI (backend/main.py)"]
-        R["REST /api/v1"] --> S[Services]
-        W["WebSocket /api/v1/ws"]
-        S --> Q["Job queue"] --> G["GPU worker"]
-        G --> P["ImageTo3D pipeline"]
-        P --> E["Inference engine seam"]
-        S --> T["Tuning worker"]
+    subgraph API["Backend · FastAPI"]
+        direction LR
+        R["REST /api/v1<br/>WebSocket /ws"] --> S["Services"] --> Q["Job queue"] --> G["GPU worker"] --> P["ImageTo3D<br/>pipeline"] --> E["Engine<br/>adapter"]
     end
-
-    subgraph ENG["Local models"]
-        E --> BR["BiRefNet<br/>background removal"]
-        BR --> DV["DINOv3<br/>image features"]
-        DV --> TR["TRELLIS.2-4B<br/>structure → shape → texture"]
-        TR --> GLB[("model.glb")]
+    subgraph ENG["Local models · offline"]
+        direction LR
+        BR["BiRefNet<br/>background removal"] --> DV["DINOv3<br/>image features"] --> TR["TRELLIS.2-4B<br/>structure → shape → texture"] --> GLB[("model.glb")]
     end
-
-    T --> BL["Blender ≥ 5.1<br/>background mode"] --> TG[("tuned.glb + report")]
-
-    UI <-->|HTTP + WebSocket| API
+    subgraph TUNE["Auto Mesh Tuner · beta"]
+        direction LR
+        TW["Tuning worker"] --> BL["Blender ≥ 5.1<br/>background mode"] --> TG[("tuned.glb<br/>+ report")]
+    end
+    UI <-->|"HTTP + WebSocket"| API
+    API --> ENG
+    API --> TUNE
 ```
 
 **Generation stages** (shown live in the UI): preparing image → encoding image → building structure →
@@ -271,7 +265,7 @@ cd backend
 Open **http://127.0.0.1:8000**. For UI development with hot reload run `npm run dev` in `frontend/` and open
 **http://localhost:5173** (the Vite dev server proxies `/api` and the WebSocket to the backend).
 
-## 🕹️ Usage
+## 🎮 Usage
 
 1. **Add references** — drag, drop or paste images onto the slots (Front, Back, Left, Right, Face Front,
    Face Side, Detail). Mark the image the engine should use with the ★ **primary** star.
