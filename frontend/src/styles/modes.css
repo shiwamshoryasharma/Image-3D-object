@@ -1,0 +1,86 @@
+/*
+ * Per-mode overrides (UI_DESIGN §3.6). Keyed only on the attributes that app/documentAttributes.ts writes on <html>:
+ * data-ui-mode, data-density, data-motion and data-posture (plus data-default-bar from the Default phone layout).
+ * Without any of these attributes every computed value equals the Default desktop UI.
+ *
+ * Every interactive element consumes the size tokens: the common components through --control-h-* / --hit-min,
+ * every other control of the touch-pass files through
+ *   :global(:root[data-density='touch']) .x { min-block-size: max(<today's px>, var(--hit-min)); … }
+ * or, for small controls whose visual size must stay (reference star and menu, switch track), a centred ::before hit
+ * area of var(--hit-min) × var(--hit-min).
+ */
+:root {
+  --shell-inset-bottom: 0px;
+  --shell-inset-left: 0px;
+  --floating-gap: var(--space-3);
+  --floating-nav-height: 64px;
+  --fab-size: 60px;
+  --rail-width: 80px;
+  --sheet-peek: 96px;
+  --sheet-max-width: 640px;
+  --side-sheet-max: 420px;
+  --top-bar-height: 56px;
+  /* Written by hooks/useSoftKeyboard.ts from visualViewport while a soft keyboard covers the page. */
+  --keyboard-inset: 0px;
+  /*
+   * Height of the Default phone layout's sticky generate bar: the large button plus border, padding, gap and one
+   * status line (88px, 96px under touch density). A layout that measures the bar may override it inline on <html>.
+   */
+  --default-bar-height: calc(var(--control-h-lg) + 44px);
+}
+
+/*
+ * Default phone layout (P11). It sets <html data-default-bar="on"> while the sticky generate bar is shown (Inputs and
+ * Settings tabs) and may set "off" on its other tabs; the attribute is absent in every other layout. Bottom chrome is
+ * then the tab bar plus, while shown, the bar, so toasts and scroll padding keep clear of both. The other shells have
+ * no Default tab bar (their floating-chrome rules below win even if the attribute were left behind).
+ */
+:root[data-default-bar]:not([data-ui-mode]),
+:root[data-default-bar][data-ui-mode='default'] {
+  --shell-inset-bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+:root[data-default-bar='on']:not([data-ui-mode]),
+:root[data-default-bar='on'][data-ui-mode='default'] {
+  --shell-inset-bottom: calc(var(--tabbar-height) + var(--default-bar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+:root[data-density='touch'] {
+  --control-h-sm: 44px;
+  --control-h-md: 44px;
+  --control-h-lg: 52px;
+  --hit-min: 44px;
+}
+
+:root[data-ui-mode='mobile'],
+:root[data-ui-mode='tablet'] {
+  --hit-min: 48px;
+  --control-h-sm: 48px;
+  --control-h-md: 48px;
+  --control-h-lg: 52px;
+}
+
+:root[data-motion='reduce'] {
+  --duration-fast: 0ms;
+  --duration-normal: 0ms;
+  --duration-slow: 0ms;
+}
+
+/* Floating bottom navigation: content and toasts keep clear of it. */
+:root[data-ui-mode='mobile'][data-posture='portrait'],
+:root[data-ui-mode='tablet'][data-posture='bottom'],
+:root[data-ui-mode='tablet'][data-posture='compact'] {
+  --shell-inset-bottom: calc(var(--floating-nav-height) + 2 * var(--floating-gap) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Floating left rail. */
+:root[data-ui-mode='mobile'][data-posture='landscape'],
+:root[data-ui-mode='tablet'][data-posture='rail'] {
+  --shell-inset-left: calc(var(--rail-width) + 2 * var(--floating-gap) + env(safe-area-inset-left, 0px));
+}
+
+/*
+ * Phone-style shared overlays at any width in Mobile mode (Default keeps its max-width: 767px rules): the CSS
+ * modules add the variants with :global(), e.g. Dialog.module.css
+ *   :global(:root[data-ui-mode='mobile']) .dialog { …same rules as its @media (max-width: 767px) block… }
+ */

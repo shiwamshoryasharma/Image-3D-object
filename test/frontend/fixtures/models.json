@@ -1,0 +1,565 @@
+{
+  "items": [
+    {
+      "id": "z_image_turbo",
+      "kind": "text_to_image",
+      "roles": [
+        "generator"
+      ],
+      "display_name": "Z-Image-Turbo",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "Tongyi-MAI/Z-Image-Turbo",
+      "revision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "size_bytes": 32850000000,
+      "vram_estimate_gb": 24,
+      "ram_gb": 21,
+      "cold_load_s": 337,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "diffusers",
+          "requirement": "==0.39.0",
+          "installed": "0.39.0",
+          "ok": true
+        },
+        {
+          "distribution": "accelerate",
+          "requirement": "==1.15.0",
+          "installed": "1.15.0",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/t2i/Z-Image-Turbo",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/t2i/Z-Image-Turbo (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "sizes": [
+          [
+            1024,
+            1024
+          ],
+          [
+            896,
+            1152
+          ],
+          [
+            1152,
+            896
+          ]
+        ],
+        "steps": {
+          "default": 9,
+          "min": 1,
+          "max": 50
+        },
+        "guidance": {
+          "default": 0,
+          "min": 0,
+          "max": 0
+        },
+        "supports_negative_prompt": false,
+        "max_images": 4
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "grounding_dino_base",
+      "kind": "segmentation",
+      "roles": [
+        "detector"
+      ],
+      "display_name": "Grounding DINO (base)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "IDEA-Research/grounding-dino-base",
+      "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+      "size_bytes": 930000000,
+      "vram_estimate_gb": 2,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/IDEA-Research/grounding-dino-base",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "transformers",
+          "requirement": "==4.57.6",
+          "installed": "4.57.6",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/seg/grounding-dino-base",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/grounding-dino-base (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "max_text_tokens": 256
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "sam2_1_hiera_large",
+      "kind": "segmentation",
+      "roles": [
+        "refiner"
+      ],
+      "display_name": "SAM 2.1 (Hiera large)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "facebook/sam2.1-hiera-large",
+      "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+      "size_bytes": 900000000,
+      "vram_estimate_gb": 2,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/facebook/sam2.1-hiera-large",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "transformers",
+          "requirement": "==4.57.6",
+          "installed": "4.57.6",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/seg/sam2.1-hiera-large",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/sam2.1-hiera-large (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "florence2_large",
+      "kind": "segmentation",
+      "roles": [
+        "grounder"
+      ],
+      "display_name": "Florence-2 (large)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "florence-community/Florence-2-large",
+      "revision": "4271c66b88cdbc05735372ec13b2360108de5317",
+      "size_bytes": 1560000000,
+      "vram_estimate_gb": 3,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "mit",
+        "name": "MIT License",
+        "url": "https://huggingface.co/florence-community/Florence-2-large",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "transformers",
+          "requirement": "==4.57.6",
+          "installed": "4.57.6",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/seg/Florence-2-large",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/Florence-2-large (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "see_through_l2d",
+      "kind": "segmentation",
+      "roles": [
+        "parser"
+      ],
+      "display_name": "See-through (anime parser)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "24yearsold/l2d_sam_iter2",
+      "revision": "0b0608310fb7a89e32ecd7397147a249540cf1e7",
+      "size_bytes": 1290000000,
+      "vram_estimate_gb": 4,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/24yearsold/l2d_sam_iter2",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": "third_party/see-through",
+      "local_path": ".model/seg/l2d_sam_iter2",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/l2d_sam_iter2 (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "subjects": [
+          "anime_character"
+        ]
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "sapiens2_seg_0_4b",
+      "kind": "segmentation",
+      "roles": [
+        "parser"
+      ],
+      "display_name": "Sapiens2 segmentation (0.4B)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "facebook/sapiens2-seg-0.4b",
+      "revision": "449b3c5335e6722bb94990abdd1aa6e612432f22",
+      "size_bytes": 1630000000,
+      "vram_estimate_gb": 3,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "sapiens2-license",
+        "name": "Sapiens2 License",
+        "url": "https://huggingface.co/facebook/sapiens2-seg-0.4b",
+        "commercial": "allowed_with_conditions",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [
+          "No biometric identification",
+          "No deepfakes or impersonation",
+          "No military use"
+        ],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": "third_party/sapiens2",
+      "local_path": ".model/seg/sapiens2-seg-0.4b",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/sapiens2-seg-0.4b (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "subjects": [
+          "realistic_human"
+        ]
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "raster_lifter",
+      "kind": "part_extraction",
+      "roles": [
+        "lifter"
+      ],
+      "display_name": "Raster label lifter (nvdiffrast)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": null,
+      "revision": null,
+      "size_bytes": null,
+      "vram_estimate_gb": 4,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "nvidia-source-code-nc",
+        "name": "NVIDIA Source Code License",
+        "url": "https://github.com/NVlabs/nvdiffrast/blob/main/LICENSE.txt",
+        "commercial": "non_commercial",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "nvdiffrast",
+          "requirement": "==0.4.0",
+          "installed": "0.4.0",
+          "ok": true
+        },
+        {
+          "distribution": "cumesh",
+          "requirement": "==0.0.1",
+          "installed": "0.0.1",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": null,
+      "install": {
+        "supported": false,
+        "hint": null,
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "p3sam",
+      "kind": "segmentation_3d",
+      "roles": [
+        "segmenter"
+      ],
+      "display_name": "P3-SAM",
+      "state": "unavailable",
+      "reason_code": "unsupported",
+      "reason": "Needs spconv/torch_scatter (no Python 3.14 / CUDA 13 wheels)",
+      "approved": false,
+      "is_default": false,
+      "repo_id": "tencent/Hunyuan3D-Part",
+      "revision": null,
+      "size_bytes": 451000000,
+      "vram_estimate_gb": null,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "tencent-hunyuan-3d-part",
+        "name": "Tencent Hunyuan 3D-Part Community License",
+        "url": "https://huggingface.co/tencent/Hunyuan3D-Part",
+        "commercial": "revenue_capped",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": false,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": null,
+      "local_path": null,
+      "install": {
+        "supported": false,
+        "hint": null,
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": true
+    },
+    {
+      "id": "partfield",
+      "kind": "segmentation_3d",
+      "roles": [
+        "segmenter"
+      ],
+      "display_name": "PartField",
+      "state": "unavailable",
+      "reason_code": "unsupported",
+      "reason": "Needs torch_scatter, open3d and pymeshlab (no Python 3.14 / CUDA 13 wheels)",
+      "approved": false,
+      "is_default": false,
+      "repo_id": "nvidia/PartField",
+      "revision": null,
+      "size_bytes": 1240000000,
+      "vram_estimate_gb": null,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "nvidia-license-nc",
+        "name": "NVIDIA License (non-commercial)",
+        "url": "https://huggingface.co/nvidia/PartField",
+        "commercial": "non_commercial",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": false,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": null,
+      "local_path": null,
+      "install": {
+        "supported": false,
+        "hint": null,
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": true
+    },
+    {
+      "id": "holopart",
+      "kind": "completion",
+      "roles": [
+        "completer"
+      ],
+      "display_name": "HoloPart",
+      "state": "unavailable",
+      "reason_code": "unsupported",
+      "reason": "Needs diso/torch_cluster and a numpy 1.x pin (no Python 3.14 / CUDA 13 wheels)",
+      "approved": false,
+      "is_default": false,
+      "repo_id": "VAST-AI/HoloPart",
+      "revision": null,
+      "size_bytes": 3830000000,
+      "vram_estimate_gb": null,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "mit",
+        "name": "MIT License",
+        "url": "https://huggingface.co/VAST-AI/HoloPart",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": false,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": null,
+      "local_path": null,
+      "install": {
+        "supported": false,
+        "hint": null,
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": true
+    },
+    {
+      "id": "x_part",
+      "kind": "part_generation",
+      "roles": [
+        "generator"
+      ],
+      "display_name": "X-Part",
+      "state": "unavailable",
+      "reason_code": "unsupported",
+      "reason": "Needs the Sonata/spconv stack (Linux sidecar)",
+      "approved": false,
+      "is_default": false,
+      "repo_id": "tencent/Hunyuan3D-Part",
+      "revision": null,
+      "size_bytes": 9000000000,
+      "vram_estimate_gb": null,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "tencent-hunyuan-3d-part",
+        "name": "Tencent Hunyuan 3D-Part Community License",
+        "url": "https://huggingface.co/tencent/Hunyuan3D-Part",
+        "commercial": "revenue_capped",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": false,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": null,
+      "local_path": null,
+      "install": {
+        "supported": false,
+        "hint": null,
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": true
+    }
+  ]
+}

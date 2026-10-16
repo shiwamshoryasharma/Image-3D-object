@@ -13,9 +13,10 @@ All test code lives here, never in `backend/` or `frontend/`. Run everything wit
 | `env_setup/` | Native CUDA extensions and toolchain checks | `test\env_setup\verify_extensions.py` · `test\env_setup\smoke_ext.cmd` |
 | `launcher/` | Blender runtime detection, selection, download, process runner | `pytest ... test\launcher -q` (`-m network` for live download tests) |
 | `mesh_tuner/` | Auto Mesh Tuner inside Blender (framework, rig, repair, refine) + exploration probes | `pytest ... test\mesh_tuner\framework test\mesh_tuner\rig -q` |
-| `frontend/` | Contract mock backend for UI work, React Compiler check | `node test\frontend\review\compiler_check.mjs` |
+| `frontend/` | Contract mock backend for UI work (part-aware routes and scenarios in `mock/`, request log, strict request keys), shared fixtures + golden request bodies, unit tests of the pure modules, mock smoke tests, review scripts (React Compiler, import boundaries, protected tuner files, bundle budget, browser-pane `ui_probe.js`) | `node --experimental-strip-types --test "test/frontend/unit/**/*.test.mjs"` · `node test\frontend\ui_modes_mock_smoke.mjs` · `node test\frontend\mesh_tuner_mock_smoke.mjs` · `node test\frontend\review\import_boundaries.mjs` (also `compiler_check`, `protected_frontend`, `bundle_budget <dist>`) |
 | `e2e/` | End-to-end generation against a running server | `test\e2e\e2e_generate.py --image <png>` |
 | `lan_check/` | REST + WebSocket through the Vite proxy from another device | `test\lan_check\lan_proxy_check.py http://<lan-ip>:<port>` |
+| `part_aware/` | Part-aware milestone: model probes, real-weight smoke runs, and `gpu_lock.py` (serialises GPU use across processes) | `test\part_aware\gpu_lock.py --label <name> -- <command ...>` |
 | `images/` | Sample inputs (personal data, not in Git — see its README) | — |
 
 `pytest` above means `backend\python\python.exe -s -m pytest`.

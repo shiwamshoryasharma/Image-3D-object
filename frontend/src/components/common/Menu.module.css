@@ -41,6 +41,10 @@
   text-align: left;
 }
 
+:global(:root[data-density='touch']) .item {
+  min-block-size: max(32px, var(--hit-min));
+}
+
 .item:hover:not(:disabled),
 .item:focus-visible {
   background: var(--color-surface-4);

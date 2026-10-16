@@ -1,0 +1,122 @@
+{
+  "name": "no_source",
+  "description": "No source node at all.",
+  "features": "full",
+  "limits": null,
+  "bound": {
+    "imageCount": 1,
+    "referenceSetId": "rs_0123456789ab",
+    "promptLength": 34,
+    "promptMax": 2000,
+    "viewedJobCompleted": false
+  },
+  "doc": {
+    "schema": "img3d.ui_workflow",
+    "version": 1,
+    "revision": 1,
+    "graph": {
+      "nodes": [
+        {
+          "id": "n_image_to_3d",
+          "type": "image_to_3d",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_export",
+          "type": "export",
+          "version": 1,
+          "mode": "active"
+        }
+      ],
+      "edges": [
+        {
+          "from": {
+            "node": "n_image_to_3d",
+            "port": "mesh"
+          },
+          "to": {
+            "node": "n_export",
+            "port": "asset"
+          }
+        }
+      ]
+    },
+    "layout": {
+      "positions": {
+        "n_image_to_3d": {
+          "x": 320,
+          "y": 260
+        },
+        "n_export": {
+          "x": 960,
+          "y": 260
+        }
+      },
+      "collapsed": [],
+      "viewport": {
+        "x": 40,
+        "y": 40,
+        "zoom": 0.9
+      }
+    }
+  },
+  "expected_issues": [
+    {
+      "severity": "error",
+      "code": "no_source",
+      "nodeId": null,
+      "port": null,
+      "message": "Connect an Input Image or Prompt node."
+    }
+  ],
+  "exhaustive": false,
+  "server": {
+    "graph": {
+      "schema": "img3d.workflow_graph",
+      "version": 1,
+      "nodes": [
+        {
+          "id": "n_image_to_3d",
+          "type": "image_to_3d",
+          "params": {
+            "resolution": 1024,
+            "seed": 0,
+            "randomize_seed": true,
+            "polygon_target": 500000,
+            "texture_size": 2048,
+            "remove_background": true,
+            "reference_mode": "primary_only"
+          }
+        },
+        {
+          "id": "n_export",
+          "type": "export",
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "from": {
+            "node": "n_image_to_3d",
+            "port": "mesh"
+          },
+          "to": {
+            "node": "n_export",
+            "port": "asset"
+          }
+        }
+      ]
+    },
+    "valid": false,
+    "mode": null,
+    "issues": [
+      {
+        "severity": "error",
+        "code": "no_source",
+        "node_id": null,
+        "port": null
+      }
+    ]
+  }
+}

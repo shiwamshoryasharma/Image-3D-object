@@ -130,6 +130,52 @@ class Settings(BaseSettings):
     blender_tune_timeout_s: float = Field(default=1800.0, gt=0)
     blender_max_queue_size: int = Field(default=4, ge=1, le=100)
 
+    # ---------------------------------------------------------------- part-aware layer (part-aware DESIGN.md 8.1)
+    part_aware_enabled: bool = True
+    """Master switch: when false no RunWorker/workflow sweep runs and mutating part-aware routes return 503."""
+    image_generation_enabled: bool = True
+    segmentation_enabled: bool = True
+    part_analysis_enabled: bool = True
+    workflows_enabled: bool = True
+    mesh_tuning_enabled: bool = False
+    """Code gate of ``POST /jobs/{id}/tunings`` (tuning stays paused until approved)."""
+    part_refinement_enabled: bool = False
+    approved_models: Annotated[list[str] | None, NoDecode] = None
+    """``None`` -> the catalog models with ``default_approved=True``; ``[]`` approves nothing."""
+    model_paths: Annotated[dict[str, Path], NoDecode] = Field(default_factory=dict)
+    """Model id -> local weights directory override (relative paths resolve against the backend directory)."""
+    allow_restricted_licenses: bool = False
+    t2i_default_model: str | None = None
+    segmentation_default_profile: Literal["auto", "baseline", "anime", "realistic"] = "auto"
+    run_queue_max_size: int = Field(default=8, ge=1, le=100)
+    """Shared by image generations, segmentations and part analyses."""
+    aux_keep_models_in_ram: bool = True
+    aux_model_idle_unload_s: float = Field(default=0.0, ge=0)
+    """0 = never unload idle auxiliary models."""
+    aux_vram_budget_gb: float = Field(default=28.0, gt=0)
+    engine_resident_vram_gb: float = Field(default=17.0, ge=0)
+    aux_vram_margin_gb: float = Field(default=1.5, ge=0)
+    prompt_max_chars: int = Field(default=2000, ge=1, le=8000)
+    parts_default_views: int = Field(default=8, ge=0, le=24)
+    parts_min_part_faces: int | None = Field(default=None, ge=0, le=100_000)
+    """``None`` -> ``max(50, round(1e-4 * faces))`` per analysis."""
+    parts_max_parts: int = Field(default=64, ge=1, le=256)
+    run_max_defer_s: float = Field(default=600.0, ge=0, le=3600)
+    """Longest wait of an auxiliary GPU phase behind pending/running jobs (0 = no jobs-first gate)."""
+    parts_export_cache_max_gb: float = Field(default=10.0, ge=0)
+    part_analysis_timeout_s: float = Field(default=1800.0, gt=0)
+    """Watchdog of part analyses, counted over active phase time only."""
+    workflow_graph_max_bytes: int = Field(default=65536, ge=1024, le=1_048_576)
+    workflow_sweep_interval_s: float = Field(default=5.0, gt=0)
+    imagegen_retention_days: int = Field(default=14, ge=0)
+    segmentation_retention_days: int = Field(default=14, ge=0)
+    workflow_retention_days: int = Field(default=30, ge=0)
+    max_stored_image_generations: int = Field(default=200, ge=1)
+    max_stored_segmentations: int = Field(default=200, ge=1)
+    max_stored_workflows: int = Field(default=500, ge=1)
+    persist_generation_intermediates: bool = False
+    """Inert (SD1 not approved): nothing reads it and ``/features`` always reports ``false``."""
+
     # ------------------------------------------------------------------ validators
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -175,6 +221,44 @@ class Settings(BaseSettings):
             if text.startswith("["):
                 return json.loads(text)
             return [part.strip().strip('"') for part in text.split(";") if part.strip()]
+        return value
+
+    @field_validator("approved_models", mode="before")
+    @classmethod
+    def _parse_approved_models(cls, value: Any) -> Any:
+        """JSON list (``[]`` approves nothing) or ``,``/``;``-separated ids; blank -> ``None`` (catalog defaults)."""
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return None
+            if text.startswith("["):
+                return json.loads(text)
+            return [part.strip() for part in re.split(r"[,;]", text) if part.strip()]
+        return value
+
+    @field_validator("approved_models", mode="after")
+    @classmethod
+    def _strip_approved_models(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        return [item.strip() for item in value if item.strip()]
+
+    @field_validator("model_paths", mode="before")
+    @classmethod
+    def _parse_model_paths(cls, value: Any) -> Any:
+        """JSON object ``{"model_id": "path", ...}``; blank -> no overrides."""
+        if value is None:
+            return {}
+        if isinstance(value, str):
+            text = value.strip()
+            return json.loads(text) if text else {}
+        return value
+
+    @field_validator("t2i_default_model", "parts_min_part_faces", mode="before")
+    @classmethod
+    def _blank_is_none(cls, value: Any) -> Any:
+        if isinstance(value, str) and not value.strip():
+            return None
         return value
 
     @field_validator("blender_min_version", mode="before")
@@ -223,6 +307,9 @@ class Settings(BaseSettings):
             if optional is not None:
                 object.__setattr__(self, name, _resolve_backend_path(optional))
         object.__setattr__(self, "blender_search_dirs", [_resolve_backend_path(p) for p in self.blender_search_dirs])
+        object.__setattr__(
+            self, "model_paths", {model_id: _resolve_backend_path(p) for model_id, p in self.model_paths.items()}
+        )
         return self
 
     # ------------------------------------------------------------------ derived values
@@ -307,6 +394,34 @@ class Settings(BaseSettings):
             "blender_detect_on_startup": self.blender_detect_on_startup,
             "blender_tune_timeout_s": self.blender_tune_timeout_s,
             "blender_max_queue_size": self.blender_max_queue_size,
+        }
+
+    def part_aware_summary(self) -> dict[str, Any]:
+        """Non-secret summary of the part-aware settings (logged by the part-aware container at startup)."""
+        return {
+            "part_aware_enabled": self.part_aware_enabled,
+            "image_generation_enabled": self.image_generation_enabled,
+            "segmentation_enabled": self.segmentation_enabled,
+            "part_analysis_enabled": self.part_analysis_enabled,
+            "workflows_enabled": self.workflows_enabled,
+            "mesh_tuning_enabled": self.mesh_tuning_enabled,
+            "part_refinement_enabled": self.part_refinement_enabled,
+            "approved_models": list(self.approved_models) if self.approved_models is not None else None,
+            "model_paths": {model_id: str(path) for model_id, path in self.model_paths.items()},
+            "allow_restricted_licenses": self.allow_restricted_licenses,
+            "aux_model_root": str(self.aux_model_root),
+            "t2i_default_model": self.t2i_default_model,
+            "segmentation_default_profile": self.segmentation_default_profile,
+            "run_queue_max_size": self.run_queue_max_size,
+            "aux_keep_models_in_ram": self.aux_keep_models_in_ram,
+            "aux_model_idle_unload_s": self.aux_model_idle_unload_s,
+            "aux_vram_budget_gb": self.aux_vram_budget_gb,
+            "engine_resident_vram_gb": self.engine_resident_vram_gb,
+            "aux_vram_margin_gb": self.aux_vram_margin_gb,
+            "run_max_defer_s": self.run_max_defer_s,
+            "part_analysis_timeout_s": self.part_analysis_timeout_s,
+            "parts_export_cache_max_gb": self.parts_export_cache_max_gb,
+            "persist_generation_intermediates": False,
         }
 
 

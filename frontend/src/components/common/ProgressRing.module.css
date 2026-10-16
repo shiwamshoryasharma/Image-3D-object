@@ -1,0 +1,51 @@
+.ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+}
+
+.track {
+  fill: none;
+  stroke: var(--progress-ring-track);
+}
+
+.indicator {
+  fill: none;
+  stroke: var(--color-accent-2);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--duration-slow) var(--ease-out);
+}
+
+/* Local keyframes: CSS modules rename keyframe references, so the global img3d-spin would not resolve here. */
+.indeterminate .svg {
+  animation: spin 1s linear infinite;
+}
+
+.content {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+/* Static under reduced motion (system setting or App settings ▸ Reduce motion). */
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate .svg {
+    animation: none;
+  }
+}
+
+:global(:root[data-motion='reduce']) .indeterminate .svg {
+  animation: none;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}

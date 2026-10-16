@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+from typing import Any, Literal
+
+from pydantic import Field, SerializerFunctionWrapHandler, model_serializer
 
 from models.enums import SINGLE_SLOTS, SLOT_DISPLAY_ORDER, SLOT_PRIMARY_PRIORITY, ReferenceSlot
 from models.types import DomainModel, UtcDateTime
@@ -11,8 +13,29 @@ _DISPLAY_INDEX = {slot: index for index, slot in enumerate(SLOT_DISPLAY_ORDER)}
 _PRIORITY_INDEX = {slot: index for index, slot in enumerate(SLOT_PRIMARY_PRIORITY)}
 
 
+class ImageSource(DomainModel):
+    """Provenance of a reference image that was not uploaded but generated (part-aware DESIGN.md section 1.2 S-f).
+
+    ``kind="t2i"``: candidate ``candidate_index`` of image generation run ``image_generation_id``. The prompt itself
+    is not stored here, only the sha256 of the final prompt (the text stays in the ``ig_`` run).
+    """
+
+    kind: Literal["t2i"]
+    image_generation_id: str
+    candidate_index: int
+    model_id: str
+    model_revision: str | None
+    license_id: str
+    seed: int
+    final_prompt_sha256: str
+
+
 class ReferenceImage(DomainModel):
-    """One uploaded reference image. Files live in ``runtime/uploads/<set_id>/``."""
+    """One reference image. Files live in ``runtime/uploads/<set_id>/``.
+
+    ``source`` is ``None`` for uploads and then omitted from ``set.json``, so stored sets of uploaded images stay
+    key-identical to the pre-part-aware format.
+    """
 
     id: str
     set_id: str
@@ -31,6 +54,15 @@ class ReferenceImage(DomainModel):
     """Stored original file name, e.g. ``img_0123456789ab.png``."""
     thumbnail_name: str
     """Stored thumbnail file name, e.g. ``img_0123456789ab_thumb.webp``."""
+    source: ImageSource | None = None
+    """Generated-image provenance (``None`` = uploaded by the user)."""
+
+    @model_serializer(mode="wrap")
+    def _omit_missing_source(self, handler: SerializerFunctionWrapHandler) -> Any:
+        data = handler(self)
+        if self.source is None and isinstance(data, dict):
+            data.pop("source", None)
+        return data
 
 
 class ReferenceSet(DomainModel):

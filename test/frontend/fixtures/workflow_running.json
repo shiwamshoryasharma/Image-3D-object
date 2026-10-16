@@ -1,0 +1,147 @@
+{
+  "id": "wf_0123456789ab",
+  "name": null,
+  "status": "running",
+  "created_at": "2026-10-16T10:00:00Z",
+  "started_at": "2026-10-16T10:00:01Z",
+  "finished_at": null,
+  "request": {
+    "name": null,
+    "source": {
+      "kind": "prompt",
+      "generation": {
+        "prompt": "a knight with a red cape and a sword",
+        "preset": "character",
+        "style": "anime",
+        "part_hint": true,
+        "num_images": 1,
+        "seed": 0,
+        "randomize_seed": true
+      }
+    },
+    "segmentation": {
+      "profile": "auto"
+    },
+    "reconstruction": {
+      "settings": {
+        "resolution": 1024,
+        "seed": 0,
+        "randomize_seed": true,
+        "polygon_target": 500000,
+        "texture_size": 2048,
+        "remove_background": true,
+        "reference_mode": "primary_only"
+      }
+    },
+    "parts": {
+      "separate": [
+        "eyes",
+        "eyebrows",
+        "eyelashes",
+        "hair",
+        "clothes",
+        "accessories",
+        "detachable"
+      ]
+    }
+  },
+  "graph_stored": true,
+  "current_step": "reconstruction",
+  "progress": {
+    "percent": 41,
+    "message": "Generating geometry",
+    "updated_at": "2026-10-16T10:00:40Z"
+  },
+  "steps": [
+    {
+      "id": "text_to_image",
+      "node": "prompt",
+      "node_id": "n_prompt",
+      "status": "done",
+      "message": null,
+      "progress": 100,
+      "warning_count": 1,
+      "resource": {
+        "kind": "image_generation",
+        "id": "ig_0123456789ab",
+        "exists": true
+      },
+      "artifacts": [
+        {
+          "role": "candidate",
+          "url": "/api/v1/image-generations/ig_0123456789ab/candidates/0/thumbnail"
+        }
+      ]
+    },
+    {
+      "id": "import_image",
+      "node": "input_image",
+      "node_id": null,
+      "status": "done",
+      "resource": {
+        "kind": "reference_image",
+        "id": "img_0123456789ab",
+        "reference_set_id": "rs_0123456789ab",
+        "exists": true
+      },
+      "artifacts": []
+    },
+    {
+      "id": "segmentation",
+      "node": "segmentation",
+      "node_id": "n_segmentation",
+      "status": "done",
+      "resource": {
+        "kind": "segmentation",
+        "id": "sg_0123456789ab",
+        "exists": true
+      },
+      "artifacts": [
+        {
+          "role": "overlay",
+          "url": "/api/v1/segmentations/sg_0123456789ab/overlay"
+        }
+      ]
+    },
+    {
+      "id": "reconstruction",
+      "node": "image_to_3d",
+      "node_id": "n_image_to_3d",
+      "status": "running",
+      "progress": 38.5,
+      "resource": {
+        "kind": "job",
+        "id": "job_0123456789ab",
+        "exists": true
+      },
+      "artifacts": []
+    },
+    {
+      "id": "part_extraction",
+      "node": "part_extraction",
+      "node_id": "n_part_extraction",
+      "status": "pending",
+      "resource": null,
+      "artifacts": []
+    },
+    {
+      "id": "export",
+      "node": "export",
+      "node_id": "n_export",
+      "status": "pending",
+      "resource": null,
+      "artifacts": []
+    }
+  ],
+  "outputs": {
+    "reference_set_id": "rs_0123456789ab",
+    "image_id": "img_0123456789ab",
+    "segmentation_id": "sg_0123456789ab",
+    "job_id": "job_0123456789ab",
+    "part_analysis_id": null,
+    "model_url": null,
+    "parts_model_url": null,
+    "manifest_url": null
+  },
+  "error": null
+}

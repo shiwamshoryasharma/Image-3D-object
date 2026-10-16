@@ -1,0 +1,44 @@
+{
+  "id": "job_0123456789ab",
+  "status": "running",
+  "engine": "trellis2",
+  "created_at": "2026-10-16T10:00:00Z",
+  "started_at": "2026-10-16T10:00:02Z",
+  "finished_at": null,
+  "reference_set_id": "rs_0123456789ab",
+  "primary_image_id": "img_0123456789ab",
+  "references": [
+    {
+      "image_id": "img_0123456789ab",
+      "slot": "front",
+      "is_primary": true
+    }
+  ],
+  "settings": {
+    "resolution": 1024,
+    "seed": 0,
+    "randomize_seed": true,
+    "polygon_target": 500000,
+    "texture_size": 2048,
+    "remove_background": true,
+    "reference_mode": "primary_only",
+    "advanced": null
+  },
+  "seed": 123456,
+  "queue_position": null,
+  "progress": {
+    "stage": "decoding",
+    "stage_label": "Decoding mesh",
+    "stage_index": 6,
+    "stage_count": 9,
+    "step": null,
+    "total_steps": null,
+    "percent": 75,
+    "message": "Decoding mesh",
+    "elapsed_seconds": 12.4,
+    "eta_seconds": null,
+    "updated_at": "2026-10-16T10:00:20Z"
+  },
+  "error": null,
+  "result": null
+}

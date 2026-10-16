@@ -1,0 +1,119 @@
+.nav {
+  position: fixed;
+  z-index: var(--z-header);
+  right: max(var(--floating-gap), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--floating-gap) + env(safe-area-inset-bottom, 0px));
+  left: max(var(--floating-gap), env(safe-area-inset-left, 0px));
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  max-width: 560px;
+  height: var(--floating-nav-height);
+  margin-inline: auto;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-lg);
+  transition:
+    translate var(--duration-normal) var(--ease-out),
+    opacity var(--duration-normal) var(--ease-out);
+}
+
+/* Glass where the browser can blur the content behind it; the solid surface above is the fallback. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav {
+    background: var(--surface-glass);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+}
+
+.hidden {
+  translate: 0 calc(100% + var(--floating-gap) + env(safe-area-inset-bottom, 0px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.center {
+  display: grid;
+  place-items: center;
+  width: var(--fab-size);
+}
+
+/* Shared with NavRail (NavItemButton). */
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 48px;
+  max-width: 96px;
+  min-height: 48px;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  transition: color var(--duration-fast) ease;
+}
+
+.item:hover {
+  color: var(--color-text);
+}
+
+.icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.active {
+  color: var(--color-text);
+}
+
+.active .icon {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  line-height: 16px;
+  text-align: center;
+}
+
+.dot {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-2);
+}

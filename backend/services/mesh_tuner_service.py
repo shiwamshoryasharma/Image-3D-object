@@ -9,6 +9,7 @@ from typing import Any, Final
 
 from config.settings import Settings
 from core.exceptions import AppError, ConflictError, NotFoundError, QueueFullError, StorageError
+from core.feature_errors import FeatureDisabledError
 from models.enums import JobStatus
 from models.tuning import (
     LOG_FILE,
@@ -96,6 +97,10 @@ class MeshTunerService:
     async def create_run(self, job_id: str, options: TuningOptionsIn | None) -> TuningRun:
         """Queue a tuning run for a completed job (409 not completed, 503 no Blender, 429 queue full)."""
         self._results.model_file(job_id)  # 404 unknown job / 409 not completed / 404 model missing
+        if not self._settings.mesh_tuning_enabled:  # paused until the user approves the part-aware milestone
+            raise FeatureDisabledError(
+                "Auto Mesh Tuner is paused until approved", feature="mesh_tuning", flag="IMG3D_MESH_TUNING_ENABLED"
+            )
         if self._worker.stopping or self._queue.closed:
             raise BlenderUnavailableAppError("The server is shutting down")
         await self._runtime.require_runtime()  # 503 blender_unavailable with the runtime's user prompt

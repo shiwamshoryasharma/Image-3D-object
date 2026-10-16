@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import Field
 
 from models.enums import SINGLE_SLOTS, SLOT_DISPLAY_ORDER, ReferenceSlot
-from models.reference import ReferenceImage, ReferenceSet
+from models.reference import ImageSource, ReferenceImage, ReferenceSet
 from models.types import UtcDateTime
 from schemas.common import API_V1_PREFIX, ApiModel, RequestModel
 
@@ -16,6 +18,31 @@ MAX_LABEL_LENGTH = 200
 class ReferenceImageUrls(ApiModel):
     file: str
     thumbnail: str
+
+
+class ImageSourceOut(ApiModel):
+    """Provenance of a generated reference image (part-aware DESIGN.md section 6.7). The prompt hash is not exposed;
+    the UI links to the ``ig_`` run for the prompt text."""
+
+    kind: Literal["t2i"]
+    image_generation_id: str
+    candidate_index: int
+    model_id: str
+    model_revision: str | None
+    license_id: str
+    seed: int
+
+    @classmethod
+    def from_domain(cls, source: ImageSource) -> ImageSourceOut:
+        return cls(
+            kind=source.kind,
+            image_generation_id=source.image_generation_id,
+            candidate_index=source.candidate_index,
+            model_id=source.model_id,
+            model_revision=source.model_revision,
+            license_id=source.license_id,
+            seed=source.seed,
+        )
 
 
 class ReferenceImageOut(ApiModel):
@@ -33,6 +60,8 @@ class ReferenceImageOut(ApiModel):
     is_primary: bool
     created_at: UtcDateTime
     urls: ReferenceImageUrls
+    source: ImageSourceOut | None = None
+    """``null`` for uploaded images."""
 
     @classmethod
     def from_domain(cls, image: ReferenceImage) -> ReferenceImageOut:
@@ -52,6 +81,7 @@ class ReferenceImageOut(ApiModel):
             is_primary=image.is_primary,
             created_at=image.created_at,
             urls=ReferenceImageUrls(file=f"{base}/file", thumbnail=f"{base}/thumbnail"),
+            source=ImageSourceOut.from_domain(image.source) if image.source is not None else None,
         )
 
 

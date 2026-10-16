@@ -54,6 +54,8 @@ interface ReferenceState {
   setPrimary: (imageId: string) => Promise<void>
   moveImage: (imageId: string, slot: ReferenceSlot) => Promise<void>
   clearTileError: (slot: ReferenceSlot) => void
+  /** Make a set returned by the server current (e.g. after `…/candidates/{n}/use`), persisting its id. */
+  adoptSet: (next: ReferenceSet) => void
 }
 
 let uploadCounter = 0
@@ -342,6 +344,11 @@ export const useReferenceStore = create<ReferenceState>()((set, get) => {
     },
 
     clearTileError: (slot) => setTileError(slot, null),
+
+    adoptSet: (next) => {
+      writeString(STORAGE_KEYS.referenceSetId, next.id)
+      set({ set: next, status: 'ready', error: null, tileErrors: {} })
+    },
   }
 })
 

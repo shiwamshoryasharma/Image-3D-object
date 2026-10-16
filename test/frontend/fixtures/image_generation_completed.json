@@ -1,0 +1,131 @@
+{
+  "id": "ig_0123456789ab",
+  "kind": "image_generation",
+  "status": "completed",
+  "created_at": "2026-10-16T10:00:00Z",
+  "started_at": "2026-10-16T10:00:01Z",
+  "finished_at": "2026-10-16T10:00:09Z",
+  "workflow_id": null,
+  "options": {
+    "prompt": "a knight with a red cape and a sword",
+    "effective_prompt": "A full-body 3D character reference image of a knight with a red cape and a sword. Exactly one character, standing upright in a neutral A-pose: arms straight and angled about 30 degrees away from the torso, hands open and relaxed, feet shoulder-width apart and flat on the ground. Front view, facing the camera directly, eye-level camera, telephoto lens with minimal perspective distortion. The whole body is visible from the top of the head to the soles of the shoes, centered in the frame with empty space on all sides. Neutral expression, eyes open, mouth closed, hair not covering the face. Plain seamless light-gray studio background, no floor line, no props, no text. Soft, even, diffuse lighting with no cast shadows and no strong highlights. Sharp focus everywhere. Anime-style character, clean cel shading, crisp line art. Hair, clothing layers and accessories are clearly distinct from each other and from the skin; both eyes clearly visible.",
+    "negative_prompt": null,
+    "model_id": "z_image_turbo",
+    "preset": "character",
+    "style": "anime",
+    "part_hint": true,
+    "num_images": 2,
+    "seed": 987654,
+    "width": 896,
+    "height": 1152,
+    "steps": 9,
+    "guidance": 0,
+    "expected_terms": [
+      "clothing.outer",
+      "object.held"
+    ],
+    "final_prompt_sha256": "1f4302545edcfefe7a72d38b173bec439e3830a5f5cff9c08394710e581ef33c"
+  },
+  "models": [
+    {
+      "id": "z_image_turbo",
+      "revision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "license_id": "apache-2.0"
+    }
+  ],
+  "progress": {
+    "percent": 100,
+    "step_id": "save",
+    "step_index": 4,
+    "step_count": 4,
+    "message": "Done",
+    "updated_at": "2026-10-16T10:00:09Z"
+  },
+  "steps": [
+    {
+      "id": "load_model",
+      "label": "Loading text-to-image model",
+      "status": "skipped",
+      "message": "Model already in memory",
+      "progress": 1,
+      "duration_s": 0,
+      "details": {}
+    },
+    {
+      "id": "generate",
+      "label": "Generating images",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 7.2,
+      "details": {}
+    },
+    {
+      "id": "check",
+      "label": "Checking 3D readiness",
+      "status": "warning",
+      "message": "1 readiness issue",
+      "progress": 1,
+      "duration_s": 0.2,
+      "details": {}
+    },
+    {
+      "id": "save",
+      "label": "Saving candidates",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 0.3,
+      "details": {}
+    }
+  ],
+  "warnings": [
+    {
+      "code": "t2i_touches_border",
+      "message": "Candidate 1: the subject touches the image border.",
+      "step_id": "check"
+    }
+  ],
+  "result": {
+    "candidates": [
+      {
+        "index": 0,
+        "seed": 987654,
+        "width": 896,
+        "height": 1152,
+        "url": "/api/v1/image-generations/ig_0123456789ab/candidates/0",
+        "thumbnail_url": "/api/v1/image-generations/ig_0123456789ab/candidates/0/thumbnail",
+        "readiness": {
+          "ok": true,
+          "issues": [],
+          "method": "border_color"
+        },
+        "used_as": []
+      },
+      {
+        "index": 1,
+        "seed": 987655,
+        "width": 896,
+        "height": 1152,
+        "url": "/api/v1/image-generations/ig_0123456789ab/candidates/1",
+        "thumbnail_url": "/api/v1/image-generations/ig_0123456789ab/candidates/1/thumbnail",
+        "readiness": {
+          "ok": false,
+          "issues": [
+            "t2i_touches_border"
+          ],
+          "method": "border_color"
+        },
+        "used_as": []
+      }
+    ],
+    "timings": {
+      "load_model": 0,
+      "generate": 7.2,
+      "check": 0.2,
+      "save": 0.3,
+      "total": 7.7
+    }
+  },
+  "error": null
+}

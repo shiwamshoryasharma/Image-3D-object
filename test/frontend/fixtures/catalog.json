@@ -1,0 +1,1518 @@
+{
+  "schema": "img3d.workflow_catalog/1",
+  "etag": "\"sha256-f055976ae6f1ec098ccbe7755ddb5d05a8d4d8ed4611176ef261f93d24c26543\"",
+  "port_types": [
+    {
+      "id": "image_set",
+      "label": "Image"
+    },
+    {
+      "id": "segmentation",
+      "label": "Masks"
+    },
+    {
+      "id": "mesh",
+      "label": "Mesh"
+    },
+    {
+      "id": "part_set",
+      "label": "Parts"
+    }
+  ],
+  "node_types": [
+    {
+      "type": "input_image",
+      "version": 1,
+      "category": "input",
+      "title": "Input Image",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "images",
+          "label": "Image",
+          "type": "image_set"
+        }
+      ],
+      "params_schema": {
+        "title": "InputImageParams",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference_set_id"
+        ],
+        "properties": {
+          "reference_set_id": {
+            "type": "string",
+            "title": "Reference Set Id"
+          },
+          "primary_image_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Primary Image Id"
+          }
+        }
+      },
+      "defaults": {
+        "primary_image_id": null
+      },
+      "compiles_to": "source",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "prompt",
+      "version": 1,
+      "category": "input",
+      "title": "Prompt",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "images",
+          "label": "Image",
+          "type": "image_set"
+        }
+      ],
+      "params_schema": {
+        "title": "ImageGenerationRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8000,
+            "title": "Prompt"
+          },
+          "negative_prompt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Negative Prompt"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model Id"
+          },
+          "preset": {
+            "type": "string",
+            "enum": [
+              "character",
+              "object",
+              "raw"
+            ],
+            "default": "character",
+            "title": "Preset"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "realistic",
+                  "stylized",
+                  "anime"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Style"
+          },
+          "part_hint": {
+            "type": "boolean",
+            "default": true,
+            "title": "Part Hint"
+          },
+          "num_images": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1,
+            "default": 1,
+            "title": "Num Images"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "default": 0,
+            "title": "Seed"
+          },
+          "randomize_seed": {
+            "type": "boolean",
+            "default": true,
+            "title": "Randomize Seed"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Height"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Steps"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Guidance"
+          }
+        }
+      },
+      "defaults": {
+        "negative_prompt": null,
+        "model_id": null,
+        "preset": "character",
+        "style": null,
+        "part_hint": true,
+        "num_images": 1,
+        "seed": 0,
+        "randomize_seed": true,
+        "width": null,
+        "height": null,
+        "steps": null,
+        "guidance": null
+      },
+      "compiles_to": "source",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "job_result",
+      "version": 1,
+      "category": "input",
+      "title": "Existing Result",
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "images",
+          "label": "Image",
+          "type": "image_set"
+        },
+        {
+          "id": "mesh",
+          "label": "Mesh",
+          "type": "mesh"
+        }
+      ],
+      "params_schema": {
+        "title": "JobResultParams",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "job_id"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        }
+      },
+      "defaults": {},
+      "compiles_to": "source",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "segmentation",
+      "version": 1,
+      "category": "analyze",
+      "title": "Segmentation",
+      "inputs": [
+        {
+          "id": "images",
+          "label": "Image",
+          "accepts": [
+            "image_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "masks",
+          "label": "Masks",
+          "type": "segmentation"
+        }
+      ],
+      "params_schema": {
+        "title": "SegmentationOptions",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "baseline",
+              "anime",
+              "realistic"
+            ],
+            "default": "auto",
+            "title": "Profile"
+          },
+          "subject": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "anime_character",
+              "realistic_human",
+              "object"
+            ],
+            "default": "auto",
+            "title": "Subject"
+          },
+          "classes": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Classes"
+          },
+          "extra_terms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 40
+            },
+            "maxItems": 16,
+            "default": [],
+            "title": "Extra Terms"
+          },
+          "use_prompt_terms": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use Prompt Terms"
+          },
+          "head_pass": {
+            "type": "boolean",
+            "default": true,
+            "title": "Head Pass"
+          },
+          "min_confidence": {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 0.95,
+            "default": 0.35,
+            "title": "Min Confidence"
+          }
+        }
+      },
+      "defaults": {
+        "profile": "auto",
+        "subject": "auto",
+        "classes": null,
+        "extra_terms": [],
+        "use_prompt_terms": true,
+        "head_pass": true,
+        "min_confidence": 0.35
+      },
+      "compiles_to": "segmentation",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "image_to_3d",
+      "version": 1,
+      "category": "generate",
+      "title": "Image-to-3D",
+      "inputs": [
+        {
+          "id": "images",
+          "label": "Image",
+          "accepts": [
+            "image_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "mesh",
+          "label": "Mesh",
+          "type": "mesh"
+        }
+      ],
+      "params_schema": {
+        "title": "GenerationSettings",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "resolution": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 1024,
+            "title": "Resolution"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "default": 0,
+            "title": "Seed"
+          },
+          "randomize_seed": {
+            "type": "boolean",
+            "default": true,
+            "title": "Randomize Seed"
+          },
+          "polygon_target": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 500000,
+            "title": "Polygon Target"
+          },
+          "texture_size": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 2048,
+            "title": "Texture Size"
+          },
+          "remove_background": {
+            "type": "boolean",
+            "default": true,
+            "title": "Remove Background"
+          },
+          "reference_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "primary_only",
+                  "multi_view"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference Mode"
+          },
+          "advanced": {
+            "anyOf": [
+              {
+                "title": "AdvancedSettings",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "sparse_structure": {
+                    "anyOf": [
+                      {
+                        "title": "SamplerSettings",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "steps": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 50
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "guidance_strength": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "guidance_rescale": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "rescale_t": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 6
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "shape": {
+                    "anyOf": [
+                      {
+                        "title": "SamplerSettings",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "steps": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 50
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "guidance_strength": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "guidance_rescale": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "rescale_t": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 6
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "texture": {
+                    "anyOf": [
+                      {
+                        "title": "SamplerSettings",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "steps": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 50
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "guidance_strength": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "guidance_rescale": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          },
+                          "rescale_t": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 6
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        }
+      },
+      "defaults": {
+        "resolution": 1024,
+        "seed": 0,
+        "randomize_seed": true,
+        "polygon_target": 500000,
+        "texture_size": 2048,
+        "remove_background": true,
+        "reference_mode": null,
+        "advanced": null
+      },
+      "compiles_to": "reconstruction",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "part_extraction",
+      "version": 1,
+      "category": "parts",
+      "title": "Part Extraction",
+      "inputs": [
+        {
+          "id": "mesh",
+          "label": "Mesh",
+          "accepts": [
+            "mesh"
+          ],
+          "required": true,
+          "multiple": false
+        },
+        {
+          "id": "masks",
+          "label": "Masks",
+          "accepts": [
+            "segmentation"
+          ],
+          "required": false,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "title": "PartExtractionParams",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "components",
+                  "semantic_regions",
+                  "semantic_parts",
+                  "per_part_regeneration"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Strategy"
+          },
+          "segmentation": {
+            "anyOf": [
+              {
+                "title": "SegmentationOptions",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "baseline",
+                      "anime",
+                      "realistic"
+                    ],
+                    "default": "auto",
+                    "title": "Profile"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "anime_character",
+                      "realistic_human",
+                      "object"
+                    ],
+                    "default": "auto",
+                    "title": "Subject"
+                  },
+                  "classes": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Classes"
+                  },
+                  "extra_terms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "maxItems": 16,
+                    "default": [],
+                    "title": "Extra Terms"
+                  },
+                  "use_prompt_terms": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Use Prompt Terms"
+                  },
+                  "head_pass": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Head Pass"
+                  },
+                  "min_confidence": {
+                    "type": "number",
+                    "minimum": 0.05,
+                    "maximum": 0.95,
+                    "default": 0.35,
+                    "title": "Min Confidence"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "separate": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "eyes",
+                "eyebrows",
+                "eyelashes",
+                "hair",
+                "clothes",
+                "accessories",
+                "detachable"
+              ]
+            },
+            "default": [
+              "eyes",
+              "eyebrows",
+              "eyelashes",
+              "hair",
+              "clothes",
+              "accessories",
+              "detachable"
+            ],
+            "title": "Separate"
+          },
+          "views": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 24,
+            "default": 8,
+            "title": "Views"
+          },
+          "min_part_faces": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Part Faces"
+          },
+          "max_parts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 256,
+            "default": 64,
+            "title": "Max Parts"
+          },
+          "split_shells": {
+            "type": "boolean",
+            "default": true,
+            "title": "Split Shells"
+          }
+        }
+      },
+      "defaults": {
+        "strategy": null,
+        "segmentation": null,
+        "separate": [
+          "eyes",
+          "eyebrows",
+          "eyelashes",
+          "hair",
+          "clothes",
+          "accessories",
+          "detachable"
+        ],
+        "views": 8,
+        "min_part_faces": null,
+        "max_parts": 64,
+        "split_shells": true
+      },
+      "compiles_to": "parts",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "export",
+      "version": 1,
+      "category": "output",
+      "title": "Export",
+      "inputs": [
+        {
+          "id": "asset",
+          "label": "Asset",
+          "accepts": [
+            "mesh",
+            "part_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [],
+      "params_schema": {
+        "title": "PartExportOptions",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "per_part_glbs": {
+            "type": "boolean",
+            "default": false,
+            "title": "Per Part Glbs"
+          },
+          "previews": {
+            "type": "boolean",
+            "default": true,
+            "title": "Previews"
+          }
+        }
+      },
+      "defaults": {
+        "per_part_glbs": false,
+        "previews": true
+      },
+      "compiles_to": "parts.export",
+      "max_instances": 1,
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "locked": false,
+      "hidden_by_default": false
+    },
+    {
+      "type": "part_refine",
+      "version": 1,
+      "category": "refine",
+      "title": "Part Refine",
+      "inputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "accepts": [
+            "part_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "locked": true,
+      "hidden_by_default": true
+    },
+    {
+      "type": "mesh_tune",
+      "version": 1,
+      "category": "refine",
+      "title": "Mesh Tune",
+      "inputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "accepts": [
+            "part_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "locked": true,
+      "hidden_by_default": true
+    },
+    {
+      "type": "eye_correction",
+      "version": 1,
+      "category": "refine",
+      "title": "Eye Correction",
+      "inputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "accepts": [
+            "part_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "locked": true,
+      "hidden_by_default": true
+    },
+    {
+      "type": "rig_correction",
+      "version": 1,
+      "category": "refine",
+      "title": "Rig Correction",
+      "inputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "accepts": [
+            "part_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "locked": true,
+      "hidden_by_default": true
+    },
+    {
+      "type": "segmentation_3d",
+      "version": 1,
+      "category": "parts",
+      "title": "3D Segmentation",
+      "inputs": [
+        {
+          "id": "mesh",
+          "label": "Mesh",
+          "accepts": [
+            "mesh"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "unsupported",
+      "reason": "Needs spconv/torch_scatter (no Python 3.14 / CUDA 13 wheels)",
+      "locked": false,
+      "hidden_by_default": true
+    },
+    {
+      "type": "part_completion",
+      "version": 1,
+      "category": "parts",
+      "title": "Part Completion",
+      "inputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "accepts": [
+            "part_set"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "unsupported",
+      "reason": "Needs diso/torch_cluster (no Python 3.14 / CUDA 13 wheels)",
+      "locked": false,
+      "hidden_by_default": true
+    },
+    {
+      "type": "part_generation",
+      "version": 1,
+      "category": "parts",
+      "title": "Part Generation",
+      "inputs": [
+        {
+          "id": "mesh",
+          "label": "Mesh",
+          "accepts": [
+            "mesh"
+          ],
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "outputs": [
+        {
+          "id": "parts",
+          "label": "Parts",
+          "type": "part_set"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "defaults": {},
+      "compiles_to": null,
+      "max_instances": 1,
+      "available": false,
+      "code": "unsupported",
+      "reason": "Needs the Sonata/spconv stack (Linux sidecar)",
+      "locked": false,
+      "hidden_by_default": true
+    }
+  ],
+  "templates": [
+    {
+      "id": "image_to_3d",
+      "title": "Image to 3D",
+      "graph": {
+        "schema": "img3d.workflow_graph",
+        "version": 1,
+        "nodes": [
+          {
+            "id": "n_input_image",
+            "type": "input_image",
+            "params": {}
+          },
+          {
+            "id": "n_image_to_3d",
+            "type": "image_to_3d",
+            "params": {}
+          },
+          {
+            "id": "n_export",
+            "type": "export",
+            "params": {}
+          }
+        ],
+        "edges": [
+          {
+            "from": {
+              "node": "n_input_image",
+              "port": "images"
+            },
+            "to": {
+              "node": "n_image_to_3d",
+              "port": "images"
+            }
+          },
+          {
+            "from": {
+              "node": "n_image_to_3d",
+              "port": "mesh"
+            },
+            "to": {
+              "node": "n_export",
+              "port": "asset"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "image_to_3d_parts",
+      "title": "Image to 3D with parts",
+      "graph": {
+        "schema": "img3d.workflow_graph",
+        "version": 1,
+        "nodes": [
+          {
+            "id": "n_input_image",
+            "type": "input_image",
+            "params": {}
+          },
+          {
+            "id": "n_image_to_3d",
+            "type": "image_to_3d",
+            "params": {}
+          },
+          {
+            "id": "n_part_extraction",
+            "type": "part_extraction",
+            "params": {}
+          },
+          {
+            "id": "n_export",
+            "type": "export",
+            "params": {}
+          }
+        ],
+        "edges": [
+          {
+            "from": {
+              "node": "n_input_image",
+              "port": "images"
+            },
+            "to": {
+              "node": "n_image_to_3d",
+              "port": "images"
+            }
+          },
+          {
+            "from": {
+              "node": "n_image_to_3d",
+              "port": "mesh"
+            },
+            "to": {
+              "node": "n_part_extraction",
+              "port": "mesh"
+            }
+          },
+          {
+            "from": {
+              "node": "n_part_extraction",
+              "port": "parts"
+            },
+            "to": {
+              "node": "n_export",
+              "port": "asset"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "prompt_to_3d",
+      "title": "Prompt to 3D",
+      "graph": {
+        "schema": "img3d.workflow_graph",
+        "version": 1,
+        "nodes": [
+          {
+            "id": "n_prompt",
+            "type": "prompt",
+            "params": {}
+          },
+          {
+            "id": "n_image_to_3d",
+            "type": "image_to_3d",
+            "params": {}
+          },
+          {
+            "id": "n_export",
+            "type": "export",
+            "params": {}
+          }
+        ],
+        "edges": [
+          {
+            "from": {
+              "node": "n_prompt",
+              "port": "images"
+            },
+            "to": {
+              "node": "n_image_to_3d",
+              "port": "images"
+            }
+          },
+          {
+            "from": {
+              "node": "n_image_to_3d",
+              "port": "mesh"
+            },
+            "to": {
+              "node": "n_export",
+              "port": "asset"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "prompt_to_3d_parts",
+      "title": "Prompt to 3D with parts",
+      "graph": {
+        "schema": "img3d.workflow_graph",
+        "version": 1,
+        "nodes": [
+          {
+            "id": "n_prompt",
+            "type": "prompt",
+            "params": {}
+          },
+          {
+            "id": "n_image_to_3d",
+            "type": "image_to_3d",
+            "params": {}
+          },
+          {
+            "id": "n_part_extraction",
+            "type": "part_extraction",
+            "params": {}
+          },
+          {
+            "id": "n_export",
+            "type": "export",
+            "params": {}
+          }
+        ],
+        "edges": [
+          {
+            "from": {
+              "node": "n_prompt",
+              "port": "images"
+            },
+            "to": {
+              "node": "n_image_to_3d",
+              "port": "images"
+            }
+          },
+          {
+            "from": {
+              "node": "n_image_to_3d",
+              "port": "mesh"
+            },
+            "to": {
+              "node": "n_part_extraction",
+              "port": "mesh"
+            }
+          },
+          {
+            "from": {
+              "node": "n_part_extraction",
+              "port": "parts"
+            },
+            "to": {
+              "node": "n_export",
+              "port": "asset"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "rebuild_parts",
+      "title": "Rebuild parts of a result",
+      "graph": {
+        "schema": "img3d.workflow_graph",
+        "version": 1,
+        "nodes": [
+          {
+            "id": "n_job_result",
+            "type": "job_result",
+            "params": {}
+          },
+          {
+            "id": "n_part_extraction",
+            "type": "part_extraction",
+            "params": {}
+          },
+          {
+            "id": "n_export",
+            "type": "export",
+            "params": {}
+          }
+        ],
+        "edges": [
+          {
+            "from": {
+              "node": "n_job_result",
+              "port": "mesh"
+            },
+            "to": {
+              "node": "n_part_extraction",
+              "port": "mesh"
+            }
+          },
+          {
+            "from": {
+              "node": "n_part_extraction",
+              "port": "parts"
+            },
+            "to": {
+              "node": "n_export",
+              "port": "asset"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "legacy_job_node_map": {
+    "queued": "image_to_3d",
+    "waiting_for_model": "image_to_3d",
+    "preprocessing": "input_image",
+    "conditioning": "image_to_3d",
+    "sparse_structure": "image_to_3d",
+    "shape": "image_to_3d",
+    "texture": "image_to_3d",
+    "decoding": "image_to_3d",
+    "exporting": "export",
+    "finalizing": "export",
+    "done": "export"
+  },
+  "limits": {
+    "max_nodes": 32,
+    "max_edges": 64,
+    "graph_max_bytes": 65536
+  }
+}

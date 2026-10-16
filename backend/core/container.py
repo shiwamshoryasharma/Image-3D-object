@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from config.settings import Settings
 from core.events import EventBus
+from core.part_aware_container import PartAwareContainer, PartProviderOverrides, build_part_aware
 from inference.base import InferenceEngine
 from inference.registry import create_engine
 from launcher import BlenderProcessRunner
@@ -58,6 +59,7 @@ class ServiceContainer:
     ws_hub: WebSocketHub
     background_tasks: set[asyncio.Task[Any]] = field(default_factory=set)
     started: bool = False
+    part_aware: PartAwareContainer | None = None
 
 
 def build_container(
@@ -66,11 +68,13 @@ def build_container(
     engine: InferenceEngine | None = None,
     blender_runtime_factory: RuntimeManagerFactory | None = None,
     blender_runner: BlenderProcessRunner | None = None,
+    part_providers: PartProviderOverrides | None = None,
 ) -> ServiceContainer:
     """Create every component (nothing is executed here: Blender detection runs as a startup background task).
 
-    ``engine``, ``blender_runtime_factory`` (``factory(launcher_settings, on_change) -> BlenderRuntimeManager``)
-    and ``blender_runner`` (tuning process runner) may be injected (tests); otherwise the real ones are used.
+    ``engine``, ``blender_runtime_factory`` (``factory(launcher_settings, on_change) -> BlenderRuntimeManager``),
+    ``blender_runner`` (tuning process runner) and ``part_providers`` (part-aware provider/executor doubles) may be
+    injected (tests); otherwise the real ones are used.
     """
     from api.websocket_hub import WebSocketHub  # api layer depends on services, not the other way round
 
@@ -148,6 +152,22 @@ def build_container(
 
     ws_hub = WebSocketHub(settings, bus, system_service, auth_service)
 
+    # Part-aware layer: separate run resources that only read finished jobs (part-aware DESIGN.md 1.2 S-b).
+    part_aware = build_part_aware(
+        settings,
+        paths=paths,
+        bus=bus,
+        engine=engine,
+        gpu=worker,
+        job_service=job_service,
+        job_store=job_store,
+        job_queue=queue,
+        reference_service=reference_service,
+        reference_store=reference_store,
+        result_service=result_service,
+        overrides=part_providers,
+    )
+
     return ServiceContainer(
         settings=settings,
         paths=paths,
@@ -170,4 +190,5 @@ def build_container(
         tuning_worker=tuning_worker,
         mesh_tuner_service=mesh_tuner_service,
         ws_hub=ws_hub,
+        part_aware=part_aware,
     )

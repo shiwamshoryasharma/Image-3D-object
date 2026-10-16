@@ -4,10 +4,20 @@
   align-items: center;
   min-width: 0;
   height: 32px;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-control);
   border-radius: var(--radius-sm);
   background: var(--color-surface-1);
   transition: border-color var(--duration-fast) ease;
+}
+
+/* Touch density: the field grows to --hit-min and the input also covers the 1px border, so it is the full target. */
+:global(:root[data-density='touch']) .field {
+  height: max(32px, var(--hit-min));
+}
+
+:global(:root[data-density='touch']) .input {
+  height: calc(100% + 2px);
+  margin-block: -1px;
 }
 
 .field:focus-within {

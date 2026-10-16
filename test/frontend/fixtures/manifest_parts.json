@@ -1,0 +1,2409 @@
+{
+  "schema": "img3d.parts/1",
+  "analysis_id": "pa_0123456789ab",
+  "job_id": "job_0123456789ab",
+  "created_at": "2026-10-16T10:01:00Z",
+  "taxonomy_version": 1,
+  "generator": {
+    "app_version": "1.0.0",
+    "engine": "trellis2",
+    "model": "TRELLIS.2-4B",
+    "pipeline_type": "1024_cascade",
+    "seed": 123456,
+    "resolution": 1024,
+    "effective_resolution": 1024,
+    "texture_size": 2048,
+    "polygon_target": 500000
+  },
+  "source": {
+    "model_file": "model.glb",
+    "model_sha256": "e8908e0a7ce420a47534762f310f49b187ebe858c1237ca1bfdb282ecde1d9cf",
+    "model_bytes": 12345678,
+    "vertices": 1553,
+    "faces": 2624,
+    "materials": 1,
+    "images": 2,
+    "face_order": "gltf_indices",
+    "vertex_order": "gltf_accessor",
+    "primary_image_id": "img_0123456789ab",
+    "origin": {
+      "kind": "prompt",
+      "image_generation_id": "ig_0123456789ab",
+      "model_id": "z_image_turbo",
+      "model_revision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "license_id": "apache-2.0",
+      "seed": 987654,
+      "final_prompt_sha256": "1f4302545edcfefe7a72d38b173bec439e3830a5f5cff9c08394710e581ef33c"
+    }
+  },
+  "frames": {
+    "asset": {
+      "convention": "gltf",
+      "up": "+Y",
+      "front": "+Z",
+      "units": "normalized",
+      "aabb": [
+        [
+          -0.5,
+          -0.5,
+          -0.5
+        ],
+        [
+          0.5,
+          0.5,
+          0.5
+        ]
+      ]
+    },
+    "trellis": {
+      "convention": "blender",
+      "up": "+Z",
+      "front": "-Y",
+      "to_asset": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "conditioning": {
+      "file": "segmentation/source.png",
+      "width": 1000,
+      "height": 1000,
+      "source_image_id": "img_0123456789ab",
+      "source_size": [
+        896,
+        1152
+      ],
+      "scale": 0.8888889,
+      "crop_box": null,
+      "alpha_threshold": 0.8,
+      "mode": "background_removed",
+      "method": "identity",
+      "verified": true,
+      "residual": 0
+    }
+  },
+  "views": [
+    {
+      "id": "input",
+      "image_frame": "conditioning",
+      "camera": {
+        "model": "perspective",
+        "yaw_deg": 0,
+        "pitch_deg": 2,
+        "fov_deg": 30,
+        "distance": 1.93,
+        "world_to_camera": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0,
+          -1,
+          1.93,
+          0,
+          0,
+          0,
+          1
+        ],
+        "intrinsics": {
+          "fx": 1.866,
+          "fy": 1.866,
+          "cx": 0.5,
+          "cy": 0.5,
+          "normalized": true
+        },
+        "convention": "opencv"
+      },
+      "fit": {
+        "method": "silhouette_grid_refine",
+        "iou": 0.91,
+        "accepted": true,
+        "candidates_tested": 1361
+      },
+      "weight": 1
+    }
+  ],
+  "strategy": {
+    "id": "semantic_parts",
+    "segmentation": {
+      "source": "internal",
+      "segmentation_id": null,
+      "profile": "anime",
+      "subject": "anime_character"
+    },
+    "separate": [
+      "eyes",
+      "eyebrows",
+      "eyelashes",
+      "hair",
+      "clothes",
+      "accessories",
+      "detachable"
+    ],
+    "min_part_faces": 50,
+    "max_parts": 4,
+    "split_shells": true,
+    "views": 8,
+    "models": [
+      {
+        "id": "grounding_dino_base",
+        "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+        "license_id": "apache-2.0"
+      },
+      {
+        "id": "sam2_1_hiera_large",
+        "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+        "license_id": "apache-2.0"
+      },
+      {
+        "id": "see_through_l2d",
+        "revision": "0b0608310fb7a89e32ecd7397147a249540cf1e7",
+        "license_id": "apache-2.0"
+      },
+      {
+        "id": "raster_lifter",
+        "revision": null,
+        "license_id": "nvidia-source-code-nc"
+      }
+    ]
+  },
+  "region_attribute": "_FEATURE_ID_0",
+  "label_table": [
+    {
+      "value": 0,
+      "category": "unknown"
+    },
+    {
+      "value": 1,
+      "category": "body"
+    },
+    {
+      "value": 3,
+      "category": "body.head.face"
+    },
+    {
+      "value": 20,
+      "category": "eye.left"
+    },
+    {
+      "value": 21,
+      "category": "eye.right"
+    },
+    {
+      "value": 22,
+      "category": "eyebrow.left"
+    },
+    {
+      "value": 23,
+      "category": "eyebrow.right"
+    },
+    {
+      "value": 30,
+      "category": "hair"
+    },
+    {
+      "value": 40,
+      "category": "clothing.top"
+    },
+    {
+      "value": 53,
+      "category": "accessory.jewelry"
+    }
+  ],
+  "meshes": [
+    {
+      "index": 0,
+      "part_id": "body",
+      "node_name": "part:body",
+      "faces": 1536,
+      "vertices": 890,
+      "unique_vertices": 825,
+      "vertex_map": "vmap_body"
+    },
+    {
+      "index": 1,
+      "part_id": "hair",
+      "node_name": "part:hair",
+      "faces": 448,
+      "vertices": 264,
+      "unique_vertices": 264,
+      "vertex_map": "vmap_hair"
+    },
+    {
+      "index": 2,
+      "part_id": "eye.left",
+      "node_name": "part:eye.left",
+      "faces": 192,
+      "vertices": 117,
+      "unique_vertices": 117,
+      "vertex_map": "vmap_eye.left"
+    },
+    {
+      "index": 3,
+      "part_id": "eye.right",
+      "node_name": "part:eye.right",
+      "faces": 192,
+      "vertices": 117,
+      "unique_vertices": 117,
+      "vertex_map": "vmap_eye.right"
+    },
+    {
+      "index": 4,
+      "part_id": "clothing.top",
+      "node_name": "part:clothing.top",
+      "faces": 256,
+      "vertices": 165,
+      "unique_vertices": 165,
+      "vertex_map": "vmap_clothing.top"
+    }
+  ],
+  "parts": [
+    {
+      "id": "body",
+      "category": "body",
+      "group": "body",
+      "label": "Body",
+      "kind": "base",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": null,
+      "host": null,
+      "symmetric_with": null,
+      "node_name": "part:body",
+      "mesh_index": 0,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 1,
+        "face_count": 1418
+      },
+      "files": {
+        "glb": null,
+        "mask": null,
+        "thumbnail": null
+      },
+      "stats": {
+        "faces": 1536,
+        "vertices": 890,
+        "area": 1.912,
+        "bbox_min": [
+          -0.34,
+          -0.5,
+          -0.34
+        ],
+        "bbox_max": [
+          0.34,
+          0.5,
+          0.34
+        ],
+        "centroid": [
+          0,
+          0,
+          0
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0,
+          0,
+          0
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [
+          {
+            "component": 41,
+            "faces": 37,
+            "centroid": [
+              0.12,
+              -0.31,
+              0.02
+            ]
+          },
+          {
+            "component": 57,
+            "faces": 12,
+            "centroid": [
+              -0.08,
+              -0.42,
+              0.05
+            ]
+          }
+        ],
+        "tags": [
+          "inner_sheet_merged"
+        ],
+        "status": "open_surface",
+        "open_boundary_loops": 4,
+        "watertight": false,
+        "occluded_geometry_missing": true,
+        "components": 1,
+        "source": "component"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [
+        "seam_0",
+        "seam_1",
+        "seam_2",
+        "seam_3"
+      ],
+      "annotations": {},
+      "confidence": 1,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "components",
+            "provider": "img3d",
+            "model": null,
+            "score": 1
+          }
+        ],
+        "votes": 0
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "occluded_geometry"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "hair",
+      "category": "hair",
+      "group": "hair",
+      "label": "Hair",
+      "kind": "physical",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": "body.head.face",
+      "host": null,
+      "symmetric_with": null,
+      "node_name": "part:hair",
+      "mesh_index": 1,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 30,
+        "face_count": 448
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/30.png",
+        "thumbnail": "thumbs/hair.webp"
+      },
+      "stats": {
+        "faces": 448,
+        "vertices": 264,
+        "area": 0.611,
+        "bbox_min": [
+          -0.230072,
+          0.396541,
+          -0.230072
+        ],
+        "bbox_max": [
+          0.230072,
+          0.51,
+          0.230072
+        ],
+        "centroid": [
+          0,
+          0.453271,
+          0
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0,
+          0.453271,
+          0
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "seam_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "open_surface",
+        "open_boundary_loops": 2,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.02,
+          0.41,
+          0.97,
+          0.99
+        ],
+        "charts_cross_boundary": true
+      },
+      "seams": [
+        "seam_0"
+      ],
+      "annotations": {},
+      "confidence": 0.88,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.88
+          }
+        ],
+        "votes": 51234
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "closure"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "eye.left",
+      "category": "eye.left",
+      "group": "eyes",
+      "label": "Left eye",
+      "kind": "physical",
+      "side": "left",
+      "image_side": "right",
+      "parent": "body",
+      "attach_to": "body.head.face",
+      "host": null,
+      "symmetric_with": "eye.right",
+      "node_name": "part:eye.left",
+      "mesh_index": 2,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 20,
+        "face_count": 192
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/20.png",
+        "thumbnail": "thumbs/eye.left.webp"
+      },
+      "stats": {
+        "faces": 192,
+        "vertices": 117,
+        "area": 0.011,
+        "bbox_min": [
+          0.04,
+          0.27,
+          0.232
+        ],
+        "bbox_max": [
+          0.1,
+          0.33,
+          0.292
+        ],
+        "centroid": [
+          0.07,
+          0.3,
+          0.262
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0.07,
+          0.3,
+          0.262
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "seam_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "open_surface",
+        "open_boundary_loops": 1,
+        "watertight": false,
+        "occluded_geometry_missing": true,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.61,
+          0.72,
+          0.66,
+          0.75
+        ],
+        "charts_cross_boundary": true
+      },
+      "seams": [
+        "seam_1"
+      ],
+      "annotations": {},
+      "confidence": 0.81,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.81
+          }
+        ],
+        "votes": 2210
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "occluded_geometry",
+          "closure"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "eye.right",
+      "category": "eye.right",
+      "group": "eyes",
+      "label": "Right eye",
+      "kind": "physical",
+      "side": "right",
+      "image_side": "left",
+      "parent": "body",
+      "attach_to": "body.head.face",
+      "host": null,
+      "symmetric_with": "eye.left",
+      "node_name": "part:eye.right",
+      "mesh_index": 3,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 21,
+        "face_count": 192
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/21.png",
+        "thumbnail": "thumbs/eye.right.webp"
+      },
+      "stats": {
+        "faces": 192,
+        "vertices": 117,
+        "area": 0.011,
+        "bbox_min": [
+          -0.1,
+          0.27,
+          0.232
+        ],
+        "bbox_max": [
+          -0.04,
+          0.33,
+          0.292
+        ],
+        "centroid": [
+          -0.07,
+          0.3,
+          0.262
+        ]
+      },
+      "frame": {
+        "pivot": [
+          -0.07,
+          0.3,
+          0.262
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "seam_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "open_surface",
+        "open_boundary_loops": 1,
+        "watertight": false,
+        "occluded_geometry_missing": true,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.55,
+          0.72,
+          0.6,
+          0.75
+        ],
+        "charts_cross_boundary": true
+      },
+      "seams": [
+        "seam_2"
+      ],
+      "annotations": {},
+      "confidence": 0.8,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.8
+          }
+        ],
+        "votes": 2180
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "occluded_geometry",
+          "closure"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "clothing.top",
+      "category": "clothing.top",
+      "group": "clothes",
+      "label": "Top",
+      "kind": "physical",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": "body",
+      "host": null,
+      "symmetric_with": null,
+      "node_name": "part:clothing.top",
+      "mesh_index": 4,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 40,
+        "face_count": 256
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/40.png",
+        "thumbnail": "thumbs/clothing.top.webp"
+      },
+      "stats": {
+        "faces": 256,
+        "vertices": 165,
+        "area": 0.571,
+        "bbox_min": [
+          -0.35,
+          -0.2,
+          -0.35
+        ],
+        "bbox_max": [
+          0.35,
+          0.06,
+          0.35
+        ],
+        "centroid": [
+          0,
+          -0.07,
+          0
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0,
+          -0.07,
+          0
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "seam_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "open_surface",
+        "open_boundary_loops": 2,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.1,
+          0.05,
+          0.9,
+          0.4
+        ],
+        "charts_cross_boundary": true
+      },
+      "seams": [
+        "seam_3"
+      ],
+      "annotations": {},
+      "confidence": 0.84,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.84
+          }
+        ],
+        "votes": 40211
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "closure"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "eyebrow.left",
+      "category": "eyebrow.left",
+      "group": "eyebrows",
+      "label": "Left eyebrow",
+      "kind": "physical_deferred",
+      "side": "left",
+      "image_side": "right",
+      "parent": "body",
+      "attach_to": "body.head.face",
+      "host": "body",
+      "symmetric_with": "eyebrow.right",
+      "node_name": null,
+      "mesh_index": null,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 22,
+        "face_count": 4
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/22.png",
+        "thumbnail": "thumbs/eyebrow.left.webp"
+      },
+      "stats": {
+        "faces": 4,
+        "vertices": 12,
+        "area": 0.0012,
+        "bbox_min": [
+          0.03,
+          0.27,
+          0.13
+        ],
+        "bbox_max": [
+          0.09,
+          0.29,
+          0.16
+        ],
+        "centroid": [
+          0.06,
+          0.28,
+          0.145
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0.06,
+          0.28,
+          0.145
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "texture_only",
+        "open_boundary_loops": 0,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.61,
+          0.7,
+          0.64,
+          0.71
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [],
+      "annotations": {},
+      "confidence": 0.61,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.61
+          }
+        ],
+        "votes": 240
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "geometry"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "eyebrow.right",
+      "category": "eyebrow.right",
+      "group": "eyebrows",
+      "label": "Right eyebrow",
+      "kind": "physical_deferred",
+      "side": "right",
+      "image_side": "left",
+      "parent": "body",
+      "attach_to": "body.head.face",
+      "host": "body",
+      "symmetric_with": "eyebrow.left",
+      "node_name": null,
+      "mesh_index": null,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 23,
+        "face_count": 4
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/23.png",
+        "thumbnail": "thumbs/eyebrow.right.webp"
+      },
+      "stats": {
+        "faces": 4,
+        "vertices": 12,
+        "area": 0.0012,
+        "bbox_min": [
+          -0.09,
+          0.27,
+          0.13
+        ],
+        "bbox_max": [
+          -0.03,
+          0.29,
+          0.16
+        ],
+        "centroid": [
+          -0.06,
+          0.28,
+          0.145
+        ]
+      },
+      "frame": {
+        "pivot": [
+          -0.06,
+          0.28,
+          0.145
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "texture_only",
+        "open_boundary_loops": 0,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.55,
+          0.7,
+          0.58,
+          0.71
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [],
+      "annotations": {},
+      "confidence": 0.6,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.6
+          }
+        ],
+        "votes": 236
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [
+          "geometry"
+        ],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "body.head.face",
+      "category": "body.head.face",
+      "group": "face",
+      "label": "Face",
+      "kind": "region",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": null,
+      "host": "body",
+      "symmetric_with": null,
+      "node_name": null,
+      "mesh_index": null,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 3,
+        "face_count": 76
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/3.png",
+        "thumbnail": null
+      },
+      "stats": {
+        "faces": 76,
+        "vertices": 96,
+        "area": 0.041,
+        "bbox_min": [
+          -0.11,
+          0.17,
+          0.05
+        ],
+        "bbox_max": [
+          0.11,
+          0.36,
+          0.33
+        ],
+        "centroid": [
+          0,
+          0.265,
+          0.19
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0,
+          0.265,
+          0.19
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "surface",
+        "open_boundary_loops": 0,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0.55,
+          0.62,
+          0.71,
+          0.8
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [],
+      "annotations": {},
+      "confidence": 0.9,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.9
+          }
+        ],
+        "votes": 40112
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "accessory.jewelry",
+      "category": "accessory.jewelry",
+      "group": "accessories",
+      "label": "Jewelry",
+      "kind": "region",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": null,
+      "host": "body",
+      "symmetric_with": null,
+      "node_name": null,
+      "mesh_index": null,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 53,
+        "face_count": 10
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/53.png",
+        "thumbnail": "thumbs/accessory.jewelry.webp"
+      },
+      "stats": {
+        "faces": 10,
+        "vertices": 14,
+        "area": 0.0021,
+        "bbox_min": [
+          0.05,
+          0.05,
+          0.2
+        ],
+        "bbox_max": [
+          0.2,
+          0.09,
+          0.31
+        ],
+        "centroid": [
+          0.125,
+          0.07,
+          0.255
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0.125,
+          0.07,
+          0.255
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "surface",
+        "open_boundary_loops": 0,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [],
+      "annotations": {},
+      "confidence": 0.66,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.66
+          }
+        ],
+        "votes": 512
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "accessory.jewelry_2",
+      "category": "accessory.jewelry",
+      "group": "accessories",
+      "label": "Jewelry 2",
+      "kind": "region",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": null,
+      "host": "body",
+      "symmetric_with": null,
+      "node_name": null,
+      "mesh_index": null,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 53,
+        "face_count": 8
+      },
+      "files": {
+        "glb": null,
+        "mask": "masks/53.png",
+        "thumbnail": "thumbs/accessory.jewelry_2.webp"
+      },
+      "stats": {
+        "faces": 8,
+        "vertices": 12,
+        "area": 0.0016,
+        "bbox_min": [
+          -0.2,
+          0.05,
+          0.2
+        ],
+        "bbox_max": [
+          -0.05,
+          0.09,
+          0.31
+        ],
+        "centroid": [
+          -0.125,
+          0.07,
+          0.255
+        ]
+      },
+      "frame": {
+        "pivot": [
+          -0.125,
+          0.07,
+          0.255
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "surface",
+        "open_boundary_loops": 0,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "lifted"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [],
+      "annotations": {},
+      "confidence": 0.58,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "lifted",
+            "provider": "anime",
+            "model": "sam2_1_hiera_large",
+            "score": 0.58
+          }
+        ],
+        "votes": 401
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    },
+    {
+      "id": "component_001",
+      "category": "unknown",
+      "group": "other",
+      "label": "Component 1",
+      "kind": "region",
+      "side": "center",
+      "image_side": "center",
+      "parent": "body",
+      "attach_to": null,
+      "host": "body",
+      "symmetric_with": null,
+      "node_name": null,
+      "mesh_index": null,
+      "region": {
+        "attribute": "_FEATURE_ID_0",
+        "value": 0,
+        "face_count": 16
+      },
+      "files": {
+        "glb": null,
+        "mask": null,
+        "thumbnail": null
+      },
+      "stats": {
+        "faces": 16,
+        "vertices": 24,
+        "area": 0.003,
+        "bbox_min": [
+          0,
+          -0.5,
+          0
+        ],
+        "bbox_max": [
+          0.17,
+          -0.46,
+          0.17
+        ],
+        "centroid": [
+          0.085,
+          -0.48,
+          0.085
+        ]
+      },
+      "frame": {
+        "pivot": [
+          0.085,
+          -0.48,
+          0.085
+        ],
+        "axes": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "method": "area_centroid"
+      },
+      "placement": {
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "method": "identity",
+        "error": null
+      },
+      "geometry": {
+        "floaters": [],
+        "tags": [],
+        "status": "surface",
+        "open_boundary_loops": 0,
+        "watertight": false,
+        "occluded_geometry_missing": false,
+        "components": 1,
+        "source": "component"
+      },
+      "uv": {
+        "material": 0,
+        "atlas": "shared",
+        "uv_bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "charts_cross_boundary": false
+      },
+      "seams": [],
+      "annotations": {},
+      "confidence": null,
+      "expected": false,
+      "provenance": {
+        "sources": [
+          {
+            "method": "components",
+            "provider": "img3d",
+            "model": null,
+            "score": 1
+          }
+        ],
+        "votes": 0
+      },
+      "refinement": {
+        "status": "untouched",
+        "locked": true,
+        "lock_reason": "part_refinement_disabled",
+        "eligible": true,
+        "needs": [],
+        "constraints": {
+          "seam_lock": true,
+          "keep_uv_atlas": true,
+          "keep_frame": true
+        },
+        "history": []
+      },
+      "lineage": {
+        "derived_from": []
+      }
+    }
+  ],
+  "seams": [
+    {
+      "id": "seam_0",
+      "a": "hair",
+      "b": "body",
+      "host_opening": true,
+      "boundary_edges": 128,
+      "length": 1.84,
+      "loops": [
+        {
+          "start": 0,
+          "count": 64,
+          "closed": true,
+          "length": 0.92
+        },
+        {
+          "start": 64,
+          "count": 64,
+          "closed": true,
+          "length": 0.92
+        }
+      ]
+    },
+    {
+      "id": "seam_1",
+      "a": "eye.left",
+      "b": "body",
+      "host_opening": true,
+      "boundary_edges": 24,
+      "length": 0.19,
+      "loops": [
+        {
+          "start": 0,
+          "count": 12,
+          "closed": true,
+          "length": 0.095
+        },
+        {
+          "start": 12,
+          "count": 12,
+          "closed": true,
+          "length": 0.095
+        }
+      ]
+    },
+    {
+      "id": "seam_2",
+      "a": "eye.right",
+      "b": "body",
+      "host_opening": true,
+      "boundary_edges": 24,
+      "length": 0.19,
+      "loops": [
+        {
+          "start": 0,
+          "count": 12,
+          "closed": true,
+          "length": 0.095
+        },
+        {
+          "start": 12,
+          "count": 12,
+          "closed": true,
+          "length": 0.095
+        }
+      ]
+    },
+    {
+      "id": "seam_3",
+      "a": "clothing.top",
+      "b": "body",
+      "host_opening": true,
+      "boundary_edges": 128,
+      "length": 2.2,
+      "loops": [
+        {
+          "start": 0,
+          "count": 64,
+          "closed": true,
+          "length": 1.1
+        },
+        {
+          "start": 64,
+          "count": 64,
+          "closed": true,
+          "length": 1.1
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_0",
+      "type": "attached_to",
+      "a": "hair",
+      "b": "body.head.face",
+      "via": "seam_0",
+      "metrics": {
+        "contact": "seam",
+        "shared_length": 1.84,
+        "distance": 0
+      },
+      "source": "geometry",
+      "confidence": 0.88
+    },
+    {
+      "id": "rel_1",
+      "type": "attached_to",
+      "a": "eye.left",
+      "b": "body.head.face",
+      "via": "seam_1",
+      "metrics": {
+        "contact": "seam",
+        "shared_length": 0.19,
+        "distance": 0
+      },
+      "source": "geometry",
+      "confidence": 0.81
+    },
+    {
+      "id": "rel_2",
+      "type": "attached_to",
+      "a": "eye.right",
+      "b": "body.head.face",
+      "via": "seam_2",
+      "metrics": {
+        "contact": "seam",
+        "shared_length": 0.19,
+        "distance": 0
+      },
+      "source": "geometry",
+      "confidence": 0.8
+    },
+    {
+      "id": "rel_3",
+      "type": "attached_to",
+      "a": "clothing.top",
+      "b": "body",
+      "via": "seam_3",
+      "metrics": {
+        "contact": "seam",
+        "shared_length": 2.2,
+        "distance": 0
+      },
+      "source": "geometry",
+      "confidence": 0.84
+    },
+    {
+      "id": "rel_4",
+      "type": "region_of",
+      "a": "eyebrow.left",
+      "b": "body",
+      "via": null,
+      "metrics": {
+        "faces": 4
+      },
+      "source": "geometry",
+      "confidence": 1
+    },
+    {
+      "id": "rel_5",
+      "type": "region_of",
+      "a": "eyebrow.right",
+      "b": "body",
+      "via": null,
+      "metrics": {
+        "faces": 4
+      },
+      "source": "geometry",
+      "confidence": 1
+    },
+    {
+      "id": "rel_6",
+      "type": "region_of",
+      "a": "body.head.face",
+      "b": "body",
+      "via": null,
+      "metrics": {
+        "faces": 76
+      },
+      "source": "geometry",
+      "confidence": 1
+    },
+    {
+      "id": "rel_7",
+      "type": "symmetric_with",
+      "a": "eye.left",
+      "b": "eye.right",
+      "via": null,
+      "metrics": {
+        "plane": "x=0",
+        "centroid_mirror_error": 0.002,
+        "area_ratio": 1
+      },
+      "source": "geometry",
+      "confidence": 0.96
+    },
+    {
+      "id": "rel_8",
+      "type": "symmetric_with",
+      "a": "eyebrow.left",
+      "b": "eyebrow.right",
+      "via": null,
+      "metrics": {
+        "plane": "x=0",
+        "centroid_mirror_error": 0.004,
+        "area_ratio": 0.97
+      },
+      "source": "geometry",
+      "confidence": 0.92
+    },
+    {
+      "id": "rel_9",
+      "type": "layered_over",
+      "a": "clothing.top",
+      "b": "body",
+      "via": null,
+      "metrics": {
+        "overlap_px": 40211
+      },
+      "source": "taxonomy_default",
+      "confidence": 0.5
+    },
+    {
+      "id": "rel_10",
+      "type": "expected_missing",
+      "a": "asset",
+      "b": "object.held",
+      "via": null,
+      "metrics": {},
+      "source": "prompt",
+      "confidence": 1
+    }
+  ],
+  "buffers": [
+    {
+      "id": "face_labels",
+      "file": "buffers/face_labels.u16",
+      "dtype": "uint16",
+      "components": 1,
+      "count": 2624,
+      "byte_length": 5248,
+      "sha256": "702bcf0423d36939a2cfb1277bb514b1e3c3b5e1154205cc3bc6db5cc1a85ee7",
+      "indexes": "base_faces",
+      "description": "taxonomy value per base face"
+    },
+    {
+      "id": "face_owner",
+      "file": "buffers/face_owner.u16",
+      "dtype": "uint16",
+      "components": 1,
+      "count": 2624,
+      "byte_length": 5248,
+      "sha256": "9a7460fb8ca55ae3b4b19d61209534f392fe874cf56023193ac33d4d001b8e0e",
+      "indexes": "base_faces",
+      "description": "mesh index per base face"
+    },
+    {
+      "id": "face_confidence",
+      "file": "buffers/face_confidence.u8",
+      "dtype": "uint8",
+      "components": 1,
+      "count": 2624,
+      "byte_length": 2624,
+      "sha256": "59f69c22753b4d1a4c9ac5ec01779890d481789dfecc2206a5f58906bcfb4318",
+      "indexes": "base_faces",
+      "description": "label confidence x 255 per base face"
+    },
+    {
+      "id": "face_component",
+      "file": "buffers/face_component.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 2624,
+      "byte_length": 10496,
+      "sha256": "58568d01ea0ea9666a703218d98c23dd54920d2ef7b9a50c6e96402eb792eead",
+      "indexes": "base_faces",
+      "description": "welded connected-component id per base face"
+    },
+    {
+      "id": "face_part",
+      "file": "buffers/face_part.u16",
+      "dtype": "uint16",
+      "components": 1,
+      "count": 2624,
+      "byte_length": 5248,
+      "sha256": "10c428b01e6bc63d7198722581615883240e15567a79616004a8eba4b7e6984f",
+      "indexes": "base_faces",
+      "description": "index into manifest.parts of the finest record covering the face (0xFFFF = none)"
+    },
+    {
+      "id": "face_flags",
+      "file": "buffers/face_flags.u8",
+      "dtype": "uint8",
+      "components": 1,
+      "count": 2624,
+      "byte_length": 2624,
+      "sha256": "f307492185415306f5523e2b7e8f48eae56a9d822615752fdf94468897cb0599",
+      "indexes": "base_faces",
+      "description": "bit 0 partner fill, bit 1 propagation, bit 2 component fill"
+    },
+    {
+      "id": "weld_map",
+      "file": "buffers/weld_map.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 1553,
+      "byte_length": 6212,
+      "sha256": "00d62ae623d72dce9d4522402c43539eea6a6647ea7918e27668affd51300844",
+      "indexes": "base_vertices",
+      "description": "welded vertex id per base vertex"
+    },
+    {
+      "id": "vmap_body",
+      "file": "buffers/vmap_body.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 890,
+      "byte_length": 3560,
+      "sha256": "952fd5db4ed7da0bac70bc02f7d535e190f233252eddd29bf8591435e88f0f05",
+      "indexes": "node_vertices:body",
+      "description": "base vertex id per vertex of part:body"
+    },
+    {
+      "id": "vmap_hair",
+      "file": "buffers/vmap_hair.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 264,
+      "byte_length": 1056,
+      "sha256": "086794a6620a09aee76926f3b04b10788befc638d57ff90394b80f0f2b8e47ff",
+      "indexes": "node_vertices:hair",
+      "description": "base vertex id per vertex of part:hair"
+    },
+    {
+      "id": "vmap_eye.left",
+      "file": "buffers/vmap_eye.left.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 117,
+      "byte_length": 468,
+      "sha256": "443d848afc8cea1be1075e2a582fe6906492a7dd9338ae3df71a2ad6f4dd6758",
+      "indexes": "node_vertices:eye.left",
+      "description": "base vertex id per vertex of part:eye.left"
+    },
+    {
+      "id": "vmap_eye.right",
+      "file": "buffers/vmap_eye.right.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 117,
+      "byte_length": 468,
+      "sha256": "04e2796306cb747be691251e2fb37b4de892116ed4846b0624399cdf3c1b3787",
+      "indexes": "node_vertices:eye.right",
+      "description": "base vertex id per vertex of part:eye.right"
+    },
+    {
+      "id": "vmap_clothing.top",
+      "file": "buffers/vmap_clothing.top.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 165,
+      "byte_length": 660,
+      "sha256": "1fd5a7543375c6b03a10c288f2f0f2517eaa61e4e49c261eac981172cf0825d7",
+      "indexes": "node_vertices:clothing.top",
+      "description": "base vertex id per vertex of part:clothing.top"
+    },
+    {
+      "id": "seam_loops",
+      "file": "buffers/seam_loops.u32",
+      "dtype": "uint32",
+      "components": 1,
+      "count": 304,
+      "byte_length": 1216,
+      "sha256": "aa202eb0c59878b0cd8846c9a62edec16fc376f43210df1a23f7cfa0371a1bb6",
+      "indexes": "welded_vertices",
+      "description": "every seam loop concatenated"
+    }
+  ],
+  "artifacts": {
+    "assembled_glb": {
+      "file": "model_parts.glb",
+      "sha256": "4c4bc495360fd64ef7c5f96f3c805395a9f5f66f230d35149414c6323a423b35",
+      "bytes": 93508,
+      "nodes": 5
+    },
+    "part_glbs": {},
+    "segmentation": {
+      "labels": "segmentation/labels.png",
+      "overlay": "segmentation/overlay.png",
+      "frame": "segmentation/frame.json",
+      "source": "segmentation/source.png"
+    },
+    "masks_dir": "masks",
+    "previews": [
+      "previews/front.png",
+      "previews/back.png",
+      "previews/left.png",
+      "previews/right.png"
+    ],
+    "log": null
+  },
+  "expectations": {
+    "source": "prompt",
+    "expected_classes": [
+      "clothing.outer",
+      "object.held"
+    ],
+    "missing": [
+      "object.held"
+    ]
+  },
+  "provenance": {
+    "steps": [
+      {
+        "id": "segmentation_2d",
+        "models": [
+          {
+            "id": "grounding_dino_base",
+            "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+            "license_id": "apache-2.0"
+          },
+          {
+            "id": "sam2_1_hiera_large",
+            "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+            "license_id": "apache-2.0"
+          },
+          {
+            "id": "see_through_l2d",
+            "revision": "0b0608310fb7a89e32ecd7397147a249540cf1e7",
+            "license_id": "apache-2.0"
+          }
+        ],
+        "duration_s": 3
+      },
+      {
+        "id": "label_lift",
+        "models": [
+          {
+            "id": "raster_lifter",
+            "revision": null,
+            "license_id": "nvidia-source-code-nc"
+          }
+        ],
+        "duration_s": 18.4
+      }
+    ],
+    "licences": [
+      "mit",
+      "dinov3-license",
+      "nvidia-source-code-nc",
+      "apache-2.0"
+    ]
+  },
+  "refinement": {
+    "enabled": false,
+    "policy": "locked_until_approved",
+    "consumers": []
+  },
+  "reassembly": {
+    "method": "vmap_gather",
+    "verified": true,
+    "positions_exact": true,
+    "uvs_exact": true,
+    "normals_exact": true,
+    "faces_exact": true
+  },
+  "summary": {
+    "part_count": 6,
+    "physical_count": 4,
+    "deferred_count": 2,
+    "region_count": 4,
+    "unlabelled_face_ratio": 0.0061,
+    "partner_filled_ratio": 0.43,
+    "cut_partner_consistency": 0.97,
+    "camera_fit_iou": 0.91
+  },
+  "warnings": [
+    {
+      "code": "charts_cross_boundary",
+      "message": "UV charts of cut parts may cross part borders.",
+      "part_id": null
+    },
+    {
+      "code": "floater_candidates",
+      "message": "2 small unlabelled shells stay on the base.",
+      "part_id": "body"
+    },
+    {
+      "code": "max_parts_exceeded",
+      "message": "3 parts over the max_parts budget (4) stay on the base as regions.",
+      "part_id": null
+    }
+  ]
+}

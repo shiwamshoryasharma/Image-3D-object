@@ -1,0 +1,1400 @@
+{
+  "schema": "img3d.features/1",
+  "api": {
+    "version": "1.1.0",
+    "workflows": true,
+    "part_analyses": true,
+    "image_generations": true,
+    "segmentations": true
+  },
+  "flags": {
+    "part_aware": true,
+    "image_generation": true,
+    "segmentation": true,
+    "part_analysis": true,
+    "workflows": true,
+    "mesh_tuning": false,
+    "part_refinement": false,
+    "persist_generation_intermediates": false
+  },
+  "pipeline": {
+    "image_to_3d": {
+      "available": true,
+      "code": "ok",
+      "reason": null
+    },
+    "prompt_to_3d": {
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "max_prompt_chars": 2000,
+      "presets": [
+        "character",
+        "object",
+        "raw"
+      ],
+      "styles": [
+        "realistic",
+        "stylized",
+        "anime"
+      ],
+      "supports_negative_prompt": false,
+      "default_model_id": "z_image_turbo",
+      "default_model_state": "installed",
+      "cold_start_s": 337,
+      "max_images": 4,
+      "sizes": [
+        [
+          1024,
+          1024
+        ],
+        [
+          896,
+          1152
+        ],
+        [
+          1152,
+          896
+        ]
+      ],
+      "selection_modes": [
+        "auto_first"
+      ]
+    },
+    "segmentation": {
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "subjects": [
+        "auto",
+        "anime_character",
+        "realistic_human",
+        "object"
+      ],
+      "profiles": [
+        {
+          "id": "baseline",
+          "available": true,
+          "code": "ok",
+          "reason": null
+        },
+        {
+          "id": "anime",
+          "available": true,
+          "code": "ok",
+          "reason": null
+        },
+        {
+          "id": "realistic",
+          "available": true,
+          "code": "ok",
+          "reason": null
+        }
+      ],
+      "default_profile": "auto",
+      "max_extra_terms": 16,
+      "before_reconstruction": true
+    },
+    "part_extraction": {
+      "available": true,
+      "code": "ok",
+      "reason": null,
+      "strategies": [
+        {
+          "id": "components",
+          "label": "Geometry components",
+          "available": true,
+          "code": "ok",
+          "reason": null,
+          "requires_segmentation": false
+        },
+        {
+          "id": "semantic_regions",
+          "label": "Semantic regions",
+          "available": true,
+          "code": "ok",
+          "reason": null,
+          "requires_segmentation": true
+        },
+        {
+          "id": "semantic_parts",
+          "label": "Semantic parts",
+          "available": true,
+          "code": "ok",
+          "reason": null,
+          "requires_segmentation": true
+        },
+        {
+          "id": "per_part_regeneration",
+          "label": "Per-part regeneration",
+          "available": false,
+          "code": "not_implemented",
+          "reason": "Per-part regeneration is not implemented in this milestone.",
+          "requires_segmentation": true
+        }
+      ],
+      "default_strategy": "semantic_parts",
+      "separable_groups": [
+        {
+          "id": "eyes",
+          "label": "Eyes",
+          "default_kind": "physical",
+          "default_selected": true,
+          "note": "Eye area is cut as an open surface; the hidden eyeball is not generated."
+        },
+        {
+          "id": "eyebrows",
+          "label": "Eyebrows",
+          "default_kind": "physical_deferred",
+          "default_selected": true,
+          "note": "Eyebrows are painted on; geometry deferred (mask + surface region now)."
+        },
+        {
+          "id": "eyelashes",
+          "label": "Eyelashes",
+          "default_kind": "physical_deferred",
+          "default_selected": true,
+          "note": "Eyelash geometry deferred; mask + lid curve only."
+        },
+        {
+          "id": "hair",
+          "label": "Hair",
+          "default_kind": "physical",
+          "default_selected": true,
+          "note": "The scalp under the hair is not generated (opening recorded)."
+        },
+        {
+          "id": "clothes",
+          "label": "Clothes",
+          "default_kind": "physical",
+          "default_selected": true,
+          "note": "The body under clothes is not generated (opening recorded)."
+        },
+        {
+          "id": "accessories",
+          "label": "Accessories",
+          "default_kind": "physical",
+          "default_selected": true,
+          "note": null
+        },
+        {
+          "id": "detachable",
+          "label": "Detachable objects",
+          "default_kind": "physical",
+          "default_selected": true,
+          "note": null
+        }
+      ],
+      "region_groups": [
+        {
+          "id": "face",
+          "label": "Face",
+          "default_kind": "region",
+          "default_selected": true,
+          "note": null
+        },
+        {
+          "id": "body",
+          "label": "Body",
+          "default_kind": "region",
+          "default_selected": true,
+          "note": null
+        }
+      ],
+      "max_views": 24,
+      "default_views": 8,
+      "rebuild": true,
+      "per_part_glbs": "on_demand"
+    }
+  },
+  "workflow": {
+    "available": true,
+    "code": "ok",
+    "reason": null,
+    "catalog_url": "/api/v1/workflows/catalog",
+    "catalog_etag": "\"sha256-f055976ae6f1ec098ccbe7755ddb5d05a8d4d8ed4611176ef261f93d24c26543\"",
+    "max_nodes": 32,
+    "max_edges": 64,
+    "graph_max_bytes": 65536,
+    "selection_modes": [
+      "auto_first"
+    ],
+    "legacy_job_node_map": {
+      "queued": "image_to_3d",
+      "waiting_for_model": "image_to_3d",
+      "preprocessing": "input_image",
+      "conditioning": "image_to_3d",
+      "sparse_structure": "image_to_3d",
+      "shape": "image_to_3d",
+      "texture": "image_to_3d",
+      "decoding": "image_to_3d",
+      "exporting": "export",
+      "finalizing": "export",
+      "done": "export"
+    }
+  },
+  "nodes": [
+    {
+      "type": "input_image",
+      "title": "Input Image",
+      "category": "input",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "prompt",
+      "title": "Prompt",
+      "category": "input",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "job_result",
+      "title": "Existing Result",
+      "category": "input",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "segmentation",
+      "title": "Segmentation",
+      "category": "analyze",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "image_to_3d",
+      "title": "Image-to-3D",
+      "category": "generate",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "part_extraction",
+      "title": "Part Extraction",
+      "category": "parts",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "export",
+      "title": "Export",
+      "category": "output",
+      "available": true,
+      "locked": false,
+      "code": "ok",
+      "reason": null,
+      "hidden_by_default": false
+    },
+    {
+      "type": "part_refine",
+      "title": "Part Refine",
+      "category": "refine",
+      "available": false,
+      "locked": true,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "hidden_by_default": true
+    },
+    {
+      "type": "mesh_tune",
+      "title": "Mesh Tune",
+      "category": "refine",
+      "available": false,
+      "locked": true,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "hidden_by_default": true
+    },
+    {
+      "type": "eye_correction",
+      "title": "Eye Correction",
+      "category": "refine",
+      "available": false,
+      "locked": true,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "hidden_by_default": true
+    },
+    {
+      "type": "rig_correction",
+      "title": "Rig Correction",
+      "category": "refine",
+      "available": false,
+      "locked": true,
+      "code": "not_approved",
+      "reason": "Paused until approved",
+      "hidden_by_default": true
+    },
+    {
+      "type": "segmentation_3d",
+      "title": "3D Segmentation",
+      "category": "parts",
+      "available": false,
+      "locked": false,
+      "code": "unsupported",
+      "reason": "Needs spconv/torch_scatter (no Python 3.14 / CUDA 13 wheels)",
+      "hidden_by_default": true
+    },
+    {
+      "type": "part_completion",
+      "title": "Part Completion",
+      "category": "parts",
+      "available": false,
+      "locked": false,
+      "code": "unsupported",
+      "reason": "Needs diso/torch_cluster (no Python 3.14 / CUDA 13 wheels)",
+      "hidden_by_default": true
+    },
+    {
+      "type": "part_generation",
+      "title": "Part Generation",
+      "category": "parts",
+      "available": false,
+      "locked": false,
+      "code": "unsupported",
+      "reason": "Needs the Sonata/spconv stack (Linux sidecar)",
+      "hidden_by_default": true
+    }
+  ],
+  "mesh_tuning": {
+    "enabled": false,
+    "reason": "Paused until the part-aware backend layer is approved"
+  },
+  "part_refinement": {
+    "enabled": false,
+    "reason": "Paused until the part-aware backend layer is approved"
+  },
+  "models": [
+    {
+      "id": "z_image_turbo",
+      "kind": "text_to_image",
+      "roles": [
+        "generator"
+      ],
+      "display_name": "Z-Image-Turbo",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "Tongyi-MAI/Z-Image-Turbo",
+      "revision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "size_bytes": 32850000000,
+      "vram_estimate_gb": 24,
+      "ram_gb": 21,
+      "cold_load_s": 337,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "diffusers",
+          "requirement": "==0.39.0",
+          "installed": "0.39.0",
+          "ok": true
+        },
+        {
+          "distribution": "accelerate",
+          "requirement": "==1.15.0",
+          "installed": "1.15.0",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/t2i/Z-Image-Turbo",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/t2i/Z-Image-Turbo (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "sizes": [
+          [
+            1024,
+            1024
+          ],
+          [
+            896,
+            1152
+          ],
+          [
+            1152,
+            896
+          ]
+        ],
+        "steps": {
+          "default": 9,
+          "min": 1,
+          "max": 50
+        },
+        "guidance": {
+          "default": 0,
+          "min": 0,
+          "max": 0
+        },
+        "supports_negative_prompt": false,
+        "max_images": 4
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "grounding_dino_base",
+      "kind": "segmentation",
+      "roles": [
+        "detector"
+      ],
+      "display_name": "Grounding DINO (base)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "IDEA-Research/grounding-dino-base",
+      "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+      "size_bytes": 930000000,
+      "vram_estimate_gb": 2,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/IDEA-Research/grounding-dino-base",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "transformers",
+          "requirement": "==4.57.6",
+          "installed": "4.57.6",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/seg/grounding-dino-base",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/grounding-dino-base (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "max_text_tokens": 256
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "sam2_1_hiera_large",
+      "kind": "segmentation",
+      "roles": [
+        "refiner"
+      ],
+      "display_name": "SAM 2.1 (Hiera large)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "facebook/sam2.1-hiera-large",
+      "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+      "size_bytes": 900000000,
+      "vram_estimate_gb": 2,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/facebook/sam2.1-hiera-large",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "transformers",
+          "requirement": "==4.57.6",
+          "installed": "4.57.6",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/seg/sam2.1-hiera-large",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/sam2.1-hiera-large (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "florence2_large",
+      "kind": "segmentation",
+      "roles": [
+        "grounder"
+      ],
+      "display_name": "Florence-2 (large)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "florence-community/Florence-2-large",
+      "revision": "4271c66b88cdbc05735372ec13b2360108de5317",
+      "size_bytes": 1560000000,
+      "vram_estimate_gb": 3,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "mit",
+        "name": "MIT License",
+        "url": "https://huggingface.co/florence-community/Florence-2-large",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "transformers",
+          "requirement": "==4.57.6",
+          "installed": "4.57.6",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": ".model/seg/Florence-2-large",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/Florence-2-large (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "see_through_l2d",
+      "kind": "segmentation",
+      "roles": [
+        "parser"
+      ],
+      "display_name": "See-through (anime parser)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "24yearsold/l2d_sam_iter2",
+      "revision": "0b0608310fb7a89e32ecd7397147a249540cf1e7",
+      "size_bytes": 1290000000,
+      "vram_estimate_gb": 4,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "apache-2.0",
+        "name": "Apache License 2.0",
+        "url": "https://huggingface.co/24yearsold/l2d_sam_iter2",
+        "commercial": "allowed",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": "third_party/see-through",
+      "local_path": ".model/seg/l2d_sam_iter2",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/l2d_sam_iter2 (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "subjects": [
+          "anime_character"
+        ]
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "sapiens2_seg_0_4b",
+      "kind": "segmentation",
+      "roles": [
+        "parser"
+      ],
+      "display_name": "Sapiens2 segmentation (0.4B)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": "facebook/sapiens2-seg-0.4b",
+      "revision": "449b3c5335e6722bb94990abdd1aa6e612432f22",
+      "size_bytes": 1630000000,
+      "vram_estimate_gb": 3,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "sapiens2-license",
+        "name": "Sapiens2 License",
+        "url": "https://huggingface.co/facebook/sapiens2-seg-0.4b",
+        "commercial": "allowed_with_conditions",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [
+          "No biometric identification",
+          "No deepfakes or impersonation",
+          "No military use"
+        ],
+        "attribution": null
+      },
+      "dependencies": [],
+      "vendored_source": "third_party/sapiens2",
+      "local_path": ".model/seg/sapiens2-seg-0.4b",
+      "install": {
+        "supported": false,
+        "hint": "Weights are installed manually under backend/.model/seg/sapiens2-seg-0.4b (DECISIONS.md)",
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {
+        "subjects": [
+          "realistic_human"
+        ]
+      },
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    },
+    {
+      "id": "raster_lifter",
+      "kind": "part_extraction",
+      "roles": [
+        "lifter"
+      ],
+      "display_name": "Raster label lifter (nvdiffrast)",
+      "state": "installed",
+      "reason_code": "ok",
+      "reason": null,
+      "approved": true,
+      "is_default": true,
+      "repo_id": null,
+      "revision": null,
+      "size_bytes": null,
+      "vram_estimate_gb": 4,
+      "ram_gb": null,
+      "cold_load_s": null,
+      "license": {
+        "id": "nvidia-source-code-nc",
+        "name": "NVIDIA Source Code License",
+        "url": "https://github.com/NVlabs/nvdiffrast/blob/main/LICENSE.txt",
+        "commercial": "non_commercial",
+        "gated": false,
+        "requires_acceptance": false,
+        "accepted": true,
+        "conditions": [],
+        "attribution": null
+      },
+      "dependencies": [
+        {
+          "distribution": "nvdiffrast",
+          "requirement": "==0.4.0",
+          "installed": "0.4.0",
+          "ok": true
+        },
+        {
+          "distribution": "cumesh",
+          "requirement": "==0.0.1",
+          "installed": "0.0.1",
+          "ok": true
+        }
+      ],
+      "vendored_source": null,
+      "local_path": null,
+      "install": {
+        "supported": false,
+        "hint": null,
+        "bytes_done": null,
+        "bytes_total": null
+      },
+      "capabilities": {},
+      "loaded_device": null,
+      "last_used_at": null,
+      "hidden_by_default": false
+    }
+  ],
+  "taxonomy": {
+    "version": 1,
+    "groups": [
+      "body",
+      "face",
+      "eyes",
+      "eyebrows",
+      "eyelashes",
+      "hair",
+      "clothes",
+      "accessories",
+      "detachable",
+      "other"
+    ],
+    "classes": [
+      {
+        "value": 0,
+        "id": "unknown",
+        "group": "other",
+        "label": "Unknown",
+        "default_kind": "region",
+        "attach_to": [
+          "body"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 1,
+        "id": "body",
+        "group": "body",
+        "label": "Body",
+        "default_kind": "base",
+        "attach_to": [],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 2,
+        "id": "body.head",
+        "group": "body",
+        "label": "Head",
+        "default_kind": "region",
+        "attach_to": [
+          "body"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 3,
+        "id": "body.head.face",
+        "group": "face",
+        "label": "Face",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 4,
+        "id": "body.head.ear.left",
+        "group": "face",
+        "label": "Left ear",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head"
+        ],
+        "symmetric_with": "body.head.ear.right",
+        "sided": true
+      },
+      {
+        "value": 5,
+        "id": "body.head.ear.right",
+        "group": "face",
+        "label": "Right ear",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head"
+        ],
+        "symmetric_with": "body.head.ear.left",
+        "sided": true
+      },
+      {
+        "value": 6,
+        "id": "body.head.nose",
+        "group": "face",
+        "label": "Nose",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 7,
+        "id": "body.head.mouth",
+        "group": "face",
+        "label": "Mouth",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 8,
+        "id": "body.neck",
+        "group": "body",
+        "label": "Neck",
+        "default_kind": "region",
+        "attach_to": [
+          "body"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 9,
+        "id": "body.torso",
+        "group": "body",
+        "label": "Torso",
+        "default_kind": "region",
+        "attach_to": [
+          "body"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 10,
+        "id": "body.arm.left",
+        "group": "body",
+        "label": "Left arm",
+        "default_kind": "region",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": "body.arm.right",
+        "sided": true
+      },
+      {
+        "value": 11,
+        "id": "body.arm.right",
+        "group": "body",
+        "label": "Right arm",
+        "default_kind": "region",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": "body.arm.left",
+        "sided": true
+      },
+      {
+        "value": 12,
+        "id": "body.hand.left",
+        "group": "body",
+        "label": "Left hand",
+        "default_kind": "region",
+        "attach_to": [
+          "body.arm.left"
+        ],
+        "symmetric_with": "body.hand.right",
+        "sided": true
+      },
+      {
+        "value": 13,
+        "id": "body.hand.right",
+        "group": "body",
+        "label": "Right hand",
+        "default_kind": "region",
+        "attach_to": [
+          "body.arm.right"
+        ],
+        "symmetric_with": "body.hand.left",
+        "sided": true
+      },
+      {
+        "value": 14,
+        "id": "body.leg.left",
+        "group": "body",
+        "label": "Left leg",
+        "default_kind": "region",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": "body.leg.right",
+        "sided": true
+      },
+      {
+        "value": 15,
+        "id": "body.leg.right",
+        "group": "body",
+        "label": "Right leg",
+        "default_kind": "region",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": "body.leg.left",
+        "sided": true
+      },
+      {
+        "value": 16,
+        "id": "body.foot.left",
+        "group": "body",
+        "label": "Left foot",
+        "default_kind": "region",
+        "attach_to": [
+          "body.leg.left"
+        ],
+        "symmetric_with": "body.foot.right",
+        "sided": true
+      },
+      {
+        "value": 17,
+        "id": "body.foot.right",
+        "group": "body",
+        "label": "Right foot",
+        "default_kind": "region",
+        "attach_to": [
+          "body.leg.right"
+        ],
+        "symmetric_with": "body.foot.left",
+        "sided": true
+      },
+      {
+        "value": 18,
+        "id": "body.skin_other",
+        "group": "body",
+        "label": "Other skin",
+        "default_kind": "region",
+        "attach_to": [
+          "body"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 20,
+        "id": "eye.left",
+        "group": "eyes",
+        "label": "Left eye",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.head.eyelid.left",
+          "body.head.face"
+        ],
+        "symmetric_with": "eye.right",
+        "sided": true
+      },
+      {
+        "value": 21,
+        "id": "eye.right",
+        "group": "eyes",
+        "label": "Right eye",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.head.eyelid.right",
+          "body.head.face"
+        ],
+        "symmetric_with": "eye.left",
+        "sided": true
+      },
+      {
+        "value": 22,
+        "id": "eyebrow.left",
+        "group": "eyebrows",
+        "label": "Left eyebrow",
+        "default_kind": "physical_deferred",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": "eyebrow.right",
+        "sided": true
+      },
+      {
+        "value": 23,
+        "id": "eyebrow.right",
+        "group": "eyebrows",
+        "label": "Right eyebrow",
+        "default_kind": "physical_deferred",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": "eyebrow.left",
+        "sided": true
+      },
+      {
+        "value": 24,
+        "id": "eyelash.left",
+        "group": "eyelashes",
+        "label": "Left eyelashes",
+        "default_kind": "physical_deferred",
+        "attach_to": [
+          "body.head.eyelid.left",
+          "eye.left"
+        ],
+        "symmetric_with": "eyelash.right",
+        "sided": true
+      },
+      {
+        "value": 25,
+        "id": "eyelash.right",
+        "group": "eyelashes",
+        "label": "Right eyelashes",
+        "default_kind": "physical_deferred",
+        "attach_to": [
+          "body.head.eyelid.right",
+          "eye.right"
+        ],
+        "symmetric_with": "eyelash.left",
+        "sided": true
+      },
+      {
+        "value": 26,
+        "id": "body.head.eyelid.left",
+        "group": "face",
+        "label": "Left eyelid",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": "body.head.eyelid.right",
+        "sided": true
+      },
+      {
+        "value": 27,
+        "id": "body.head.eyelid.right",
+        "group": "face",
+        "label": "Right eyelid",
+        "default_kind": "region",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": "body.head.eyelid.left",
+        "sided": true
+      },
+      {
+        "value": 30,
+        "id": "hair",
+        "group": "hair",
+        "label": "Hair",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.head"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 31,
+        "id": "hair.facial",
+        "group": "hair",
+        "label": "Facial hair",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 40,
+        "id": "clothing.top",
+        "group": "clothes",
+        "label": "Top",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 41,
+        "id": "clothing.outer",
+        "group": "clothes",
+        "label": "Outerwear",
+        "default_kind": "physical",
+        "attach_to": [
+          "clothing.top",
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 42,
+        "id": "clothing.bottom",
+        "group": "clothes",
+        "label": "Bottom",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso",
+          "body.leg.left",
+          "body.leg.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 43,
+        "id": "clothing.dress",
+        "group": "clothes",
+        "label": "Dress",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 44,
+        "id": "clothing.legwear",
+        "group": "clothes",
+        "label": "Legwear",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.leg.left",
+          "body.leg.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 45,
+        "id": "clothing.handwear",
+        "group": "clothes",
+        "label": "Gloves",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.hand.left",
+          "body.hand.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 46,
+        "id": "clothing.footwear",
+        "group": "clothes",
+        "label": "Footwear",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.foot.left",
+          "body.foot.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 47,
+        "id": "clothing.neckwear",
+        "group": "clothes",
+        "label": "Neckwear",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.neck"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 50,
+        "id": "accessory.headwear",
+        "group": "accessories",
+        "label": "Headwear",
+        "default_kind": "physical",
+        "attach_to": [
+          "hair",
+          "body.head"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 51,
+        "id": "accessory.eyewear",
+        "group": "accessories",
+        "label": "Eyewear",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.head.face"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 52,
+        "id": "accessory.earwear",
+        "group": "accessories",
+        "label": "Earwear",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.head.ear.left",
+          "body.head.ear.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 53,
+        "id": "accessory.jewelry",
+        "group": "accessories",
+        "label": "Jewelry",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.neck",
+          "body.hand.left",
+          "body.hand.right",
+          "body.arm.left",
+          "body.arm.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 54,
+        "id": "accessory.belt",
+        "group": "accessories",
+        "label": "Belt",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 55,
+        "id": "accessory.bag",
+        "group": "accessories",
+        "label": "Bag",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 56,
+        "id": "appendage.tail",
+        "group": "accessories",
+        "label": "Tail",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 57,
+        "id": "appendage.wings",
+        "group": "accessories",
+        "label": "Wings",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.torso"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 58,
+        "id": "appendage.animal_ears",
+        "group": "accessories",
+        "label": "Animal ears",
+        "default_kind": "physical",
+        "attach_to": [
+          "hair",
+          "body.head"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 60,
+        "id": "object.held",
+        "group": "detachable",
+        "label": "Held object",
+        "default_kind": "physical",
+        "attach_to": [
+          "body.hand.left",
+          "body.hand.right"
+        ],
+        "symmetric_with": null,
+        "sided": false
+      },
+      {
+        "value": 61,
+        "id": "object.detached",
+        "group": "detachable",
+        "label": "Detached object",
+        "default_kind": "physical",
+        "attach_to": [],
+        "symmetric_with": null,
+        "sided": false
+      }
+    ]
+  },
+  "queues": {
+    "runs": {
+      "pending": 0,
+      "running_id": null,
+      "running_kind": null,
+      "max_size": 8
+    }
+  },
+  "limits": {
+    "prompt_max_chars": 2000,
+    "negative_prompt_max_chars": 1000,
+    "extra_terms_max": 16,
+    "views_max": 24,
+    "workflow_graph_max_bytes": 65536,
+    "max_parts": 256
+  }
+}

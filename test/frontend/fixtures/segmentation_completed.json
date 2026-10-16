@@ -1,0 +1,311 @@
+{
+  "id": "sg_0123456789ab",
+  "kind": "segmentation",
+  "status": "completed",
+  "created_at": "2026-10-16T10:00:00Z",
+  "started_at": "2026-10-16T10:00:01Z",
+  "finished_at": "2026-10-16T10:00:04Z",
+  "workflow_id": null,
+  "options": {
+    "source": {
+      "kind": "reference_image",
+      "reference_set_id": "rs_0123456789ab",
+      "image_id": "img_0123456789ab"
+    },
+    "options": {
+      "profile": "auto",
+      "subject": "anime_character",
+      "classes": null,
+      "extra_terms": [
+        "katana"
+      ],
+      "use_prompt_terms": true,
+      "head_pass": true,
+      "min_confidence": 0.35
+    }
+  },
+  "models": [
+    {
+      "id": "grounding_dino_base",
+      "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+      "license_id": "apache-2.0"
+    },
+    {
+      "id": "sam2_1_hiera_large",
+      "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+      "license_id": "apache-2.0"
+    },
+    {
+      "id": "florence2_large",
+      "revision": "4271c66b88cdbc05735372ec13b2360108de5317",
+      "license_id": "mit"
+    },
+    {
+      "id": "see_through_l2d",
+      "revision": "0b0608310fb7a89e32ecd7397147a249540cf1e7",
+      "license_id": "apache-2.0"
+    }
+  ],
+  "progress": {
+    "percent": 100,
+    "step_id": "fuse",
+    "step_index": 6,
+    "step_count": 6,
+    "message": "Done",
+    "updated_at": "2026-10-16T10:00:04Z"
+  },
+  "steps": [
+    {
+      "id": "prepare",
+      "label": "Preparing image",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 0.1,
+      "details": {}
+    },
+    {
+      "id": "frame",
+      "label": "Predicting the conditioning frame",
+      "status": "warning",
+      "message": "Frame matched by template; not verified",
+      "progress": 1,
+      "duration_s": 0.2,
+      "details": {}
+    },
+    {
+      "id": "parse",
+      "label": "Parsing the character",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 0.6,
+      "details": {}
+    },
+    {
+      "id": "detect",
+      "label": "Detecting parts",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 1.1,
+      "details": {}
+    },
+    {
+      "id": "refine",
+      "label": "Refining masks",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 0.6,
+      "details": {}
+    },
+    {
+      "id": "fuse",
+      "label": "Fusing labels",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 0.1,
+      "details": {}
+    }
+  ],
+  "warnings": [
+    {
+      "code": "frame_unverified",
+      "message": "The conditioning frame was matched by template and could not be verified.",
+      "step_id": "frame"
+    }
+  ],
+  "result": {
+    "space": "source",
+    "frame": {
+      "mode": "alpha_crop",
+      "method": "template_match",
+      "scale": 0.5,
+      "crop_box": [
+        112,
+        40,
+        912,
+        840
+      ],
+      "size": [
+        800,
+        800
+      ],
+      "verified": false,
+      "residual": 2.4
+    },
+    "subject": "anime_character",
+    "profile": "anime",
+    "labels": [
+      {
+        "value": 3,
+        "category": "body.head.face",
+        "group": "face",
+        "area_px": 18210,
+        "confidence": 0.9,
+        "bbox": [
+          402,
+          120,
+          598,
+          330
+        ],
+        "side": "center",
+        "sources": [
+          "see_through_l2d",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/3"
+      },
+      {
+        "value": 20,
+        "category": "eye.left",
+        "group": "eyes",
+        "area_px": 610,
+        "confidence": 0.81,
+        "bbox": [
+          520,
+          210,
+          560,
+          238
+        ],
+        "side": "left",
+        "sources": [
+          "grounding_dino_base",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/20"
+      },
+      {
+        "value": 21,
+        "category": "eye.right",
+        "group": "eyes",
+        "area_px": 598,
+        "confidence": 0.8,
+        "bbox": [
+          440,
+          210,
+          480,
+          238
+        ],
+        "side": "right",
+        "sources": [
+          "grounding_dino_base",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/21"
+      },
+      {
+        "value": 22,
+        "category": "eyebrow.left",
+        "group": "eyebrows",
+        "area_px": 240,
+        "confidence": 0.62,
+        "bbox": [
+          518,
+          192,
+          566,
+          204
+        ],
+        "side": "left",
+        "sources": [
+          "florence2_large",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/22"
+      },
+      {
+        "value": 30,
+        "category": "hair",
+        "group": "hair",
+        "area_px": 51234,
+        "confidence": 0.86,
+        "bbox": [
+          130,
+          42,
+          870,
+          610
+        ],
+        "side": "center",
+        "sources": [
+          "see_through_l2d",
+          "grounding_dino_base",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/30"
+      },
+      {
+        "value": 40,
+        "category": "clothing.top",
+        "group": "clothes",
+        "area_px": 40211,
+        "confidence": 0.84,
+        "bbox": [
+          300,
+          360,
+          700,
+          640
+        ],
+        "side": "center",
+        "sources": [
+          "see_through_l2d",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/40"
+      },
+      {
+        "value": 60,
+        "category": "object.held",
+        "group": "detachable",
+        "area_px": 9120,
+        "confidence": 0.71,
+        "bbox": [
+          640,
+          300,
+          900,
+          880
+        ],
+        "side": "center",
+        "sources": [
+          "grounding_dino_base",
+          "sam2_1_hiera_large"
+        ],
+        "mask_url": "/api/v1/segmentations/sg_0123456789ab/masks/60"
+      }
+    ],
+    "annotations": {
+      "eyelash.left": {
+        "lid_curve": [
+          [
+            521,
+            214
+          ],
+          [
+            540,
+            208
+          ],
+          [
+            559,
+            213
+          ]
+        ],
+        "method": "heuristic",
+        "confidence": 0.6
+      }
+    },
+    "expected_terms_missing": [],
+    "overlay_url": "/api/v1/segmentations/sg_0123456789ab/overlay",
+    "labels_url": "/api/v1/segmentations/sg_0123456789ab/labels",
+    "timings": {
+      "prepare": 0.1,
+      "frame": 0.2,
+      "parse": 0.6,
+      "detect": 1.1,
+      "refine": 0.6,
+      "fuse": 0.1,
+      "total": 2.7
+    }
+  },
+  "error": null
+}

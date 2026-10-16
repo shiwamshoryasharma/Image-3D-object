@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 
 import { IconButton } from './Button'
+import { registerModal } from './modalStack'
 import styles from './Dialog.module.css'
 
 export interface DialogProps {
@@ -20,7 +21,8 @@ export interface DialogProps {
 
 /**
  * Modal dialog on the native `<dialog>` element: top layer, focus trap and inert background come from the
- * browser. Escape (`cancel`) and a click on the backdrop call `onClose`. Full-height sheet on phones.
+ * browser. Escape (`cancel`) and a click on the backdrop call `onClose`. Full-height sheet on phones and in the
+ * Mobile UI. While open it is registered in `modalStack`, so toasts and announcements render inside it.
  */
 export function Dialog({ open, onClose, title, icon, subtitle, headerAside, children, footer, size = 'md', className }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
@@ -33,6 +35,13 @@ export function Dialog({ open, onClose, title, icon, subtitle, headerAside, chil
     else if (!open && dialog.open) dialog.close()
   }, [open])
 
+  // Declared after the showModal() effect, so the dialog is already open when the Toaster portals into it.
+  useEffect(() => {
+    const dialog = ref.current
+    if (!open || !dialog) return
+    return registerModal(dialog)
+  }, [open])
+
   return (
     <dialog
       ref={ref}
@@ -41,6 +50,11 @@ export function Dialog({ open, onClose, title, icon, subtitle, headerAside, chil
       onCancel={(event) => {
         event.preventDefault()
         onClose()
+      }}
+      onClose={(event) => {
+        // The browser may close the dialog without a cancelable `cancel` (repeated Escape without user activation):
+        // report it, so `open` and the modal registration follow the element.
+        if (open && !event.currentTarget.open) onClose()
       }}
       onClick={(event) => {
         // The surface fills the dialog box, so a click that targets the <dialog> itself hit the backdrop.

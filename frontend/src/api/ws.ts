@@ -1,8 +1,9 @@
 /**
  * Realtime client for `GET /api/v1/ws` (§8).
  *
- * - Typed events (`hello`, `job.updated`, `system.updated`, `blender.updated`, `tuning.updated`) via
- *   {@link RealtimeClient.on}.
+ * - Typed events (`hello`, `job.updated`, `system.updated`, `blender.updated`, `tuning.updated`, plus the part-aware
+ *   `features.updated`, `image_generation.updated`, `segmentation.updated`, `part_analysis.updated`,
+ *   `workflow.updated`) via {@link RealtimeClient.on}. Unknown types are ignored.
  * - Auto-reconnect with exponential backoff + jitter; reconnects immediately when the browser comes back
  *   online or the tab becomes visible again.
  * - Heartbeat watchdog: the server pings every 20 s, so a silent socket is recycled.
@@ -11,6 +12,7 @@
  * - Close code 4401 → `auth-failure` event and no further reconnects.
  */
 import { API_ORIGIN, API_PREFIX } from './client'
+import type { PartAwareEventMap, PartAwareWsMessage } from './partAwareTypes'
 import {
   WS_CLOSE_AUTH_FAILED,
   type BlenderRuntimeStatus,
@@ -31,7 +33,8 @@ export interface RealtimeStatus {
   nextRetryAt: number | null
 }
 
-export interface RealtimeEventMap {
+/** Client events: the server message types (incl. the five part-aware ones) plus `status` and `auth-failure`. */
+export interface RealtimeEventMap extends PartAwareEventMap {
   hello: SystemStatus
   'job.updated': Job
   'system.updated': SystemStatus
@@ -79,12 +82,15 @@ export function buildWebSocketUrl(params: { token?: string | null; jobId?: strin
   return url.toString()
 }
 
-function parseMessage(raw: unknown): WsServerMessage | null {
+/** Every frame the server may send (`WsServerMessage` stays closed; part-aware types live in `partAwareTypes.ts`). */
+type ServerMessage = WsServerMessage | PartAwareWsMessage
+
+function parseMessage(raw: unknown): ServerMessage | null {
   if (typeof raw !== 'string') return null
   try {
     const value = JSON.parse(raw) as unknown
     if (typeof value === 'object' && value !== null && typeof (value as { type?: unknown }).type === 'string') {
-      return value as WsServerMessage
+      return value as ServerMessage
     }
   } catch {
     // Ignore malformed frames.
@@ -250,7 +256,7 @@ export class RealtimeClient {
     if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify(message))
   }
 
-  private dispatch(message: WsServerMessage): void {
+  private dispatch(message: ServerMessage): void {
     switch (message.type) {
       case 'hello':
         this.emit('hello', message.data.system)
@@ -266,6 +272,21 @@ export class RealtimeClient {
         break
       case 'tuning.updated':
         this.emit('tuning.updated', message.data)
+        break
+      case 'features.updated':
+        this.emit('features.updated', message.data)
+        break
+      case 'image_generation.updated':
+        this.emit('image_generation.updated', message.data)
+        break
+      case 'segmentation.updated':
+        this.emit('segmentation.updated', message.data)
+        break
+      case 'part_analysis.updated':
+        this.emit('part_analysis.updated', message.data)
+        break
+      case 'workflow.updated':
+        this.emit('workflow.updated', message.data)
         break
       case 'ping':
         this.send({ type: 'pong' })

@@ -1,0 +1,182 @@
+{
+  "CreateJobRequest": [
+    "reference_set_id",
+    "primary_image_id",
+    "settings"
+  ],
+  "ImageGenerationRequest": [
+    "prompt",
+    "negative_prompt",
+    "model_id",
+    "preset",
+    "style",
+    "part_hint",
+    "num_images",
+    "seed",
+    "randomize_seed",
+    "width",
+    "height",
+    "steps",
+    "guidance"
+  ],
+  "UseCandidateRequest": [
+    "reference_set_id",
+    "slot",
+    "make_primary",
+    "label"
+  ],
+  "SegmentationRequest": [
+    "source",
+    "options"
+  ],
+  "SegmentationOptions": [
+    "profile",
+    "subject",
+    "classes",
+    "extra_terms",
+    "use_prompt_terms",
+    "head_pass",
+    "min_confidence"
+  ],
+  "PartAnalysisOptions": [
+    "strategy",
+    "segmentation_id",
+    "segmentation",
+    "separate",
+    "views",
+    "min_part_faces",
+    "max_parts",
+    "split_shells",
+    "export"
+  ],
+  "PartExportOptions": [
+    "per_part_glbs",
+    "previews"
+  ],
+  "WorkflowRequest": [
+    "name",
+    "source",
+    "segmentation",
+    "reconstruction",
+    "parts",
+    "graph",
+    "layout"
+  ],
+  "WorkflowSource.image": [
+    "kind",
+    "reference_set_id",
+    "primary_image_id"
+  ],
+  "WorkflowSource.prompt": [
+    "kind",
+    "generation"
+  ],
+  "WorkflowSource.job": [
+    "kind",
+    "job_id"
+  ],
+  "node.input_image": [
+    "reference_set_id",
+    "primary_image_id"
+  ],
+  "node.prompt": "=ImageGenerationRequest",
+  "node.job_result": [
+    "job_id"
+  ],
+  "node.segmentation": "=SegmentationOptions",
+  "node.image_to_3d": "=GenerationSettings",
+  "node.part_extraction": [
+    "strategy",
+    "segmentation",
+    "separate",
+    "views",
+    "min_part_faces",
+    "max_parts",
+    "split_shells"
+  ],
+  "node.export": "=PartExportOptions",
+  "node.part_refine": [],
+  "node.mesh_tune": [],
+  "node.eye_correction": [],
+  "node.rig_correction": [],
+  "node.segmentation_3d": [],
+  "node.part_completion": [],
+  "node.part_generation": [],
+  "GenerationSettings": [
+    "resolution",
+    "seed",
+    "randomize_seed",
+    "polygon_target",
+    "texture_size",
+    "remove_background",
+    "reference_mode",
+    "advanced"
+  ],
+  "SegmentationSource.reference_image": [
+    "kind",
+    "reference_set_id",
+    "image_id"
+  ],
+  "SegmentationSource.job": [
+    "kind",
+    "job_id"
+  ],
+  "Reconstruction": [
+    "settings"
+  ],
+  "WorkflowGraph": [
+    "schema",
+    "version",
+    "nodes",
+    "edges"
+  ],
+  "WorkflowGraph.node": [
+    "id",
+    "type",
+    "params"
+  ],
+  "WorkflowGraph.edge": [
+    "from",
+    "to"
+  ],
+  "PortRef": [
+    "node",
+    "port"
+  ],
+  "AdvancedSettings": [
+    "sparse_structure",
+    "shape",
+    "texture"
+  ],
+  "SamplerSettings": [
+    "steps",
+    "guidance_strength",
+    "guidance_rescale",
+    "rescale_t"
+  ],
+  "opaque": [
+    "layout"
+  ],
+  "paths": {
+    "SegmentationRequest.source": "SegmentationSource.<kind>",
+    "SegmentationRequest.options": "SegmentationOptions",
+    "WorkflowRequest.source": "WorkflowSource.<kind>",
+    "WorkflowSource.prompt.generation": "ImageGenerationRequest",
+    "WorkflowRequest.segmentation": "SegmentationOptions",
+    "WorkflowRequest.reconstruction": "Reconstruction",
+    "Reconstruction.settings": "GenerationSettings",
+    "CreateJobRequest.settings": "GenerationSettings",
+    "GenerationSettings.advanced": "AdvancedSettings",
+    "AdvancedSettings.*": "SamplerSettings",
+    "WorkflowRequest.parts": "PartAnalysisOptions",
+    "PartAnalysisOptions.segmentation": "SegmentationOptions",
+    "PartAnalysisOptions.export": "PartExportOptions",
+    "node.part_extraction.segmentation": "SegmentationOptions",
+    "WorkflowRequest.graph": "WorkflowGraph",
+    "WorkflowGraph.nodes[]": "WorkflowGraph.node",
+    "WorkflowGraph.node.params": "node.<type>",
+    "WorkflowGraph.edges[]": "WorkflowGraph.edge",
+    "WorkflowGraph.edge.from": "PortRef",
+    "WorkflowGraph.edge.to": "PortRef"
+  }
+}

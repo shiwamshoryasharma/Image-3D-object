@@ -1,0 +1,95 @@
+{
+  "name": "unsupported_topology_job_result",
+  "description": "Existing Result feeding Image-to-3D (node and message not compared: the rule names two nodes).",
+  "features": "full",
+  "limits": null,
+  "bound": {
+    "imageCount": 1,
+    "referenceSetId": "rs_0123456789ab",
+    "promptLength": 34,
+    "promptMax": 2000,
+    "viewedJobCompleted": true
+  },
+  "doc": {
+    "schema": "img3d.ui_workflow",
+    "version": 1,
+    "revision": 1,
+    "graph": {
+      "nodes": [
+        {
+          "id": "n_job_result",
+          "type": "job_result",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_image_to_3d",
+          "type": "image_to_3d",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_export",
+          "type": "export",
+          "version": 1,
+          "mode": "active"
+        }
+      ],
+      "edges": [
+        {
+          "from": {
+            "node": "n_job_result",
+            "port": "images"
+          },
+          "to": {
+            "node": "n_image_to_3d",
+            "port": "images"
+          }
+        },
+        {
+          "from": {
+            "node": "n_image_to_3d",
+            "port": "mesh"
+          },
+          "to": {
+            "node": "n_export",
+            "port": "asset"
+          }
+        }
+      ]
+    },
+    "layout": {
+      "positions": {
+        "n_job_result": {
+          "x": 0,
+          "y": 520
+        },
+        "n_image_to_3d": {
+          "x": 320,
+          "y": 260
+        },
+        "n_export": {
+          "x": 960,
+          "y": 260
+        }
+      },
+      "collapsed": [],
+      "viewport": {
+        "x": 40,
+        "y": 40,
+        "zoom": 0.9
+      }
+    }
+  },
+  "expected_issues": [
+    {
+      "severity": "error",
+      "code": "unsupported_topology",
+      "nodeId": null,
+      "port": null,
+      "message": null
+    }
+  ],
+  "exhaustive": false,
+  "server": null
+}

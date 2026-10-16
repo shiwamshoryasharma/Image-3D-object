@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from api.part_routes import build_part_aware_router
 from api.v1 import auth, blender, health, jobs, references, results, system, tunings, ws
 from schemas.common import API_V1_PREFIX
 
@@ -23,5 +24,6 @@ def build_api_router() -> APIRouter:
     api.include_router(tunings.jobs_router)
     api.include_router(tunings.router)
     api.include_router(tunings.files_router)
+    api.include_router(build_part_aware_router())
     api.include_router(ws.router)
     return api

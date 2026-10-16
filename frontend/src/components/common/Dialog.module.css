@@ -1,3 +1,7 @@
+/*
+ * Never put transform, filter, perspective or contain on the <dialog> itself: toasts portaled into the open modal
+ * are position: fixed and must keep laying out against the viewport (UI_DESIGN §4.1 modalStack).
+ */
 .dialog {
   max-width: calc(100vw - 32px);
   max-height: calc(100dvh - 48px);
@@ -125,4 +129,28 @@
   .footer {
     padding: var(--space-3);
   }
+}
+
+/* The Mobile UI uses the phone presentation at every width (same rules as the block above). */
+:global(:root[data-ui-mode='mobile']) .dialog {
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+:global(:root[data-ui-mode='mobile']) .surface {
+  max-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:global(:root[data-ui-mode='mobile']) .body {
+  padding: var(--space-3);
+}
+
+:global(:root[data-ui-mode='mobile']) .footer {
+  padding: var(--space-3);
 }

@@ -1,0 +1,135 @@
+{
+  "name": "missing_required_input",
+  "description": "Part Extraction reached through Segmentation masks while its required Mesh input is unconnected.",
+  "features": "full",
+  "limits": null,
+  "bound": {
+    "imageCount": 1,
+    "referenceSetId": "rs_0123456789ab",
+    "promptLength": 34,
+    "promptMax": 2000,
+    "viewedJobCompleted": false
+  },
+  "doc": {
+    "schema": "img3d.ui_workflow",
+    "version": 1,
+    "revision": 1,
+    "graph": {
+      "nodes": [
+        {
+          "id": "n_input_image",
+          "type": "input_image",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_segmentation",
+          "type": "segmentation",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_image_to_3d",
+          "type": "image_to_3d",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_part_extraction",
+          "type": "part_extraction",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_export",
+          "type": "export",
+          "version": 1,
+          "mode": "active"
+        }
+      ],
+      "edges": [
+        {
+          "from": {
+            "node": "n_input_image",
+            "port": "images"
+          },
+          "to": {
+            "node": "n_segmentation",
+            "port": "images"
+          }
+        },
+        {
+          "from": {
+            "node": "n_input_image",
+            "port": "images"
+          },
+          "to": {
+            "node": "n_image_to_3d",
+            "port": "images"
+          }
+        },
+        {
+          "from": {
+            "node": "n_segmentation",
+            "port": "masks"
+          },
+          "to": {
+            "node": "n_part_extraction",
+            "port": "masks"
+          }
+        },
+        {
+          "from": {
+            "node": "n_part_extraction",
+            "port": "parts"
+          },
+          "to": {
+            "node": "n_export",
+            "port": "asset"
+          }
+        }
+      ]
+    },
+    "layout": {
+      "positions": {
+        "n_input_image": {
+          "x": 0,
+          "y": 0
+        },
+        "n_segmentation": {
+          "x": 320,
+          "y": 0
+        },
+        "n_image_to_3d": {
+          "x": 320,
+          "y": 260
+        },
+        "n_part_extraction": {
+          "x": 640,
+          "y": 130
+        },
+        "n_export": {
+          "x": 960,
+          "y": 260
+        }
+      },
+      "collapsed": [],
+      "viewport": {
+        "x": 40,
+        "y": 40,
+        "zoom": 0.9
+      }
+    }
+  },
+  "expected_issues": [
+    {
+      "severity": "error",
+      "code": "missing_required_input",
+      "nodeId": "n_part_extraction",
+      "port": "mesh",
+      "message": "Part Extraction: connect \"Mesh\"."
+    }
+  ],
+  "exhaustive": false,
+  "server": null
+}

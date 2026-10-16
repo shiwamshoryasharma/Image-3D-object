@@ -6,9 +6,35 @@
  *        [--blender-scenario ready|old-only|none|downloading] [--no-download] [--download-seconds 10]
  *        [--download-fail none|checksum|network] [--tuning-scenario ok|warnings|fail] [--tuning-seconds 9]
  *        [--seed-jobs 0] [--engine-ready]
+ *        [--features full|no-t2i|no-seg|disabled|legacy404] [--strict-requests on|off]
+ *        [--parts-scenario ok|partial|fail|slow|no-attribute] [--t2i-cold-seconds 0] [--tuner-enabled]
  *
  * Then run the frontend against it:
  *   IMG3D_BACKEND_URL=http://127.0.0.1:8765 npx vite preview --port 4174   (from frontend/)
+ *
+ * Part-aware milestone (UI_DESIGN.md §10.4; routes and shapes of DESIGN.md §6 in test/frontend/mock/part_aware_mock.mjs):
+ *   --features          full (default) | no-t2i | no-seg | disabled | legacy404: serves fixtures/features/<name>.json;
+ *                       legacy404 = an old backend (404 for /features, /models*, /image-generations*, /segmentations*,
+ *                       /jobs/{id}/part-analyses*, /part-analyses*, /workflows*); disabled = mutating new routes 503
+ *                       feature_disabled; no-t2i / no-seg = 503 capability_unavailable for prompt / segmentation.
+ *   --strict-requests   on (default): every JSON body with a DESIGN key set (incl. POST /jobs) is checked recursively
+ *                       against fixtures/request_keys.json → 422 validation_error / extra_forbidden.
+ *   --parts-scenario    pa_ runs: ok | partial (result.status partial + warning) | fail (partition_failed) | slow (30 s)
+ *                       | no-attribute (model_parts.glb without _FEATURE_ID_0).
+ *   --t2i-cold-seconds  the first ig_ run spends N s in load_model; POST /models/{id}/load → loading for N s → loaded.
+ *   --tuner-enabled     /features reports mesh_tuning.enabled = flags.mesh_tuning = true (the UI build flag still hides it).
+ *
+ * Test-only routes (never part of the contract):
+ *   GET    /api/__test/sample/<name>   serves files from test/images (for scripted uploads)
+ *   GET    /api/__test/requests        request log [{ts, method, path, query, status, body, body_sha256, created_id}];
+ *                                      `body` is the raw request text exactly as received (null for no body or a binary
+ *                                      multipart upload), `created_id` the id the request created (rs_/img_/job_/wf_/…)
+ *   DELETE /api/__test/requests        clears the log
+ *   GET    /api/__test/scenario        the current scenario
+ *   POST   /api/__test/scenario        {features?, parts?, t2i_cold_seconds?, tuner_enabled?, queue_full?}: switch at
+ *                                      runtime (broadcasts features.updated); queue_full makes every create route
+ *                                      (POST /jobs, /workflows, /image-generations, /segmentations,
+ *                                      /jobs/{id}/part-analyses) answer 429 queue_full until reset
  *
  * Auto Mesh Tuner simulation (DESIGN.md §6 contract, test-only data):
  *   --blender-scenario ready        5.2.2 LTS (system, selected) + 4.2.17 LTS (incompatible)        [default]
@@ -20,8 +46,6 @@
  *   Auto Tune runs stream the 8 protocol steps, then a report (metrics/validation/warnings/previews) and a
  *   distinct tuned GLB at /api/v1/tunings/<id>/model.glb.
  *   --seed-jobs N creates N completed jobs at startup (so the tuner can be exercised without generating).
- *
- * Extra test-only endpoint: GET /api/__test/sample/<name> serves files from test/images (for scripted uploads).
  */
 import { createHash, randomBytes } from 'node:crypto'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
@@ -29,6 +53,7 @@ import { createServer } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { deflateSync } from 'node:zlib'
+import { createPartAwareMock, FEATURE_SCENARIOS, PARTS_SCENARIOS } from './mock/part_aware_mock.mjs'
 
 const args = process.argv.slice(2)
 const argValue = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] ?? fallback : fallback)
@@ -47,6 +72,19 @@ const IMAGES_DIR = join(HERE, '..', 'images')
 const P = '/api/v1'
 if (!['ready', 'old-only', 'none', 'downloading'].includes(BLENDER_SCENARIO)) throw new Error(`unknown --blender-scenario ${BLENDER_SCENARIO}`)
 if (!['ok', 'warnings', 'fail'].includes(TUNING_SCENARIO)) throw new Error(`unknown --tuning-scenario ${TUNING_SCENARIO}`)
+
+/** Part-aware scenario (UI_DESIGN §10.4); mutated at runtime by POST /api/__test/scenario. */
+const scenario = {
+  features: argValue('--features', 'full'),
+  parts: argValue('--parts-scenario', 'ok'),
+  t2i_cold_seconds: Number(argValue('--t2i-cold-seconds', '0')) || 0,
+  tuner_enabled: args.includes('--tuner-enabled'),
+  queue_full: false,
+  strict: argValue('--strict-requests', 'on') !== 'off',
+}
+if (!FEATURE_SCENARIOS.includes(scenario.features)) throw new Error(`unknown --features ${scenario.features}`)
+if (!PARTS_SCENARIOS.includes(scenario.parts)) throw new Error(`unknown --parts-scenario ${scenario.parts}`)
+if (!['on', 'off'].includes(argValue('--strict-requests', 'on'))) throw new Error('--strict-requests must be on or off')
 
 const now = () => new Date().toISOString()
 const hex = (n = 12) => randomBytes(Math.ceil(n / 2)).toString('hex').slice(0, n)
@@ -131,6 +169,34 @@ function pngSize(buf) {
   return { width: 512, height: 512, alpha: false }
 }
 
+function createReferenceSet(name = null) {
+  const set = { id: `rs_${hex()}`, name, created_at: now(), updated_at: now(), images: [] }
+  sets.set(set.id, set)
+  return set
+}
+
+/** The upload path (slot replacement, primary rules). `source` is DESIGN §6.7 `ImageSourceOut` (null for uploads). */
+function addReferenceImage(set, { bytes, mime, filename, slot, label = null, makePrimary = false, source = null }) {
+  let wasPrimary = false
+  if (slot !== 'detail') {
+    const old = set.images.find((i) => i.slot === slot)
+    if (old) { wasPrimary = old.is_primary; set.images = set.images.filter((i) => i !== old); files.delete(old.id) }
+  }
+  const size = pngSize(bytes)
+  const image = {
+    id: `img_${hex()}`, set_id: set.id, slot, label, original_filename: filename, mime_type: mime,
+    width: size.width, height: size.height, has_alpha: size.alpha, size_bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'),
+    is_primary: false, created_at: now(), urls: {}, source,
+  }
+  image.urls = { file: `${P}/reference-sets/${set.id}/images/${image.id}/file`, thumbnail: `${P}/reference-sets/${set.id}/images/${image.id}/thumbnail` }
+  if (makePrimary || wasPrimary || set.images.length === 0) {
+    set.images.forEach((i) => { i.is_primary = false })
+    image.is_primary = true
+  }
+  set.images.push(image); files.set(image.id, { bytes, mime }); touch(set)
+  return image
+}
+
 // ------------------------------------------------------------------------------------------------
 // Jobs
 // ------------------------------------------------------------------------------------------------
@@ -206,6 +272,30 @@ function publicJob(job) {
     rest.queue_position = queued.findIndex((j) => j.id === job.id) + 1
   }
   return rest
+}
+
+/** The POST /jobs path (also used by workflow reconstruction steps): `{job}` or `{error: {status, code, message, details}}`. */
+function createJob(body) {
+  const set = sets.get(body.reference_set_id)
+  if (!set) return { error: { status: 404, code: 'not_found', message: 'Reference set not found', details: null } }
+  if (!set.images.length) return { error: { status: 422, code: 'validation_error', message: 'Reference set is empty', details: null } }
+  const s = { resolution: 1024, seed: 0, randomize_seed: true, polygon_target: 500000, texture_size: 2048, remove_background: true, reference_mode: 'primary_only', advanced: null, ...body.settings }
+  const primary = body.primary_image_id ?? set.images.find((i) => i.is_primary)?.id
+  const job = {
+    id: `job_${hex()}`, status: 'queued', engine: 'trellis2', created_at: now(), started_at: null, finished_at: null,
+    reference_set_id: set.id, primary_image_id: primary, references: set.images.map((i) => ({ image_id: i.id, slot: i.slot, is_primary: i.id === primary })),
+    settings: s, seed: s.randomize_seed ? Math.floor(Math.random() * 2147483647) : s.seed, queue_position: 1, error: null, result: null,
+  }
+  job.progress = progress('queued', 'Queued', 0, null, null, 0, 'Queued', job)
+  job.primaryBytes = files.get(primary)
+  jobs.set(job.id, job)
+  broadcast('job.updated', job); broadcast('system.updated', systemStatus())
+  return { job }
+}
+
+function cancelJob(job) {
+  if (!job || ['completed', 'failed', 'cancelled'].includes(job.status)) return
+  if (job.status === 'queued') { job.status = 'cancelled'; job.finished_at = now(); broadcast('job.updated', job) } else job.cancel = true
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -732,8 +822,28 @@ function send(res, status, body, headers = {}) {
 }
 const fail = (res, status, code, message, details = null) => send(res, status, { error: { code, message, details, request_id: hex(6) } })
 
+/** The raw request body; read once per request (before routing) so the request log sees the exact bytes. */
 function readBody(req) {
-  return new Promise((resolve) => { const chunks = []; req.on('data', (c) => chunks.push(c)); req.on('end', () => resolve(Buffer.concat(chunks))) })
+  if (req.rawBody) return Promise.resolve(req.rawBody)
+  return new Promise((resolve) => { const chunks = []; req.on('data', (c) => chunks.push(c)); req.on('end', () => resolve((req.rawBody = Buffer.concat(chunks)))) })
+}
+
+// Request log (GET/DELETE /api/__test/requests): the only source of the request bytes for the browser-pane checks.
+const REQUEST_LOG_MAX = 5000
+const requestLog = []
+const markCreated = (res, id) => { res.img3dCreatedId = id }
+
+function logRequest(req, res, url, ts) {
+  const raw = req.rawBody ?? Buffer.alloc(0)
+  const type = req.headers['content-type'] ?? ''
+  const textual = !type || /json|text|x-www-form-urlencoded/.test(type)
+  const query = Object.fromEntries([...url.searchParams].map(([key, value]) => [key, key === 'token' ? 'REDACTED' : value]))
+  requestLog.push({
+    ts, method: req.method, path: url.pathname, query, status: res.statusCode,
+    body: raw.length && textual ? raw.toString('utf8') : null, body_sha256: raw.length ? createHash('sha256').update(raw).digest('hex') : null,
+    created_id: res.img3dCreatedId ?? null,
+  })
+  if (requestLog.length > REQUEST_LOG_MAX) requestLog.shift()
 }
 
 function parseMultipart(buf, boundary) {
@@ -763,6 +873,36 @@ function authorized(req, url) {
   return !!token && tokens.has(token)
 }
 
+/** DESIGN §6.0 "J" routes: Bearer header only (file routes "F" also take ?token=, see `authorized`). */
+function headerAuthorized(req) {
+  if (!AUTH) return true
+  const header = req.headers.authorization ?? ''
+  return header.startsWith('Bearer ') && tokens.has(header.slice(7))
+}
+
+// ------------------------------------------------------------------------------------------------
+// Part-aware routes (DESIGN.md §6.1–§6.6) and test-only scenario switching
+// ------------------------------------------------------------------------------------------------
+const partAware = createPartAwareMock({
+  send, fail, readBody, broadcast, now, hex, encodePng, createJob, cancelJob, jobs, sets, files, scenario,
+  createReferenceSet, addReferenceImage, setView, markCreated, headerAuthorized, baseGlb: GLB.buffer,
+})
+setInterval(partAware.tick, TICK_MS)
+
+const SCENARIO_KEYS = { features: FEATURE_SCENARIOS, parts: PARTS_SCENARIOS, t2i_cold_seconds: 'number', tuner_enabled: 'boolean', queue_full: 'boolean' }
+const scenarioView = () => ({ features: scenario.features, parts: scenario.parts, t2i_cold_seconds: scenario.t2i_cold_seconds, tuner_enabled: scenario.tuner_enabled, queue_full: scenario.queue_full, strict_requests: scenario.strict ? 'on' : 'off' })
+
+/** POST /api/__test/scenario body → list of 422 details (empty when valid). */
+function scenarioDetails(body) {
+  const details = []
+  for (const [key, value] of Object.entries(body)) {
+    const rule = SCENARIO_KEYS[key]
+    const ok = Array.isArray(rule) ? rule.includes(value) : rule === 'number' ? Number.isFinite(value) && value >= 0 : rule === 'boolean' ? typeof value === 'boolean' : false
+    if (!ok) details.push({ loc: ['body', key], type: rule ? 'value_error' : 'extra_forbidden', msg: rule ? `Invalid value for ${key}` : 'Extra inputs are not permitted' })
+  }
+  return details
+}
+
 // ------------------------------------------------------------------------------------------------
 // Router
 // ------------------------------------------------------------------------------------------------
@@ -770,8 +910,26 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`)
   const path = url.pathname
   const method = req.method
+  const ts = now()
   let m
   try {
+    await readBody(req)
+    if (!path.startsWith('/api/__test/')) res.on('finish', () => logRequest(req, res, url, ts))
+    if (path === '/api/__test/requests') {
+      if (method === 'DELETE') { requestLog.length = 0; return send(res, 204) }
+      return send(res, 200, requestLog)
+    }
+    if (path === '/api/__test/scenario') {
+      if (method === 'POST') {
+        let body
+        try { body = JSON.parse(req.rawBody.toString() || '{}') } catch { return fail(res, 422, 'validation_error', 'Request validation failed', [{ loc: ['body'], type: 'json_invalid', msg: 'Invalid JSON' }]) }
+        const details = scenarioDetails(body ?? {})
+        if (details.length) return fail(res, 422, 'validation_error', 'Request validation failed', details)
+        Object.assign(scenario, body)
+        partAware.scenarioChanged()
+      }
+      return send(res, 200, scenarioView())
+    }
     if (path.startsWith('/api/__test/sample/')) {
       const name = decodeURIComponent(path.slice('/api/__test/sample/'.length))
       const all = readdirSync(IMAGES_DIR).flatMap((d) => (statSync(join(IMAGES_DIR, d)).isDirectory() ? readdirSync(join(IMAGES_DIR, d)).map((f) => join(IMAGES_DIR, d, f)) : []))
@@ -792,10 +950,13 @@ const server = createServer(async (req, res) => {
     if (path === `${P}/system` && method === 'GET') return send(res, 200, systemStatus())
     if (path === `${P}/system/engine/load` && method === 'POST') return send(res, 202, systemStatus())
 
+    // Part-aware routes (features, models, image generations, segmentations, part analyses, workflows)
+    if (await partAware.handle(req, res, url)) return
+
     // Reference sets
     if (path === `${P}/reference-sets` && method === 'POST') {
-      const set = { id: `rs_${hex()}`, name: null, created_at: now(), updated_at: now(), images: [] }
-      sets.set(set.id, set)
+      const set = createReferenceSet(null)
+      markCreated(res, set.id)
       return send(res, 201, setView(set))
     }
     if (path === `${P}/reference-sets` && method === 'GET') return send(res, 200, { items: [...sets.values()].map(setView) })
@@ -820,23 +981,8 @@ const server = createServer(async (req, res) => {
       if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) return fail(res, 415, 'unsupported_media_type', 'Unsupported image type')
       if (file.data.length > 25 * 1024 * 1024) return fail(res, 413, 'payload_too_large', 'File too large')
       if (slot === 'detail' && set.images.filter((i) => i.slot === 'detail').length >= 8) return fail(res, 422, 'validation_error', 'Too many detail images')
-      let wasPrimary = false
-      if (slot !== 'detail') {
-        const old = set.images.find((i) => i.slot === slot)
-        if (old) { wasPrimary = old.is_primary; set.images = set.images.filter((i) => i !== old); files.delete(old.id) }
-      }
-      const size = pngSize(file.data)
-      const image = {
-        id: `img_${hex()}`, set_id: set.id, slot, label: parts.label ?? null, original_filename: file.filename, mime_type: file.type,
-        width: size.width, height: size.height, has_alpha: size.alpha, size_bytes: file.data.length, sha256: createHash('sha256').update(file.data).digest('hex'),
-        is_primary: false, created_at: now(), urls: {},
-      }
-      image.urls = { file: `${P}/reference-sets/${set.id}/images/${image.id}/file`, thumbnail: `${P}/reference-sets/${set.id}/images/${image.id}/thumbnail` }
-      if (parts.make_primary === 'true' || wasPrimary || set.images.length === 0) {
-        set.images.forEach((i) => { i.is_primary = false })
-        image.is_primary = true
-      }
-      set.images.push(image); files.set(image.id, { bytes: file.data, mime: file.type }); touch(set)
+      const image = addReferenceImage(set, { bytes: file.data, mime: file.type, filename: file.filename, slot, label: parts.label ?? null, makePrimary: parts.make_primary === 'true' })
+      markCreated(res, image.id)
       return send(res, 201, { image, set: setView(set) })
     }
     if ((m = new RegExp(`^${P}/reference-sets/(rs_\\w+)/images/(img_\\w+)(/file|/thumbnail)?$`).exec(path))) {
@@ -920,6 +1066,7 @@ const server = createServer(async (req, res) => {
           return fail(res, 429, 'queue_full', 'The Auto Tune queue is full')
         }
         const run = createTuning(job, body)
+        markCreated(res, run.id)
         broadcast('tuning.updated', publicRun(run))
         return send(res, 202, publicRun(run))
       }
@@ -954,22 +1101,14 @@ const server = createServer(async (req, res) => {
 
     // Jobs
     if (path === `${P}/jobs` && method === 'POST') {
-      const body = JSON.parse((await readBody(req)).toString())
-      const set = sets.get(body.reference_set_id)
-      if (!set) return fail(res, 404, 'not_found', 'Reference set not found')
-      if (!set.images.length) return fail(res, 422, 'validation_error', 'Reference set is empty')
-      const s = { resolution: 1024, seed: 0, randomize_seed: true, polygon_target: 500000, texture_size: 2048, remove_background: true, reference_mode: 'primary_only', advanced: null, ...body.settings }
-      const primary = body.primary_image_id ?? set.images.find((i) => i.is_primary)?.id
-      const job = {
-        id: `job_${hex()}`, status: 'queued', engine: 'trellis2', created_at: now(), started_at: null, finished_at: null,
-        reference_set_id: set.id, primary_image_id: primary, references: set.images.map((i) => ({ image_id: i.id, slot: i.slot, is_primary: i.id === primary })),
-        settings: s, seed: s.randomize_seed ? Math.floor(Math.random() * 2147483647) : s.seed, queue_position: 1, error: null, result: null,
-      }
-      job.progress = progress('queued', 'Queued', 0, null, null, 0, 'Queued', job)
-      job.primaryBytes = files.get(primary)
-      jobs.set(job.id, job)
-      broadcast('job.updated', job); broadcast('system.updated', systemStatus())
-      return send(res, 202, publicJob(job))
+      const body = await partAware.readJson(req, res, 'CreateJobRequest')
+      if (!body) return
+      if (typeof body.reference_set_id !== 'string') return fail(res, 422, 'validation_error', 'Request validation failed', [{ loc: ['body', 'reference_set_id'], type: 'missing', msg: 'Field required' }])
+      if (scenario.queue_full) return fail(res, 429, 'queue_full', 'The generation queue is full')
+      const created = createJob(body)
+      if (created.error) return fail(res, created.error.status, created.error.code, created.error.message, created.error.details)
+      markCreated(res, created.job.id)
+      return send(res, 202, publicJob(created.job))
     }
     if (path === `${P}/jobs` && method === 'GET') {
       const limit = Number(url.searchParams.get('limit') ?? 20)
@@ -981,13 +1120,14 @@ const server = createServer(async (req, res) => {
       if (!sub && method === 'GET') return send(res, 200, publicJob(job))
       if (!sub && method === 'DELETE') {
         if (['queued', 'running'].includes(job.status)) return fail(res, 409, 'conflict', 'Job is active')
-        // Deleting a job cancels and removes its tuning runs (DESIGN.md §6).
+        // Deleting a job cancels and removes its tuning runs (DESIGN.md §6) and its part analyses (part-aware §6.4).
         for (const run of [...tunings.values()].filter((item) => item.job_id === job.id)) tunings.delete(run.id)
+        partAware.onJobDeleted(job.id)
         jobs.delete(job.id); return send(res, 204)
       }
       if (sub === '/cancel') {
         if (['completed', 'failed', 'cancelled'].includes(job.status)) return fail(res, 409, 'conflict', 'Job already finished')
-        if (job.status === 'queued') { job.status = 'cancelled'; job.finished_at = now(); broadcast('job.updated', publicJob(job)) } else job.cancel = true
+        cancelJob(job)
         return send(res, 200, publicJob(job))
       }
       if (sub === '/result') return job.result ? send(res, 200, job.result) : fail(res, 409, 'conflict', 'Job not completed')
@@ -1033,6 +1173,6 @@ setInterval(() => { for (const s of sockets) s.write(wsFrame(JSON.stringify({ ty
 
 server.listen(PORT, '127.0.0.1', () =>
   console.log(
-    `[mock-backend] listening on http://127.0.0.1:${PORT} (auth=${AUTH}, blender=${BLENDER_SCENARIO}, download=${ALLOW_DOWNLOAD ? `${DOWNLOAD_SECONDS}s/${DOWNLOAD_FAIL}` : 'disabled'}, tuning=${TUNING_SCENARIO}/${TUNING_SECONDS}s, seeded jobs=${SEED_JOBS})`,
+    `[mock-backend] listening on http://127.0.0.1:${PORT} (auth=${AUTH}, blender=${BLENDER_SCENARIO}, download=${ALLOW_DOWNLOAD ? `${DOWNLOAD_SECONDS}s/${DOWNLOAD_FAIL}` : 'disabled'}, tuning=${TUNING_SCENARIO}/${TUNING_SECONDS}s, seeded jobs=${SEED_JOBS}, features=${scenario.features}, parts=${scenario.parts}, strict=${scenario.strict ? 'on' : 'off'}, t2i cold=${scenario.t2i_cold_seconds}s, tuner flag=${scenario.tuner_enabled})`,
   ),
 )

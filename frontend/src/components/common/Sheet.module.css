@@ -1,0 +1,232 @@
+/*
+ * Modal sheet: the <dialog> is a full-viewport, transparent layer that is never transformed, filtered or contained
+ * (toasts portaled into it are position: fixed and must lay out against the viewport, UI_DESIGN §4.1). A click on
+ * the dialog itself is outside the panel (light dismiss). It stays displayed during the exit transition.
+ */
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  transition-property: display, overlay;
+  transition-duration: var(--duration-slow);
+  transition-behavior: allow-discrete;
+}
+
+.dialog:focus-visible {
+  outline: none;
+}
+
+.dialog::backdrop {
+  background: var(--color-overlay);
+  opacity: 0;
+  transition-property: opacity, display, overlay;
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-out);
+  transition-behavior: allow-discrete;
+}
+
+.dialog[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Standard sheet: a pass-through layer above the page (and above the floating nav's top edge). */
+.region {
+  position: fixed;
+  z-index: var(--z-sheet);
+  inset: 0 0 var(--shell-inset-bottom);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The visible surface: carries the snap height, the entry/exit `translate` and the drag/FLIP `transform`. */
+.panel {
+  --sheet-hidden: 0 100%;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--sheet-max-width);
+  margin-inline: auto;
+  padding-bottom: var(--keyboard-inset);
+  border: 1px solid var(--color-border-strong);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  translate: var(--sheet-hidden);
+  transition:
+    translate var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.dialog[open] .panel,
+.region .panel {
+  translate: none;
+}
+
+@starting-style {
+  .dialog[open] .panel,
+  .region .panel {
+    translate: var(--sheet-hidden);
+  }
+}
+
+.region.closing .panel {
+  translate: var(--sheet-hidden);
+}
+
+.panel[data-snap='peek'] {
+  height: var(--sheet-peek);
+}
+
+.panel[data-snap='half'] {
+  height: 50%;
+}
+
+.panel[data-snap='full'] {
+  height: calc(100% - env(safe-area-inset-top, 0px) - 24px);
+}
+
+/* Fills the space below the panel while it is lifted by a drag or a shrinking snap animation. */
+.panel[data-side='bottom']::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: -1px;
+  left: -1px;
+  height: 100dvh;
+  border-inline: 1px solid var(--color-border-strong);
+  background: var(--color-surface-1);
+  pointer-events: none;
+}
+
+.panel[data-side='right'] {
+  --sheet-hidden: calc(100% + 2 * var(--floating-gap) + env(safe-area-inset-right, 0px)) 0;
+  top: var(--floating-gap);
+  right: max(var(--floating-gap), env(safe-area-inset-right, 0px));
+  bottom: var(--floating-gap);
+  left: auto;
+  width: min(var(--side-sheet-max), 100vw - 2 * var(--floating-gap));
+  max-width: none;
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.region:has(> .panel[data-side='right']) {
+  bottom: 0;
+}
+
+.header {
+  position: relative;
+  flex: none;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Drag zone: the handle and the bare header. The body never starts a drag, so it scrolls normally. */
+.draggable {
+  padding-top: var(--space-5);
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+/* 48 × 48 hit area around a 36 × 4 pill. */
+.handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: grid;
+  place-items: start center;
+  width: 48px;
+  height: 48px;
+  padding: var(--space-2) 0 0;
+  border: 0;
+  background: transparent;
+  translate: -50% 0;
+  cursor: grab;
+}
+
+.handle:focus-visible {
+  outline-offset: -2px;
+}
+
+.pill {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-control);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.handle:hover .pill {
+  background: var(--color-text-subtle);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h-sm);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+}
+
+.bodyWithFooter {
+  padding-bottom: var(--space-3);
+}
+
+.footer {
+  flex: none;
+  padding: var(--space-3);
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}

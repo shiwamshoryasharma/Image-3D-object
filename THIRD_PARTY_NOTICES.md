@@ -41,6 +41,10 @@ Other notes:
 | DINOv3 ViT-L/16 (LVD-1689M) | Meta AI | [DINOv3 License](https://ai.meta.com/resources/models-and-libraries/dinov3-license/) | [huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m](https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m) |
 | BiRefNet | Peng Zheng et al. | MIT | [huggingface.co/ZhengPeng7/BiRefNet](https://huggingface.co/ZhengPeng7/BiRefNet) |
 | RMBG-2.0 (optional) | BRIA AI | Bria RMBG-2.0 / [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) | [huggingface.co/briaai/RMBG-2.0](https://huggingface.co/briaai/RMBG-2.0) |
+| Z-Image-Turbo (part-aware milestone, prompt-to-3D; in progress) | Tongyi-MAI (Alibaba) | Apache-2.0 | [huggingface.co/Tongyi-MAI/Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) |
+| Grounding DINO base (part-aware segmentation; in progress) | IDEA Research | Apache-2.0 | [huggingface.co/IDEA-Research/grounding-dino-base](https://huggingface.co/IDEA-Research/grounding-dino-base) |
+| SAM 2.1 hiera-large (part-aware segmentation; in progress) | Meta AI | Apache-2.0 | [huggingface.co/facebook/sam2.1-hiera-large](https://huggingface.co/facebook/sam2.1-hiera-large) |
+| Florence-2-large (part-aware segmentation; in progress) | Microsoft (transformers port: florence-community) | MIT | [huggingface.co/florence-community/Florence-2-large](https://huggingface.co/florence-community/Florence-2-large) |
 
 Downloads go through the Hugging Face Hub and are subject to the
 [Hugging Face Terms of Service](https://huggingface.co/terms-of-service).
@@ -72,6 +76,8 @@ own licenses (list them with `pip-licenses` or `importlib.metadata`).
 |---|---|---|---|
 | torch | 2.14.1+cu130 | BSD-3-Clause (+ bundled Apache-2.0, MIT, BSL-1.0 parts) | [pytorch.org](https://pytorch.org) |
 | torchvision | 0.29.1+cu130 | BSD-3-Clause | [pytorch/vision](https://github.com/pytorch/vision) |
+| diffusers | 0.39.0 | Apache-2.0 | [huggingface/diffusers](https://github.com/huggingface/diffusers) |
+| accelerate | 1.15.0 | Apache-2.0 | [huggingface/accelerate](https://github.com/huggingface/accelerate) |
 | fastapi | 0.143.0 | MIT | [fastapi/fastapi](https://github.com/fastapi/fastapi) |
 | starlette | 1.8.0 | BSD-3-Clause | [Kludex/starlette](https://github.com/Kludex/starlette) |
 | uvicorn | 0.54.0 | BSD-3-Clause | [uvicorn.dev](https://uvicorn.dev/) |

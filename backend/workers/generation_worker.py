@@ -13,7 +13,7 @@ import concurrent.futures
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 from core.events import EventBus
 from core.exceptions import AppError, ConflictError, EngineUnavailableError, JobCancelledError
@@ -30,6 +30,8 @@ from utils.timeutil import utcnow
 from workers.queue import JobQueue
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 GPU_THREAD_NAME = "gpu-worker"
 SHUTDOWN_REASON = "Server is shutting down"
@@ -126,6 +128,19 @@ class GenerationWorker:
         self._inflight.add(future)
         future.add_done_callback(self._inflight.discard)
         return future
+
+    @property
+    def accepting_gpu_tasks(self) -> bool:
+        """False once stop() has begun (no new auxiliary GPU work may be queued)."""
+        return not self._stopping
+
+    def submit_gpu_task(self, fn: Callable[..., T], /, *args: Any) -> asyncio.Future[T]:
+        """Run a blocking callable on the single gpu-worker thread, FIFO with model load/generation/unload.
+        The callable must honour its CancellationToken and leave no weights on the GPU when it returns.
+        Raises EngineUnavailableError("The server is shutting down") while stopping."""
+        if self._stopping:
+            raise EngineUnavailableError("The server is shutting down")
+        return asyncio.wrap_future(self._submit(fn, *args))
 
     # ------------------------------------------------------------------ engine lifecycle
     def request_engine_load(self) -> bool:

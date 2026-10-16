@@ -272,3 +272,37 @@
   width: 18px !important;
   height: 18px !important;
 }
+
+/*
+ * Touch density (P12). Star and menu keep their small visual chips with a centred --hit-min hit area and are always
+ * visible (no hover-only affordances); the transparent error close button grows for real, its negative margins
+ * keep the error row's layout.
+ */
+:global(:root[data-density='touch']) .star,
+:global(:root[data-density='touch']) .menu {
+  opacity: 1;
+}
+
+:global(:root[data-density='touch']) .menu > button {
+  position: relative;
+  width: 28px;
+  height: 28px;
+}
+
+:global(:root[data-density='touch']) .star::before,
+:global(:root[data-density='touch']) .menu > button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--hit-min);
+  height: var(--hit-min);
+  translate: -50% -50%;
+}
+
+:global(:root[data-density='touch']) .errorClose {
+  position: relative;
+  width: var(--hit-min) !important;
+  height: var(--hit-min) !important;
+  margin: calc((18px - var(--hit-min)) / 2);
+}

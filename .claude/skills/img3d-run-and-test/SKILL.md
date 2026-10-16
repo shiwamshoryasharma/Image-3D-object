@@ -51,3 +51,8 @@ $py="E:\14-OCT-2026\Img3D\backend\python\python.exe"
   `node test\frontend\review\compiler_check.mjs`. `test\frontend\mock_backend.mjs` is a contract mock for UI work only.
 - Sample inputs: `test\images\ALICE\*` (front/back/side/face views + detail sheet), `test\images\ANIME_CHARACTER_01\*`.
 - Test outputs go to `test\outputs\` (gitignored). Never write test artifacts elsewhere.
+- Baseline (2026-10-16, before the part-aware milestone code): `test\backend` + `test\aux_models` = 182 passed, ~80 s.
+- **GPU lock (part-aware milestone onward):** any command that puts real weights on the GPU must run under
+  `& $py -s E:\14-OCT-2026\Img3D\test\part_aware\gpu_lock.py --label <name> -- <command ...>` (OS file lock on
+  `test\.runtime\gpu.lock`, auto-released on exit; exit 124 = timed out waiting). Parallel agents share one 32 GB GPU.
+- Part-aware probes / smoke scripts: `test\part_aware\` (see `.claude\skills\img3d-part-aware\SKILL.md`).

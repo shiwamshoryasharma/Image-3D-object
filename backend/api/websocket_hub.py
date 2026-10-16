@@ -1,8 +1,9 @@
 """WebSocket hub (contract section 8).
 
 Per connection: ``hello`` with the system status, then ``job.updated`` / ``system.updated`` / ``blender.updated`` /
-``tuning.updated`` events from the :class:`~core.events.EventBus` (``?job_id=`` restricts the job-scoped
-``job.updated`` / ``tuning.updated`` events to that job) and a ``ping`` every ``ws_ping_interval_s``.
+``tuning.updated`` and the part-aware events from the :class:`~core.events.EventBus` (``?job_id=`` restricts the
+job-scoped ``job.updated`` / ``tuning.updated`` / ``part_analysis.updated`` events to that job) and a ``ping`` every
+``ws_ping_interval_s``.
 Auth failure closes with 4401; server shutdown closes with 1001.
 
 The connection's own task waits for either the client to disconnect (a receiver task drains client messages) or
@@ -226,7 +227,9 @@ class WebSocketHub:
             return  # client gone or send timed out (connection marked dead)
 
 
-_JOB_SCOPED_EVENTS: Final = frozenset({str(EventType.JOB_UPDATED), str(EventType.TUNING_UPDATED)})
+_JOB_SCOPED_EVENTS: Final = frozenset(
+    {str(EventType.JOB_UPDATED), str(EventType.TUNING_UPDATED), str(EventType.PART_ANALYSIS_UPDATED)}
+)
 """Event types that belong to one job; a ``?job_id=`` connection only receives those of its job."""
 
 

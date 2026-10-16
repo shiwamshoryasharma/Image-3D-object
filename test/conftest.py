@@ -41,6 +41,7 @@ os.environ.setdefault("IMG3D_LOG_DIR", str(TEST_LOG_DIR))
 os.environ.setdefault("IMG3D_PRELOAD_MODEL", "false")
 # Never execute the real Blender installs at every app startup (tests opt in explicitly).
 os.environ.setdefault("IMG3D_BLENDER_DETECT_ON_STARTUP", "false")
+os.environ.setdefault("IMG3D_MESH_TUNING_ENABLED", "true")  # tuner tests opt in; the app default is off
 os.environ.setdefault("IMG3D_FRONTEND_DIST_DIR", str(TEST_RUNTIME_ROOT / "no-frontend"))
 os.environ.setdefault("NO_COLOR", "1")
 for _secret in ("HF_TOKEN", "UI_USERNAME", "UI_PASSWORD", "IMG3D_AUTH_ENABLED", "IMG3D_AUTH_SECRET"):

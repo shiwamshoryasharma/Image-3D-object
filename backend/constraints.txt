@@ -1,0 +1,25 @@
+# Img3D backend - install constraints. Use with EVERY install into the embedded interpreter:
+#   $py = ".\backend\python\python.exe"
+#   & $py -s -m uv pip install --python $py --link-mode=copy --only-binary ":all:" -c backend\constraints.txt <pkgs>
+#
+# Freezes the TRELLIS.2 stack. transformers 4.57.x needs huggingface-hub < 1.0, so diffusers must stay at 0.39.0
+# (0.40.0 needs hub >= 1.23, 0.41.0 hub >= 1.32). A plain "pip install diffusers" would silently upgrade the hub and
+# break TRELLIS.2's DINOv3 loading.
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.14.1+cu130
+torchvision==0.29.1+cu130
+transformers==4.57.6
+huggingface-hub==0.36.2
+tokenizers==0.22.2
+safetensors==0.8.0
+numpy==2.4.1
+pillow==12.3.0
+opencv-python-headless==5.0.0.93
+scipy==1.18.1
+trimesh==5.1.1
+timm==1.0.30
+diffusers==0.39.0
+accelerate==1.15.0
+# Never install a second OpenCV build next to the headless one.
+opencv-python<0
+opencv-contrib-python<0

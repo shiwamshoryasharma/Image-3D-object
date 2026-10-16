@@ -23,6 +23,12 @@ button.pill:hover {
   background: var(--color-surface-3);
 }
 
+/* Touch density: the status pill becomes a full-size target (30px by default). */
+:global(:root[data-density='touch']) .pill {
+  min-block-size: max(30px, var(--hit-min));
+  min-inline-size: var(--hit-min);
+}
+
 .text {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -104,6 +110,16 @@ button.pill:hover {
     right: 12px;
     width: auto;
   }
+}
+
+/* The Mobile UI uses the phone presentation at every width, below its compact top bar. */
+:global(:root[data-ui-mode='mobile']) .popover {
+  position: fixed;
+  top: calc(var(--top-bar-height) + env(safe-area-inset-top, 0px) + 4px);
+  left: 12px;
+  right: 12px;
+  width: auto;
+  max-height: calc(100dvh - var(--top-bar-height) - env(safe-area-inset-top, 0px) - 16px);
 }
 
 .section {

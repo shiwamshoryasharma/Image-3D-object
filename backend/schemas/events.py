@@ -19,6 +19,16 @@ class EventType(StrEnum):
     """Blender runtime status (detection, selection, download progress); data = ``BlenderRuntimeOut``."""
     TUNING_UPDATED = "tuning.updated"
     """Auto Mesh Tuner run status/progress; data = ``TuningRunOut``; ``Event.job_id`` = the run's job."""
+    FEATURES_UPDATED = "features.updated"
+    """Capability/flag discovery changed; data = ``FeaturesOut`` (debounced 250 ms, never dropped)."""
+    IMAGE_GENERATION_UPDATED = "image_generation.updated"
+    """Image generation run status/progress; data = ``ImageGenerationOut``."""
+    SEGMENTATION_UPDATED = "segmentation.updated"
+    """Segmentation run status/progress; data = ``SegmentationOut``; ``Event.job_id`` = the job of a job source."""
+    PART_ANALYSIS_UPDATED = "part_analysis.updated"
+    """Part analysis status/progress; data = ``PartAnalysisOut``; ``Event.job_id`` = the analysed job (job-scoped)."""
+    WORKFLOW_UPDATED = "workflow.updated"
+    """Workflow status/step progress; data = ``WorkflowOut``."""
 
 
 class WsMessage(ApiModel):

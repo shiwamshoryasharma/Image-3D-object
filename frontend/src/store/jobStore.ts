@@ -7,9 +7,10 @@ import { create } from 'zustand'
 import { ApiError, toApiError } from '../api/client'
 import { cancelJob, createJob, deleteJob, getJob, listJobs } from '../api/jobs'
 import { TERMINAL_STATUSES, type CreateJobRequest, type Job } from '../api/types'
+import { buildImageJobRequest } from '../lib/imageJobRequest.ts'
 import { STORAGE_KEYS, readString, writeString } from '../lib/storage'
 import { useReferenceStore } from './referenceStore'
-import { toRequestSettings, useSettingsStore } from './settingsStore'
+import { useSettingsStore } from './settingsStore'
 import { useSystemStore } from './systemStore'
 import { toast } from './toastStore'
 
@@ -39,6 +40,8 @@ interface JobState {
   cancel: (jobId: string) => Promise<void>
   remove: (jobId: string) => Promise<void>
   view: (jobId: string | null) => void
+  /** Track a job created elsewhere (a workflow's reconstruction step): GET it, make it active, upsert it. */
+  adopt: (jobId: string) => Promise<boolean>
 }
 
 export const isTerminal = (job: Pick<Job, 'status'>): boolean => TERMINAL_STATUSES.has(job.status)
@@ -205,11 +208,14 @@ export const useJobStore = create<JobState>()((set, get) => ({
     const referenceMode = system?.defaults.reference_mode ?? 'primary_only'
     set({ submitting: true })
     try {
-      const job = await submitRequest({
-        reference_set_id: references.id,
-        primary_image_id: references.primary_image_id,
-        settings: toRequestSettings(form, referenceMode),
-      })
+      const job = await submitRequest(
+        buildImageJobRequest({
+          referenceSetId: references.id,
+          primaryImageId: references.primary_image_id,
+          form,
+          referenceMode,
+        }),
+      )
       set({ activeJobId: job.id })
       get().upsertJob(job)
       return true
@@ -300,6 +306,18 @@ export const useJobStore = create<JobState>()((set, get) => ({
   view: (jobId) => {
     persistViewed(jobId)
     set({ viewedJobId: jobId })
+  },
+
+  adopt: async (jobId) => {
+    try {
+      const job = await getJob(jobId)
+      set({ activeJobId: job.id })
+      get().upsertJob(job)
+      return true
+    } catch {
+      // The next job.updated adopts it anyway ("track jobs started elsewhere" in upsertJob).
+      return false
+    }
   },
 }))
 

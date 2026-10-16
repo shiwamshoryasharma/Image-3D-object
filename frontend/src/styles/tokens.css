@@ -16,18 +16,28 @@
   --color-overlay: rgb(5 7 12 / 0.72);
   --color-viewer-bg: radial-gradient(ellipse at 50% 35%, #1a1f2b 0%, #0e1118 70%);
 
+  /* Floating chrome (Mobile/Tablet nav, rail) and loading placeholders */
+  --surface-glass: color-mix(in srgb, var(--color-surface-2) 86%, transparent);
+  --skeleton-base: var(--color-surface-3);
+  --skeleton-highlight: var(--color-surface-4);
+  /* Unfilled part of a progress ring; translucent, so it reads on any surface (including a filled button). */
+  --progress-ring-track: rgb(255 255 255 / 0.14);
+
   /* Borders */
   --color-border: #222838;
   --color-border-strong: #313849;
   --color-border-focus: #8b6cff;
+  /* Boundary of inputs and switches: 3.17:1 on surface-1 (WCAG 1.4.11). */
+  --color-border-control: #5b6580;
 
   /* Text */
   --color-text: #e8ebf2;
   --color-text-muted: #a1a9ba;
-  --color-text-subtle: #6d7588;
+  /* ≥ 4.6:1 on surface-4 (WCAG 1.4.3). */
+  --color-text-subtle: #8a92a6;
   --color-text-inverse: #0b0d12;
 
-  /* Brand */
+  /* Brand. --color-accent stays for focus rings, borders and accents; white text sits on --color-primary*. */
   --color-accent: #8b6cff;
   --color-accent-hover: #9d83ff;
   --color-accent-active: #7a58f5;
@@ -35,6 +45,11 @@
   --color-accent-border: rgb(139 108 255 / 0.45);
   --color-accent-2: #22d3ee;
   --gradient-brand: linear-gradient(135deg, #8b6cff 0%, #22d3ee 100%);
+  /* Filled primary controls with white text: 4.62:1, hover 5.08:1, pressed 5.53:1. */
+  --color-primary: var(--color-accent-active);
+  --color-primary-hover: #7350f0;
+  --color-primary-pressed: #6d4ae8;
+  --color-on-primary: #fff;
 
   /* Status */
   --color-success: #22c55e;
@@ -47,6 +62,34 @@
   --color-info: #38bdf8;
   --color-info-soft: rgb(56 189 248 / 0.14);
   --color-primary-star: #fbbf24;
+
+  /* Node editor: port types (always shown with a glyph + label, never colour alone) and category stripes */
+  --port-image: var(--color-accent-2);
+  --port-masks: #34d399;
+  --port-mesh: var(--color-accent);
+  --port-parts: #f472b6;
+  --cat-input: var(--color-info);
+  --cat-analyze: #34d399;
+  --cat-generate: var(--color-accent);
+  --cat-parts: #f472b6;
+  --cat-output: var(--color-success);
+  --cat-refine: var(--color-warning);
+
+  /* Parts in the viewer: hover/selection overlays and a 12-colour palette (each ≥ 3:1 on --color-viewer-bg) */
+  --part-highlight: #fbbf24;
+  --part-select: var(--color-accent-2);
+  --part-1: #f87171;
+  --part-2: #fb923c;
+  --part-3: #facc15;
+  --part-4: #a3e635;
+  --part-5: #4ade80;
+  --part-6: #2dd4bf;
+  --part-7: #38bdf8;
+  --part-8: #818cf8;
+  --part-9: #a78bfa;
+  --part-10: #e879f9;
+  --part-11: #f472b6;
+  --part-12: #d6a77a;
 
   /* Typography — system stacks only (no network fonts) */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
@@ -100,14 +143,31 @@
   --layout-gap: 12px;
   --column-left: minmax(300px, 360px);
   --column-right: minmax(320px, 388px);
+  --panel-padding: var(--space-4);
+
+  /*
+   * Control heights and the minimum target size. The defaults are today's sizes (WCAG 2.5.8 minimum = 24px);
+   * styles/modes.css raises them under data-density='touch' and in the Mobile/Tablet modes.
+   */
+  --control-h-sm: 28px;
+  --control-h-md: 34px;
+  --control-h-lg: 44px;
+  --hit-min: 24px;
 
   /* Z-index scale */
   --z-sticky: 10;
   --z-header: 20;
+  --z-sheet: 30;
   --z-dropdown: 40;
   --z-drawer: 60;
   --z-toast: 80;
   --z-modal: 90;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --panel-padding: var(--space-3);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

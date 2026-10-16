@@ -1,0 +1,473 @@
+{
+  "id": "pa_0123456789ab",
+  "kind": "part_analysis",
+  "status": "completed",
+  "created_at": "2026-10-16T10:00:00Z",
+  "started_at": "2026-10-16T10:00:01Z",
+  "finished_at": "2026-10-16T10:01:00Z",
+  "workflow_id": null,
+  "options": {
+    "strategy": "semantic_parts",
+    "segmentation_id": null,
+    "segmentation": null,
+    "separate": [
+      "eyes",
+      "eyebrows",
+      "eyelashes",
+      "hair",
+      "clothes",
+      "accessories",
+      "detachable"
+    ],
+    "views": 8,
+    "min_part_faces": null,
+    "max_parts": 4,
+    "split_shells": true,
+    "export": {
+      "per_part_glbs": false,
+      "previews": true
+    }
+  },
+  "models": [
+    {
+      "id": "grounding_dino_base",
+      "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+      "license_id": "apache-2.0"
+    },
+    {
+      "id": "sam2_1_hiera_large",
+      "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+      "license_id": "apache-2.0"
+    },
+    {
+      "id": "see_through_l2d",
+      "revision": "0b0608310fb7a89e32ecd7397147a249540cf1e7",
+      "license_id": "apache-2.0"
+    },
+    {
+      "id": "raster_lifter",
+      "revision": null,
+      "license_id": "nvidia-source-code-nc"
+    }
+  ],
+  "progress": {
+    "percent": 100,
+    "step_id": "previews",
+    "step_index": 8,
+    "step_count": 8,
+    "message": "Done",
+    "updated_at": "2026-10-16T10:01:00Z"
+  },
+  "steps": [
+    {
+      "id": "prepare",
+      "label": "Preparing inputs",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 2.1,
+      "details": {}
+    },
+    {
+      "id": "segmentation_2d",
+      "label": "Segmenting image",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 3,
+      "details": {}
+    },
+    {
+      "id": "camera_fit",
+      "label": "Aligning camera",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 4.2,
+      "details": {}
+    },
+    {
+      "id": "label_lift",
+      "label": "Lifting labels to 3D",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 18.4,
+      "details": {}
+    },
+    {
+      "id": "assign_labels",
+      "label": "Assigning labels",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 3.3,
+      "details": {}
+    },
+    {
+      "id": "partition",
+      "label": "Separating parts",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 9.9,
+      "details": {}
+    },
+    {
+      "id": "export",
+      "label": "Exporting parts",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 14.7,
+      "details": {}
+    },
+    {
+      "id": "previews",
+      "label": "Rendering previews",
+      "status": "done",
+      "message": null,
+      "progress": 1,
+      "duration_s": 2,
+      "details": {}
+    }
+  ],
+  "warnings": [
+    {
+      "code": "max_parts_exceeded",
+      "message": "3 parts over the max_parts budget (4) stay on the base as regions.",
+      "step_id": "partition"
+    },
+    {
+      "code": "floater_candidates",
+      "message": "2 small unlabelled shells stay on the base.",
+      "step_id": "partition"
+    },
+    {
+      "code": "charts_cross_boundary",
+      "message": "UV charts of cut parts may cross part borders.",
+      "step_id": "export"
+    }
+  ],
+  "result": {
+    "status": "completed",
+    "manifest_url": "/api/v1/part-analyses/pa_0123456789ab/manifest",
+    "assembled_url": "/api/v1/part-analyses/pa_0123456789ab/model.glb",
+    "download_url": "/api/v1/part-analyses/pa_0123456789ab/export/glb",
+    "zip_url": "/api/v1/part-analyses/pa_0123456789ab/export/zip",
+    "overlay_url": "/api/v1/part-analyses/pa_0123456789ab/segmentation/overlay.png",
+    "face_labels_url": "/api/v1/part-analyses/pa_0123456789ab/buffers/face_labels",
+    "preview_urls": {
+      "front": "/api/v1/part-analyses/pa_0123456789ab/previews/front.png",
+      "back": "/api/v1/part-analyses/pa_0123456789ab/previews/back.png",
+      "left": "/api/v1/part-analyses/pa_0123456789ab/previews/left.png",
+      "right": "/api/v1/part-analyses/pa_0123456789ab/previews/right.png"
+    },
+    "region_attribute": "_FEATURE_ID_0",
+    "part_count": 6,
+    "physical_count": 4,
+    "deferred_count": 2,
+    "region_count": 4,
+    "camera_fit_iou": 0.91,
+    "unlabelled_face_ratio": 0.0061,
+    "partner_filled_ratio": 0.43,
+    "cut_partner_consistency": 0.97,
+    "parts": [
+      {
+        "id": "body",
+        "label": "Body",
+        "category": "body",
+        "group": "body",
+        "kind": "base",
+        "node_name": "part:body",
+        "region_value": 1,
+        "faces": 1536,
+        "confidence": 1,
+        "side": "center",
+        "model_url": "/api/v1/part-analyses/pa_0123456789ab/parts/body/model.glb",
+        "download_url": "/api/v1/part-analyses/pa_0123456789ab/parts/body/export/glb",
+        "mask_url": null,
+        "thumbnail_url": null,
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "occluded_geometry"
+          ]
+        }
+      },
+      {
+        "id": "hair",
+        "label": "Hair",
+        "category": "hair",
+        "group": "hair",
+        "kind": "physical",
+        "node_name": "part:hair",
+        "region_value": 30,
+        "faces": 448,
+        "confidence": 0.88,
+        "side": "center",
+        "model_url": "/api/v1/part-analyses/pa_0123456789ab/parts/hair/model.glb",
+        "download_url": "/api/v1/part-analyses/pa_0123456789ab/parts/hair/export/glb",
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/30",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/hair.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "closure"
+          ]
+        }
+      },
+      {
+        "id": "eye.left",
+        "label": "Left eye",
+        "category": "eye.left",
+        "group": "eyes",
+        "kind": "physical",
+        "node_name": "part:eye.left",
+        "region_value": 20,
+        "faces": 192,
+        "confidence": 0.81,
+        "side": "left",
+        "model_url": "/api/v1/part-analyses/pa_0123456789ab/parts/eye.left/model.glb",
+        "download_url": "/api/v1/part-analyses/pa_0123456789ab/parts/eye.left/export/glb",
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/20",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/eye.left.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "occluded_geometry",
+            "closure"
+          ]
+        }
+      },
+      {
+        "id": "eye.right",
+        "label": "Right eye",
+        "category": "eye.right",
+        "group": "eyes",
+        "kind": "physical",
+        "node_name": "part:eye.right",
+        "region_value": 21,
+        "faces": 192,
+        "confidence": 0.8,
+        "side": "right",
+        "model_url": "/api/v1/part-analyses/pa_0123456789ab/parts/eye.right/model.glb",
+        "download_url": "/api/v1/part-analyses/pa_0123456789ab/parts/eye.right/export/glb",
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/21",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/eye.right.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "occluded_geometry",
+            "closure"
+          ]
+        }
+      },
+      {
+        "id": "clothing.top",
+        "label": "Top",
+        "category": "clothing.top",
+        "group": "clothes",
+        "kind": "physical",
+        "node_name": "part:clothing.top",
+        "region_value": 40,
+        "faces": 256,
+        "confidence": 0.84,
+        "side": "center",
+        "model_url": "/api/v1/part-analyses/pa_0123456789ab/parts/clothing.top/model.glb",
+        "download_url": "/api/v1/part-analyses/pa_0123456789ab/parts/clothing.top/export/glb",
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/40",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/clothing.top.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "closure"
+          ]
+        }
+      },
+      {
+        "id": "eyebrow.left",
+        "label": "Left eyebrow",
+        "category": "eyebrow.left",
+        "group": "eyebrows",
+        "kind": "physical_deferred",
+        "node_name": null,
+        "region_value": 22,
+        "faces": 4,
+        "confidence": 0.61,
+        "side": "left",
+        "model_url": null,
+        "download_url": null,
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/22",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/eyebrow.left.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "geometry"
+          ]
+        }
+      },
+      {
+        "id": "eyebrow.right",
+        "label": "Right eyebrow",
+        "category": "eyebrow.right",
+        "group": "eyebrows",
+        "kind": "physical_deferred",
+        "node_name": null,
+        "region_value": 23,
+        "faces": 4,
+        "confidence": 0.6,
+        "side": "right",
+        "model_url": null,
+        "download_url": null,
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/23",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/eyebrow.right.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": [
+            "geometry"
+          ]
+        }
+      },
+      {
+        "id": "body.head.face",
+        "label": "Face",
+        "category": "body.head.face",
+        "group": "face",
+        "kind": "region",
+        "node_name": null,
+        "region_value": 3,
+        "faces": 76,
+        "confidence": 0.9,
+        "side": "center",
+        "model_url": null,
+        "download_url": null,
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/3",
+        "thumbnail_url": null,
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": []
+        }
+      },
+      {
+        "id": "accessory.jewelry",
+        "label": "Jewelry",
+        "category": "accessory.jewelry",
+        "group": "accessories",
+        "kind": "region",
+        "node_name": null,
+        "region_value": 53,
+        "faces": 10,
+        "confidence": 0.66,
+        "side": "center",
+        "model_url": null,
+        "download_url": null,
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/53",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/accessory.jewelry.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": []
+        }
+      },
+      {
+        "id": "accessory.jewelry_2",
+        "label": "Jewelry 2",
+        "category": "accessory.jewelry",
+        "group": "accessories",
+        "kind": "region",
+        "node_name": null,
+        "region_value": 53,
+        "faces": 8,
+        "confidence": 0.58,
+        "side": "center",
+        "model_url": null,
+        "download_url": null,
+        "mask_url": "/api/v1/part-analyses/pa_0123456789ab/masks/53",
+        "thumbnail_url": "/api/v1/part-analyses/pa_0123456789ab/thumbs/accessory.jewelry_2.webp",
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": []
+        }
+      },
+      {
+        "id": "component_001",
+        "label": "Component 1",
+        "category": "unknown",
+        "group": "other",
+        "kind": "region",
+        "node_name": null,
+        "region_value": 0,
+        "faces": 16,
+        "confidence": null,
+        "side": "center",
+        "model_url": null,
+        "download_url": null,
+        "mask_url": null,
+        "thumbnail_url": null,
+        "refinement": {
+          "status": "untouched",
+          "locked": true,
+          "eligible": true,
+          "needs": []
+        }
+      }
+    ],
+    "stats": {
+      "vertices": 1553,
+      "faces": 2624,
+      "materials": 1,
+      "textures": 0,
+      "texture_size": null,
+      "has_uv": true,
+      "bbox_min": [
+        -0.35,
+        -0.5,
+        -0.35
+      ],
+      "bbox_max": [
+        0.35,
+        0.51,
+        0.35
+      ],
+      "dimensions": [
+        0.7,
+        1.01,
+        0.7
+      ],
+      "file_size_bytes": 93508
+    },
+    "timings": {
+      "prepare": 2.1,
+      "segmentation_2d": 3,
+      "camera_fit": 4.2,
+      "label_lift": 18.4,
+      "assign_labels": 3.3,
+      "partition": 9.9,
+      "export": 14.7,
+      "previews": 2,
+      "total": 57.6
+    }
+  },
+  "error": null,
+  "job_id": "job_0123456789ab"
+}

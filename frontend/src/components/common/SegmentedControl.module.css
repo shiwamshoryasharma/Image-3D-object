@@ -34,6 +34,12 @@
   font-size: var(--text-xs);
 }
 
+/* Touch density: every segment is at least a --hit-min square (min-block-size wins over the fixed height). */
+:global(:root[data-density='touch']) .segment {
+  min-block-size: var(--hit-min);
+  min-inline-size: var(--hit-min);
+}
+
 .segment:hover:not(:disabled):not(.selected) {
   color: var(--color-text);
   background: var(--color-surface-3);

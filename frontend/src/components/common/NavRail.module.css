@@ -1,0 +1,56 @@
+/* Vertically centred without a transform (insets + auto margins), so fixed descendants keep the viewport. */
+.rail {
+  position: fixed;
+  z-index: var(--z-header);
+  top: var(--floating-gap);
+  bottom: var(--floating-gap);
+  left: calc(var(--floating-gap) + env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: var(--rail-width);
+  height: fit-content;
+  max-height: calc(100dvh - 2 * var(--floating-gap));
+  margin-block: auto;
+  padding: var(--space-2) 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Glass where the browser can blur the content behind it; the solid surface above is the fallback. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rail {
+    background: var(--surface-glass);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* 56 × 56 targets (the shared item look comes from FloatingNav.module.css; the child selector outranks it). */
+.items > .item {
+  width: 56px;
+  min-width: 56px;
+  min-height: 56px;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}

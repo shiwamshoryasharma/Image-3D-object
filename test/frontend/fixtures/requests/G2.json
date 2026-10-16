@@ -1,0 +1,1 @@
+{"source":{"kind":"image","reference_set_id":"rs_0123456789ab","primary_image_id":"img_0123456789ab"},"reconstruction":{"settings":{"resolution":1024,"seed":0,"randomize_seed":true,"polygon_target":500000,"texture_size":2048,"remove_background":true,"reference_mode":"primary_only"}},"parts":{"separate":["eyes","eyebrows","eyelashes","hair","clothes","accessories","detachable"]}}

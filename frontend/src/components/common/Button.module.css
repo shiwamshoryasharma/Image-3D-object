@@ -36,38 +36,44 @@
   width: 100%;
 }
 
+/* Heights follow the density tokens (28 / 34 / 44 px by default, styles/modes.css raises them for touch). */
 .sm {
-  height: 28px;
+  height: var(--control-h-sm);
   padding: 0 var(--space-3);
   font-size: var(--text-xs);
 }
 
 .md {
-  height: 34px;
+  height: var(--control-h-md);
   padding: 0 var(--space-4);
   font-size: var(--text-sm);
 }
 
 .lg {
-  height: 44px;
+  height: var(--control-h-lg);
   padding: 0 var(--space-5);
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
   border-radius: var(--radius-md);
 }
 
+:global(:root[data-density='touch']) .button {
+  min-inline-size: var(--hit-min);
+}
+
+/* White label on --color-primary (≥ 4.6:1, P13); --color-accent stays for rings and accents. */
 .primary {
-  background: var(--color-accent);
+  background: var(--color-primary);
   color: #fff;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 4px 14px rgb(139 108 255 / 0.25);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--color-accent-hover);
+  background: var(--color-primary-hover);
 }
 
 .primary:active:not(:disabled) {
-  background: var(--color-accent-active);
+  background: var(--color-primary-pressed);
 }
 
 .secondary {
@@ -130,13 +136,13 @@
 }
 
 .icon_sm {
-  width: 28px;
-  height: 28px;
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
 }
 
 .icon_md {
-  width: 34px;
-  height: 34px;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
 }
 
 .icon_ghost:hover:not(:disabled) {

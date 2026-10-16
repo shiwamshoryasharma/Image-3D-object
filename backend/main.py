@@ -52,6 +52,7 @@ from core.error_handlers import register_exception_handlers  # noqa: E402
 from core.lifecycle import build_lifespan  # noqa: E402
 from core.logging import configure_logging, flush_logging  # noqa: E402
 from core.middleware import REQUEST_ID_HEADER, RequestContextMiddleware  # noqa: E402
+from core.part_aware_container import PartProviderOverrides  # noqa: E402
 from inference.base import InferenceEngine  # noqa: E402
 from launcher import BlenderProcessRunner  # noqa: E402
 from services.blender_runtime_service import RuntimeManagerFactory  # noqa: E402
@@ -67,6 +68,7 @@ def create_app(
     engine: InferenceEngine | None = None,
     blender_runtime_factory: RuntimeManagerFactory | None = None,
     blender_runner: BlenderProcessRunner | None = None,
+    part_providers: PartProviderOverrides | None = None,
 ) -> FastAPI:
     """Build the FastAPI application.
 
@@ -78,11 +80,17 @@ def create_app(
             managers with fake detectors/downloaders); defaults to the real manager.
         blender_runner: process runner for Auto Mesh Tuner runs (tests inject a double); defaults to the
             launcher's :class:`~launcher.BlenderProcessRunner`.
+        part_providers: part-aware provider/registry/executor doubles (tests); defaults to the lazily resolved
+            real ones (:mod:`core.part_aware_container`).
     """
     settings = settings or get_settings()
     configure_logging(settings)
     container = build_container(
-        settings, engine=engine, blender_runtime_factory=blender_runtime_factory, blender_runner=blender_runner
+        settings,
+        engine=engine,
+        blender_runtime_factory=blender_runtime_factory,
+        blender_runner=blender_runner,
+        part_providers=part_providers,
     )
 
     docs_enabled = not settings.is_production

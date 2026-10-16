@@ -706,3 +706,25 @@ export interface WsClientMessage {
 export const WS_CLOSE_AUTH_FAILED = 4401
 /** Close code sent by the server on shutdown. */
 export const WS_CLOSE_GOING_AWAY = 1001
+
+// ------------------------------------------------------------------------------------------------
+// Part-aware additions (part-aware DESIGN.md §6.7; APPEND-ONLY, this file stays import-free)
+// The other part-aware wire types live in `partAwareTypes.ts`.
+// ------------------------------------------------------------------------------------------------
+
+/** Provenance of a reference image imported from a text-to-image candidate (`…/candidates/{index}/use`). */
+export interface ImageSourceOut {
+  kind: 't2i'
+  image_generation_id: string
+  candidate_index: number
+  model_id: string
+  model_revision: string | null
+  license_id: string
+  seed: number
+}
+
+/** Interface merging with {@link ReferenceImage} above (additive response field). */
+export interface ReferenceImage {
+  /** `null` for uploads; absent on older backends. */
+  source?: ImageSourceOut | null
+}

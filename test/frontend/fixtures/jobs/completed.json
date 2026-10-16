@@ -1,0 +1,88 @@
+{
+  "id": "job_0123456789ab",
+  "status": "completed",
+  "engine": "trellis2",
+  "created_at": "2026-10-16T10:00:00Z",
+  "started_at": "2026-10-16T10:00:02Z",
+  "finished_at": "2026-10-16T10:01:35Z",
+  "reference_set_id": "rs_0123456789ab",
+  "primary_image_id": "img_0123456789ab",
+  "references": [
+    {
+      "image_id": "img_0123456789ab",
+      "slot": "front",
+      "is_primary": true
+    }
+  ],
+  "settings": {
+    "resolution": 1024,
+    "seed": 0,
+    "randomize_seed": true,
+    "polygon_target": 500000,
+    "texture_size": 2048,
+    "remove_background": true,
+    "reference_mode": "primary_only",
+    "advanced": null
+  },
+  "seed": 123456,
+  "queue_position": null,
+  "progress": {
+    "stage": "done",
+    "stage_label": "Done",
+    "stage_index": 9,
+    "stage_count": 9,
+    "step": null,
+    "total_steps": null,
+    "percent": 100,
+    "message": "Completed",
+    "elapsed_seconds": 93,
+    "eta_seconds": null,
+    "updated_at": "2026-10-16T10:00:20Z"
+  },
+  "error": null,
+  "result": {
+    "model_url": "/api/v1/jobs/job_0123456789ab/model.glb",
+    "download_url": "/api/v1/jobs/job_0123456789ab/export/glb",
+    "preview_url": "/api/v1/jobs/job_0123456789ab/preview",
+    "stats": {
+      "vertices": 250123,
+      "faces": 499870,
+      "materials": 1,
+      "textures": 3,
+      "texture_size": 2048,
+      "has_uv": true,
+      "bbox_min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "bbox_max": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "dimensions": [
+        1,
+        1,
+        1
+      ],
+      "file_size_bytes": 12345678
+    },
+    "timings": {
+      "preprocessing": 1.2,
+      "conditioning": 0.8,
+      "sparse_structure": 11.2,
+      "shape": 32.9,
+      "texture": 28.1,
+      "decoding": 6.5,
+      "exporting": 9.6,
+      "finalizing": 0.1,
+      "total": 90.4
+    },
+    "seed": 123456,
+    "resolution": 1024,
+    "effective_resolution": 1024,
+    "texture_size": 2048,
+    "polygon_target": 500000
+  }
+}

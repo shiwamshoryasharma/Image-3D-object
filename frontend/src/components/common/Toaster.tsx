@@ -1,7 +1,9 @@
 import { CircleCheck, CircleX, Info, TriangleAlert, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
+import { createPortal } from 'react-dom'
 
 import { useToastStore, type Toast } from '../../store/toastStore'
+import { getTopModal, subscribeModalStack } from './modalStack'
 import styles from './Toaster.module.css'
 
 const ICONS = {
@@ -10,6 +12,10 @@ const ICONS = {
   warning: TriangleAlert,
   error: CircleX,
 } as const
+
+function noModal(): null {
+  return null
+}
 
 function ToastItem({ toast }: { toast: Toast }) {
   const dismiss = useToastStore((s) => s.dismiss)
@@ -34,14 +40,19 @@ function ToastItem({ toast }: { toast: Toast }) {
   )
 }
 
-/** Toast stack (aria-live). Mounted once at the app root. */
+/**
+ * Toast stack (aria-live). Mounted once at the app root. A modal `<dialog>` makes everything outside it inert and
+ * hides it from assistive technology, so while one is open the stack renders inside the topmost modal (modalStack).
+ */
 export function Toaster() {
   const toasts = useToastStore((s) => s.toasts)
-  return (
+  const topModal = useSyncExternalStore(subscribeModalStack, getTopModal, noModal)
+  const region = (
     <div className={styles.region} aria-live="polite" aria-relevant="additions">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} />
       ))}
     </div>
   )
+  return topModal ? createPortal(region, topModal) : region
 }

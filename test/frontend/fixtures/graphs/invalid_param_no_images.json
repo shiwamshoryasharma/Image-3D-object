@@ -1,0 +1,95 @@
+{
+  "name": "invalid_param_no_images",
+  "description": "Input Image bound to an empty reference set.",
+  "features": "full",
+  "limits": null,
+  "bound": {
+    "imageCount": 0,
+    "referenceSetId": null,
+    "promptLength": 34,
+    "promptMax": 2000,
+    "viewedJobCompleted": false
+  },
+  "doc": {
+    "schema": "img3d.ui_workflow",
+    "version": 1,
+    "revision": 1,
+    "graph": {
+      "nodes": [
+        {
+          "id": "n_input_image",
+          "type": "input_image",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_image_to_3d",
+          "type": "image_to_3d",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_export",
+          "type": "export",
+          "version": 1,
+          "mode": "active"
+        }
+      ],
+      "edges": [
+        {
+          "from": {
+            "node": "n_input_image",
+            "port": "images"
+          },
+          "to": {
+            "node": "n_image_to_3d",
+            "port": "images"
+          }
+        },
+        {
+          "from": {
+            "node": "n_image_to_3d",
+            "port": "mesh"
+          },
+          "to": {
+            "node": "n_export",
+            "port": "asset"
+          }
+        }
+      ]
+    },
+    "layout": {
+      "positions": {
+        "n_input_image": {
+          "x": 0,
+          "y": 0
+        },
+        "n_image_to_3d": {
+          "x": 320,
+          "y": 260
+        },
+        "n_export": {
+          "x": 960,
+          "y": 260
+        }
+      },
+      "collapsed": [],
+      "viewport": {
+        "x": 40,
+        "y": 40,
+        "zoom": 0.9
+      }
+    }
+  },
+  "expected_issues": [
+    {
+      "severity": "error",
+      "code": "invalid_param",
+      "nodeId": "n_input_image",
+      "port": null,
+      "message": "Add at least one reference image."
+    }
+  ],
+  "exhaustive": false,
+  "server": null
+}

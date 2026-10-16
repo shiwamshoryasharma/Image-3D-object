@@ -1,0 +1,139 @@
+{
+  "id": "job_00000000a001",
+  "status": "completed",
+  "engine": "trellis2",
+  "created_at": "2026-10-15T09:00:00.000Z",
+  "started_at": "2026-10-15T09:00:02.125Z",
+  "finished_at": "2026-10-15T09:04:31.250Z",
+  "reference_set_id": "rs_00000000a001",
+  "primary_image_id": "img_00000000a001",
+  "references": [
+    {
+      "image_id": "img_00000000a001",
+      "slot": "front",
+      "is_primary": true
+    },
+    {
+      "image_id": "img_00000000a002",
+      "slot": "detail",
+      "is_primary": false
+    }
+  ],
+  "settings": {
+    "resolution": 1024,
+    "seed": 0,
+    "randomize_seed": true,
+    "polygon_target": 500000,
+    "texture_size": 2048,
+    "remove_background": true,
+    "reference_mode": "primary_only",
+    "advanced": null
+  },
+  "seed": 123456,
+  "progress": {
+    "stage": "done",
+    "stage_label": "Done",
+    "stage_index": 9,
+    "stage_count": 9,
+    "step": null,
+    "total_steps": null,
+    "percent": 100.0,
+    "message": "Completed",
+    "elapsed_seconds": null,
+    "eta_seconds": null,
+    "updated_at": "2026-10-15T09:04:31.250Z"
+  },
+  "error": null,
+  "result": {
+    "stats": {
+      "vertices": 8,
+      "faces": 12,
+      "materials": 1,
+      "textures": 1,
+      "texture_size": 64,
+      "has_uv": true,
+      "bbox_min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "bbox_max": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "dimensions": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "file_size_bytes": 1620
+    },
+    "timings": {
+      "preprocessing": 1.204,
+      "conditioning": 0.811,
+      "sparse_structure": 9.402,
+      "shape": 61.337,
+      "texture": 52.918,
+      "decoding": 6.115,
+      "exporting": 132.477,
+      "finalizing": 0.412,
+      "total": 264.676
+    },
+    "seed": 123456,
+    "resolution": 1024,
+    "effective_resolution": 1024,
+    "texture_size": 2048,
+    "polygon_target": 500000,
+    "has_preview": true,
+    "metadata": {
+      "engine": "trellis2",
+      "model": "TRELLIS.2-4B",
+      "pipeline_type": "1024_cascade",
+      "requested_resolution": 1024,
+      "effective_resolution": 1024,
+      "seed": 123456,
+      "preprocess": "alpha_crop",
+      "attention_backend": "sdpa",
+      "low_vram": true,
+      "sparse_voxels": 21345,
+      "shape_tokens": 21345,
+      "sampler_params": {
+        "sparse_structure": {
+          "steps": 12,
+          "guidance_strength": 7.5,
+          "guidance_rescale": 0.7,
+          "rescale_t": 5.0
+        },
+        "shape": {
+          "steps": 12,
+          "guidance_strength": 7.5,
+          "guidance_rescale": 0.5,
+          "rescale_t": 3.0
+        },
+        "texture": {
+          "steps": 12,
+          "guidance_strength": 1.0,
+          "guidance_rescale": 0.0,
+          "rescale_t": 3.0
+        }
+      },
+      "polygon_target": 500000,
+      "texture_size": 2048,
+      "glb_webp_textures": true,
+      "engine_mesh_stats": {
+        "vertices": 8,
+        "faces": 12,
+        "decoded_vertices": 1048576,
+        "decoded_faces": 2097152,
+        "texture_size": 2048,
+        "polygon_target": 500000,
+        "webp_textures": true,
+        "file_size_bytes": 1620,
+        "bake_seconds": 98.214,
+        "write_seconds": 2.301
+      }
+    }
+  },
+  "cancel_requested": false
+}

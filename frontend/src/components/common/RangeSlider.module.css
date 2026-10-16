@@ -9,6 +9,15 @@
   cursor: pointer;
 }
 
+/*
+ * Touch density: a range input cannot carry a ::before hit area, so its own box grows instead. Equal block padding
+ * around today's 20px content box keeps the track and the thumb exactly where they were.
+ */
+:global(:root[data-density='touch']) .range {
+  box-sizing: content-box;
+  padding-block: calc((var(--hit-min) - 20px) / 2);
+}
+
 .range:disabled {
   opacity: 0.5;
   cursor: not-allowed;

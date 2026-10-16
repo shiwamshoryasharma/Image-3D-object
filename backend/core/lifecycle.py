@@ -42,6 +42,8 @@ async def startup(container: ServiceContainer) -> None:
     container.system_service.mark_started()
     container.worker.start()
     container.tuning_worker.start()
+    if container.part_aware:
+        await container.part_aware.start()
 
     engine_status = container.engine.status()
     logger.info("Inference engine '%s' state: %s", container.engine.name, engine_status.state)
@@ -79,6 +81,13 @@ async def shutdown(container: ServiceContainer) -> None:
         task.cancel()
     if container.background_tasks:
         await asyncio.gather(*container.background_tasks, return_exceptions=True)
+
+    if container.part_aware:
+        try:
+            # Before the generation worker stops: cancels the active run and awaits its GPU task.
+            await container.part_aware.stop(timeout=settings.shutdown_timeout_s)
+        except Exception:  # noqa: BLE001 - keep shutting down
+            logger.exception("Error while stopping the part-aware layer")
 
     try:
         await container.worker.stop(timeout=settings.shutdown_timeout_s)

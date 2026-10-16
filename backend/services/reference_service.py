@@ -14,7 +14,7 @@ from pathlib import Path, PurePath
 from config.settings import Settings
 from core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from models.enums import SINGLE_SLOTS, ReferenceSlot
-from models.reference import ReferenceImage, ReferenceSet
+from models.reference import ImageSource, ReferenceImage, ReferenceSet
 from processing.image_ops import make_thumbnail_webp
 from processing.image_validation import validate_image_bytes
 from schemas.references import UpdateReferenceImageRequest
@@ -136,8 +136,13 @@ class ReferenceService:
         slot: ReferenceSlot,
         label: str | None = None,
         make_primary: bool = False,
+        source: ImageSource | None = None,
     ) -> tuple[ReferenceImage, ReferenceSet]:
-        """Validate and store an image. Single slots are replaced (primary flag carries over)."""
+        """Validate and store an image. Single slots are replaced (primary flag carries over).
+
+        ``source`` records where a generated image came from (e.g. a text-to-image candidate); uploads leave it
+        ``None``.
+        """
         async with self.locked_set(set_id) as ref_set:
             replaced: ReferenceImage | None = None
             if slot in SINGLE_SLOTS:
@@ -171,6 +176,7 @@ class ReferenceService:
                 created_at=utcnow(),
                 file_name=f"{image_id}{info.extension}",
                 thumbnail_name=f"{image_id}_thumb.webp",
+                source=source.model_copy(deep=True) if source is not None else None,
             )
             await asyncio.to_thread(self._store.write_image_files, image, data, thumbnail)
 

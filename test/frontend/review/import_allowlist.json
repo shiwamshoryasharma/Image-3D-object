@@ -1,0 +1,17 @@
+{
+  "$comment": "Grandfathered import edges for import_boundaries.mjs (UI_DESIGN.md §1.4). Deletion-only: F0 alone adds entries; a later slice deletes the entries whose `from` file it owns in the commit that removes the violation. Paths are relative to frontend/src; `to` is a module id without extension; `names` limits the imported values (\"*\" = any).",
+  "entries": [
+    {
+      "from": "components/meshTuner/**",
+      "to": ["api/tunings", "api/client"],
+      "names": ["*"],
+      "reason": "Paused Auto Mesh Tuner components (sha256-pinned, never edited): TunedDownloadButton → downloadTunedGlb, TuningReport → tuningFileUrl/tuningPreviewUrl and API_PREFIX."
+    },
+    {
+      "from": "components/viewer/ModelStatsCard.tsx",
+      "to": ["api/jobs"],
+      "names": ["downloadJobGlb"],
+      "reason": "Until F7 routes the download through actions/downloads.ts (F7 deletes this entry)."
+    }
+  ]
+}

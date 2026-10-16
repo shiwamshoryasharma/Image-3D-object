@@ -185,8 +185,15 @@ Every dependency with version and license: [**THIRD_PARTY_NOTICES.md**](THIRD_PA
 | TRELLIS.2 engine adapter, native CUDA extensions, background removal | ✅ Done — verified on RTX 5090 |
 | React UI (references, settings, progress, viewer, history, login) | ✅ Done |
 | Blender runtime detection / selection / portable download | ✅ Done — tested |
-| Auto Mesh Tuner steps (repair, face/eye refinement, topology) | 🧪 In progress — experimental |
+| Auto Mesh Tuner steps (repair, face/eye refinement, topology) | ⏸️ Paused — experimental; new tuning runs are switched off until the part-aware layer is approved |
+| Part-aware layer: run framework, feature flags, model registry + `/features`, part taxonomy + manifest `img3d.parts/1`, mesh geometry core | 🧪 In progress — backend pieces landed and tested, not wired into the UI yet |
+| Prompt-to-3D (Z-Image-Turbo → TRELLIS.2), 2D segmentation (Grounding DINO + SAM 2.1 + Florence-2), label lifting, part extraction, workflows | 🧪 In progress |
+| Four UI modes (Default, Node, Mobile, Tablet) selectable in Settings | 🧪 In progress — shared API/state layer, workflow engine and touch primitives landed; the mode shells are not built yet |
 | True multi-view conditioning | 🗺️ Planned (data model and API already support it) |
+
+> **Work in progress (part-aware milestone).** The current image-to-3D path is unchanged and protected by hash-pinned
+> tests; everything new sits behind feature flags (`IMG3D_PART_AWARE_ENABLED`, …) and additive API routes. The UI you
+> run today is still the Default UI. Design notes: `.claude/skills/img3d-part-aware/`.
 
 ---
 
@@ -437,7 +444,10 @@ Img3D needs Blender ≥ 5.1. Point `IMG3D_BLENDER_EXECUTABLE` at your `blender.e
 
 - [x] Local TRELLIS.2 generation, live progress, viewer, history, GLB export
 - [x] Blender runtime detection, selection and verified portable download
-- [ ] Finish and verify the Auto Mesh Tuner repair / refinement steps on real meshes
+- [ ] Part-aware assets: separate eyes, hair, clothes, accessories and detachable objects as parts (eyebrows/eyelashes as part records), keep face/body as semantic regions, preserve part relationships for reassembly
+- [ ] Prompt-to-3D next to image-to-3D
+- [ ] Four UI modes selectable in Settings: Default (polished), Node (ComfyUI-style workflow), Mobile, Tablet
+- [ ] Finish and verify the Auto Mesh Tuner repair / refinement steps on real meshes (after the part-aware layer is approved)
 - [ ] Live end-to-end validation of Auto Tune from the UI
 - [ ] True multi-view conditioning using the existing multi-reference slots
 

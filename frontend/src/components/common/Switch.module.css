@@ -28,10 +28,14 @@
   color: var(--color-text-subtle);
 }
 
+:global(:root[data-density='touch']) .row {
+  min-block-size: max(32px, var(--hit-min));
+}
+
 .track {
   position: relative;
   flex: none;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-control);
   border-radius: var(--radius-pill);
   background: var(--color-surface-4);
   padding: 0;
@@ -48,6 +52,17 @@
 .sm {
   width: 32px;
   height: 18px;
+}
+
+/* Touch density: the track keeps its look; a centred transparent hit area makes the target --hit-min square. */
+:global(:root[data-density='touch']) .track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--hit-min);
+  height: var(--hit-min);
+  translate: -50% -50%;
 }
 
 .thumb {

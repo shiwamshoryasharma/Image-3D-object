@@ -1,0 +1,22 @@
+{
+  "$comment": "gzip -9 bytes (node:zlib) of the clean 8654b90 production build (UI_DESIGN.md §8.1). Recorded by bundle_budget.mjs --record-baseline; F11 adds nodeShell.",
+  "commit": "8654b90",
+  "unit": "bytes",
+  "initialJs": 178454,
+  "initialCss": 14514,
+  "chunks": {
+    "three": 204625,
+    "r3f": 79012,
+    "ModelViewer": 5597
+  },
+  "files": {
+    "index.js": 108610,
+    "rolldown-runtime.js": 428,
+    "react.js": 67496,
+    "vendor.js": 1920,
+    "index.css": 14514,
+    "three.js": 204625,
+    "r3f.js": 79012,
+    "ModelViewer.js": 5597
+  }
+}

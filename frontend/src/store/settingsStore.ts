@@ -7,25 +7,22 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 import {
   SAMPLER_KEYS,
-  type AdvancedSettings,
   type EngineCapabilities,
-  type GenerationSettings,
   type NormalizedGenerationSettings,
-  type ReferenceMode,
-  type Resolution,
   type SamplerKey,
   type SamplerSettings,
   type SystemDefaults,
-  type TextureSize,
 } from '../api/types'
 import { clamp } from '../lib/format'
+import { SAMPLER_FIELDS, type SamplerField, type SamplerForm, type SettingsForm } from '../lib/settingsRequest.ts'
 import { STORAGE_KEYS } from '../lib/storage'
 
+// The form types and the request builder live in the pure `lib/settingsRequest.ts` (UI_DESIGN §1.3); re-exported here
+// so every existing import keeps compiling.
+export { toRequestSettings, SAMPLER_FIELDS, hasAdvancedOverrides } from '../lib/settingsRequest.ts'
+export type { SettingsForm, SamplerForm, SamplerField } from '../lib/settingsRequest.ts'
+
 export const MAX_SEED = 2_147_483_647
-
-export type SamplerField = keyof Required<SamplerSettings>
-
-export const SAMPLER_FIELDS: readonly SamplerField[] = ['steps', 'guidance_strength', 'guidance_rescale', 'rescale_t']
 
 /** Request bounds from the contract (§7.4). */
 export const SAMPLER_BOUNDS: Record<SamplerField, { min: number; max: number; step: number }> = {
@@ -40,18 +37,6 @@ export const SAMPLER_DEFAULTS: Record<SamplerKey, Required<SamplerSettings>> = {
   sparse_structure: { steps: 12, guidance_strength: 7.5, guidance_rescale: 0.7, rescale_t: 5.0 },
   shape: { steps: 12, guidance_strength: 7.5, guidance_rescale: 0.5, rescale_t: 3.0 },
   texture: { steps: 12, guidance_strength: 1.0, guidance_rescale: 0.0, rescale_t: 3.0 },
-}
-
-export type SamplerForm = Record<SamplerField, number | null>
-
-export interface SettingsForm {
-  resolution: Resolution
-  seed: number
-  randomize_seed: boolean
-  polygon_target: number
-  texture_size: TextureSize
-  remove_background: boolean
-  advanced: Record<SamplerKey, SamplerForm>
 }
 
 const emptySampler = (): SamplerForm => ({ steps: null, guidance_strength: null, guidance_rescale: null, rescale_t: null })
@@ -102,36 +87,6 @@ export function clampToCapabilities(form: SettingsForm, capabilities: EngineCapa
     polygon_target: Math.round(clamp(form.polygon_target, range.min, range.max)),
     seed: Math.round(clamp(form.seed, 0, MAX_SEED)),
   }
-}
-
-function hasAdvancedOverrides(advanced: Record<SamplerKey, SamplerForm>): boolean {
-  return SAMPLER_KEYS.some((key) => SAMPLER_FIELDS.some((field) => advanced[key][field] !== null))
-}
-
-/** Build the request `settings` object (only explicit advanced overrides are sent). */
-export function toRequestSettings(form: SettingsForm, referenceMode: ReferenceMode): GenerationSettings {
-  const settings: GenerationSettings = {
-    resolution: form.resolution,
-    seed: form.seed,
-    randomize_seed: form.randomize_seed,
-    polygon_target: form.polygon_target,
-    texture_size: form.texture_size,
-    remove_background: form.remove_background,
-    reference_mode: referenceMode,
-  }
-  if (hasAdvancedOverrides(form.advanced)) {
-    const advanced: AdvancedSettings = {}
-    for (const key of SAMPLER_KEYS) {
-      const sampler: SamplerSettings = {}
-      for (const field of SAMPLER_FIELDS) {
-        const value = form.advanced[key][field]
-        if (value !== null) sampler[field] = value
-      }
-      if (Object.keys(sampler).length > 0) advanced[key] = sampler
-    }
-    settings.advanced = advanced
-  }
-  return settings
 }
 
 /** Convert a job's normalized settings back into a form (used by "reuse settings"). */

@@ -1,5 +1,9 @@
 # Auto Mesh Tuner — handoff
 
+> **ON HOLD (user instruction, 2026-10-16): do NOT continue this work** — no tuning, refinement, eye/rig correction,
+> reference-aware optimisation or Blender tuning — until the user explicitly approves the part-aware milestone
+> (`.claude/skills/img3d-part-aware/HANDOFF.md`). Future tuning will consume that milestone's individual parts.
+
 **PAUSED again on 2026-10-16** at the user's request (they want to add/optimize something new first).
 First pause: 2026-10-15 ~14:35 (token budget). Read in this order to resume: this file → `DESIGN.md`
 (authoritative contract) → `progress/*_report.md` → `progress/resume_briefs.md` → `research/*.md` only as needed.

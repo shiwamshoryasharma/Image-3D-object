@@ -5,15 +5,21 @@
  *  3. once authenticated (or auth disabled): loads system status, the reference set and job history, and
  *     opens the realtime WebSocket (with REST polling fallback);
  *  4. on reconnect after an outage: re-syncs everything.
+ * Part-aware milestone (UI_DESIGN §2.12): backend features, run index, parts of the viewed job and the five new WS
+ * events. The Auto Mesh Tuner wiring is unchanged and makes GET requests only (runtime status, runs of the viewed
+ * job), locked or not: tuner mutations are reachable only from the (locked) tuner components (§3.9).
  */
 import { useEffect, useState } from 'react'
 
 import { configureClientHooks, getAuthToken } from '../api/client'
 import { RealtimeClient, type PollMode } from '../api/ws'
 import { useAuthStore } from '../store/authStore'
+import { useFeaturesStore } from '../store/featuresStore'
 import { isTerminal, useJobStore } from '../store/jobStore'
 import { isRunTerminal, useMeshTunerStore } from '../store/meshTunerStore'
+import { usePartStore } from '../store/partStore'
 import { useReferenceStore } from '../store/referenceStore'
+import { useRunStore } from '../store/runStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { useSystemStore } from '../store/systemStore'
 
@@ -51,7 +57,12 @@ async function pollBackend(mode: PollMode): Promise<boolean> {
   const active = activeJobId ? jobs[activeJobId] : undefined
   if (active && !isTerminal(active)) await useJobStore.getState().refreshJob(active.id)
   await pollMeshTuner(mode)
-  if (mode === 'safety') await useJobStore.getState().loadHistory()
+  if (mode === 'fallback') {
+    await Promise.all([useRunStore.getState().resyncActive(), usePartStore.getState().refreshActive()])
+  }
+  if (mode === 'safety') {
+    await Promise.all([useJobStore.getState().loadHistory(), useFeaturesStore.getState().refresh()])
+  }
   return true
 }
 
@@ -62,10 +73,18 @@ async function syncSessionData(): Promise<void> {
     useReferenceStore.getState().refresh(),
     useJobStore.getState().loadHistory(),
     useMeshTunerStore.getState().refreshRuntime(),
+    useFeaturesStore.getState().refresh(),
   ])
-  // Tuning runs of the model in the viewer (known only once the history has loaded).
+  // Tuning runs of the model in the viewer (known only once the history has loaded): GET only, viewing past results.
   const viewedJobId = useJobStore.getState().viewedJobId
-  if (viewedJobId) await useMeshTunerStore.getState().loadRunsForJob(viewedJobId, true)
+  const featuresReady = useFeaturesStore.getState().snapshot.status === 'ready'
+  usePartStore.getState().resetView(viewedJobId)
+  await Promise.all([
+    viewedJobId ? useMeshTunerStore.getState().loadRunsForJob(viewedJobId, true) : Promise.resolve(),
+    // GET routes work even when the part-aware flags are off (DESIGN §6.0); a legacy backend has none.
+    featuresReady ? useRunStore.getState().loadIndex() : Promise.resolve(),
+    featuresReady && viewedJobId ? usePartStore.getState().loadForJob(viewedJobId, true) : Promise.resolve(),
+  ])
 }
 
 export interface BackendSession {
@@ -128,6 +147,11 @@ export function useBackendSession(): BackendSession {
       client.on('job.updated', (job) => useJobStore.getState().upsertJob(job)),
       client.on('blender.updated', (runtime) => useMeshTunerStore.getState().applyRuntime(runtime)),
       client.on('tuning.updated', (run) => useMeshTunerStore.getState().upsertRun(run)),
+      client.on('features.updated', (features) => useFeaturesStore.getState().apply(features)),
+      client.on('image_generation.updated', (run) => useRunStore.getState().upsertImageGeneration(run)),
+      client.on('segmentation.updated', (run) => useRunStore.getState().upsertSegmentation(run)),
+      client.on('part_analysis.updated', (run) => usePartStore.getState().upsertAnalysis(run)),
+      client.on('workflow.updated', (workflow) => useRunStore.getState().upsertWorkflow(workflow)),
       client.on('auth-failure', () => {
         // A 4401 close proves the backend answered. Without marking it reachable, an outage that ends with a
         // rejected token (backend restarted with a new auth secret) leaves a stale "unreachable" banner on the
@@ -142,17 +166,31 @@ export function useBackendSession(): BackendSession {
       if (state.retrySignal !== previous.retrySignal) client.retryNow()
     })
 
-    // The viewer switched to another model: fetch its tuning runs (cached per job by the store).
+    // The viewer switched to another model: fetch its tuning runs and part analyses (cached per job by the stores).
     const unsubscribeViewed = useJobStore.subscribe((state, previous) => {
-      if (state.viewedJobId && state.viewedJobId !== previous.viewedJobId) {
-        void useMeshTunerStore.getState().loadRunsForJob(state.viewedJobId)
-      }
+      if (state.viewedJobId === previous.viewedJobId) return
+      usePartStore.getState().resetView(state.viewedJobId)
+      if (!state.viewedJobId) return
+      void useMeshTunerStore.getState().loadRunsForJob(state.viewedJobId)
+      if (useFeaturesStore.getState().snapshot.status === 'ready') void usePartStore.getState().loadForJob(state.viewedJobId)
     })
 
     // `hello` arrives on every (re)connect: REST is the source of truth for events missed while disconnected.
     let connectedOnce = false
     const unsubscribeHello = client.on('hello', () => {
-      if (connectedOnce) void useMeshTunerStore.getState().resync()
+      if (connectedOnce) {
+        void useMeshTunerStore.getState().resync()
+        void useRunStore.getState().resyncActive()
+        void useFeaturesStore
+          .getState()
+          .refresh()
+          .then(() => {
+            const viewed = useJobStore.getState().viewedJobId
+            if (viewed && useFeaturesStore.getState().snapshot.status === 'ready') {
+              void usePartStore.getState().loadForJob(viewed, true)
+            }
+          })
+      }
       connectedOnce = true
     })
 

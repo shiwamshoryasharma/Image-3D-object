@@ -36,8 +36,18 @@ Machine-local private notes (gitignored): `CLAUDE.local.md` in the repo root —
 - `.claude\skills\img3d-run-and-test\` — launch commands, test suites, real-generation smoke tests.
 - `.claude\skills\img3d-repo-publishing\` — git/GitHub publishing, `.gitignore` policy, licenses, pre-push checks.
 - `.claude\skills\img3d-auto-mesh-tuner\` — tuner design contract, handoff, progress reports, research.
+- `.claude\skills\img3d-part-aware\` — part-aware milestone index (`SKILL.md`), handoff, decisions, designs.
 
-## In progress: Auto Mesh Tuner (Blender >= 5.1 runtime + mesh repair)
+## Current milestone (started 2026-10-16; paused 3 times on token budget; WIP pushed): part-aware backend + four UI modes
+**Resume from `.claude\skills\img3d-part-aware\RESUME.md`** (one-page status table + next steps + file map; do NOT
+read the big DESIGN.md / UI_DESIGN.md in full — Grep the section index there). Work LEAN (user rule): one implementer
+agent per slice, no reviewer/integrator/checker agents, one review at the end. Tuning stays OFF until the user
+approves this milestone; the Default UI keeps the tuner card visible but locked. Tripo-style part layer (2D
+segmentation → lift labels onto the mesh → physical parts + semantic regions + manifest `img3d.parts/1`), prompt-to-3D
+(Z-Image-Turbo → TRELLIS.2), four UI modes (Default, Node, Mobile, Tablet). `DECISIONS.md` = user's choices.
+Always install packages with `-c backend\constraints.txt` (diffusers must stay 0.39.0).
+
+## Paused: Auto Mesh Tuner (Blender >= 5.1 runtime + mesh repair)
 PAUSED (2026-10-15, and again 2026-10-16 so the user can add/optimize something new first). Resume from
 `.claude\skills\img3d-auto-mesh-tuner\HANDOFF.md` (status table, what changed, numbered resume plan); agent prompts in
 `progress\resume_briefs.md`; contract in `DESIGN.md`. The 2026-10-15 code is pushed (marked experimental in README);

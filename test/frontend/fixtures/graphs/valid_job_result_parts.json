@@ -1,0 +1,87 @@
+{
+  "name": "valid_job_result_parts",
+  "description": "Existing Result mesh → Part Extraction → Export with a finished viewed job: valid.",
+  "features": "full",
+  "limits": null,
+  "bound": {
+    "imageCount": 1,
+    "referenceSetId": "rs_0123456789ab",
+    "promptLength": 34,
+    "promptMax": 2000,
+    "viewedJobCompleted": true
+  },
+  "doc": {
+    "schema": "img3d.ui_workflow",
+    "version": 1,
+    "revision": 1,
+    "graph": {
+      "nodes": [
+        {
+          "id": "n_job_result",
+          "type": "job_result",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_part_extraction",
+          "type": "part_extraction",
+          "version": 1,
+          "mode": "active"
+        },
+        {
+          "id": "n_export",
+          "type": "export",
+          "version": 1,
+          "mode": "active"
+        }
+      ],
+      "edges": [
+        {
+          "from": {
+            "node": "n_job_result",
+            "port": "mesh"
+          },
+          "to": {
+            "node": "n_part_extraction",
+            "port": "mesh"
+          }
+        },
+        {
+          "from": {
+            "node": "n_part_extraction",
+            "port": "parts"
+          },
+          "to": {
+            "node": "n_export",
+            "port": "asset"
+          }
+        }
+      ]
+    },
+    "layout": {
+      "positions": {
+        "n_job_result": {
+          "x": 0,
+          "y": 520
+        },
+        "n_part_extraction": {
+          "x": 640,
+          "y": 130
+        },
+        "n_export": {
+          "x": 960,
+          "y": 260
+        }
+      },
+      "collapsed": [],
+      "viewport": {
+        "x": 40,
+        "y": 40,
+        "zoom": 0.9
+      }
+    }
+  },
+  "expected_issues": [],
+  "exhaustive": true,
+  "server": null
+}

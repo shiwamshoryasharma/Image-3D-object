@@ -1,8 +1,12 @@
+/*
+ * --shell-inset-bottom keeps toasts clear of bottom chrome (styles/modes.css): 0 on the Default desktop and tablet
+ * layouts, the tab bar plus the sticky generate bar in the Default phone layout, the floating nav in the other shells.
+ */
 .region {
   position: fixed;
   z-index: var(--z-toast);
   right: var(--space-4);
-  bottom: var(--space-4);
+  bottom: calc(var(--space-4) + var(--shell-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -11,13 +15,33 @@
   pointer-events: none;
 }
 
+/*
+ * Default phone layout: always above the tab bar (also before the layout reports data-default-bar), and above the
+ * sticky generate bar while it is shown (P11).
+ */
 @media (max-width: 767px) {
   .region {
     right: var(--space-3);
     left: var(--space-3);
-    bottom: calc(var(--tabbar-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(max(var(--tabbar-height) + env(safe-area-inset-bottom, 0px), var(--shell-inset-bottom)) + var(--space-3));
     width: auto;
   }
+}
+
+/* The other shells have no Default tab bar: only their floating chrome counts. */
+:global(:root[data-ui-mode='mobile']) .region,
+:global(:root[data-ui-mode='tablet']) .region,
+:global(:root[data-ui-mode='node']) .region {
+  bottom: calc(var(--shell-inset-bottom) + var(--space-3));
+}
+
+/* Phone presentation at any width in the Mobile UI; centred like the sheets on wide screens. */
+:global(:root[data-ui-mode='mobile']) .region {
+  right: max(var(--space-3), env(safe-area-inset-right, 0px));
+  left: max(var(--space-3), env(safe-area-inset-left, 0px));
+  width: auto;
+  max-width: var(--sheet-max-width);
+  margin-inline: auto;
 }
 
 .toast {
@@ -104,6 +128,13 @@
 .close:hover {
   background: var(--color-surface-4);
   color: var(--color-text);
+}
+
+/* Touch density: a --hit-min target; the negative margins reach into the toast padding, so the layout stays. */
+:global(:root[data-density='touch']) .close {
+  width: var(--hit-min);
+  height: var(--hit-min);
+  margin: calc((24px - var(--hit-min)) / 2);
 }
 
 @keyframes enter {

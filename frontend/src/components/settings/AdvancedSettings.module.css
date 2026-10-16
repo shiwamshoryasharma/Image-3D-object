@@ -90,6 +90,23 @@
   right: var(--space-2);
 }
 
+/*
+ * Touch density: the disclosure row grows from 40px to --hit-min; the reset IconButton grows with --control-h-sm,
+ * so it moves into the corner and the legend keeps clear of it.
+ */
+:global(:root[data-density='touch']) .toggle {
+  min-block-size: max(40px, var(--hit-min));
+}
+
+:global(:root[data-density='touch']) .samplerReset {
+  top: var(--space-1);
+  right: var(--space-1);
+}
+
+:global(:root[data-density='touch']) .legend {
+  padding-right: calc(var(--control-h-sm) + var(--space-1));
+}
+
 .grid {
   clear: both;
   display: grid;

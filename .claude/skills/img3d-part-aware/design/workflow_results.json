@@ -1,0 +1,660 @@
+[
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "file": "E:/14-OCT-2026/Img3D/.claude/skills/img3d-part-aware/design/backend_c_pipeline_graph.md",
+   "summary": "This is a backend proposal (C) built pipeline-graph-first. It is design only; I changed no other project file. The one GPU unit of work stays the existing Job, with the same single queue and single gpu-worker thread. A job either has `plan = null` or a typed `JobPlan`. With `plan = null` it is today's image-to-3D path: `ImageTo3DPipeline.run` is called exactly as now, so `model.glb` and the stored `settings` stay byte-identical. Otherwise a new `PlanRunner` executes the steps in order: `source_image`, `source_job`, `text_to_image`, `preprocess`, `segmentation_2d`, `reconstruct` (which wraps the unchanged pipeline), `lift_labels`, `part_extraction`, `export`. `part_refine` and `tune` are reserved and locked.\n\nAll request forms compile through a server-side `PlanCompiler` into one canonical plan: legacy bodies, the simple form (`source` plus `settings.parts`) and the Node UI graph (`pipeline`, with node types, ports, params schemas and templates taken from `GET /pipeline/catalog`). A graph equal to \"input image \u2192 image-to-3D \u2192 export\" compiles to `plan = null`.\n\n- **Job kinds:** `image_to_3d`, `prompt_to_3d` and `part_decomposition`. The last one is a derived re-run on a completed job; it copies the parent's artifacts and does not wait for TRELLIS.\n- **Progress:** the `JobStage` list, the percent formula and the `/system` keys are untouched. Steps report under `preprocessing` before reconstruction and `finalizing` after it. Per-step status, the plan percent and the plan ETA live in `Job.plan`, delivered through the existing `job.updated` event.\n- **Providers:** text-to-image, 2D segmentation, lifting, part extraction and future 3D segmenters, completers and part generators each have a spec with licence metadata. Their states are honest (`not_approved`, `missing_dependencies`, `not_installed`, `license_required`, `unsupported`, `available`, `ready`, `error`). A model provider is usable only after the user approves it (`IMG3D_PROVIDERS_APPROVED`). Weights are installed only through a CLI that requires `--accept-license`.\n- **GPU sharing:** a `GpuResidencyManager` loads helper models lazily, offloads them after each step, and adds an optional `release_vram()` for TRELLIS.\n- **Parts:** 2D masks are lifted onto the faces of `model.glb`. Face and body stay one surface with regions marked per face (`_PART_ID`). Eyes, hair, clothes, accessories and detachable objects become separate nodes in one GLB that shares the original texture, with seam loops so they reassemble exactly. Eyebrows and eyelashes are deferred (mask now, geometry later). A versioned manifest (`img3d.parts/1`) records parts and their relationships.\n- **API additions:** `/features`, `/pipeline/catalog`, `/pipeline/validate`, `/providers` routes, part and step file routes, `POST /jobs/{id}/parts/rebuild`, a `?kind=` filter, the `features.updated` event and new error codes.\n- **Tuning:** hidden behind `IMG3D_FEATURE_MESH_TUNING=false`. Refine nodes are locked, and a refinement-consumer registry refuses registration while `IMG3D_PART_REFINEMENT_ENABLED=false`. No tuning algorithms are added.\n\nThe document also says exactly what the frontend needs, gives a per-file test plan, and splits the work into 11 slices (S0\u2013S10) with disjoint file ownership, dependencies, merge order and acceptance criteria.\n\nIt ends with 8 questions only you can decide:\n1. Which text-to-image model to approve.\n2. Which segmentation stack to approve.\n3. Whether models install by CLI only or also from inside the app.\n4. Whether to add `IMG3D_BLENDER_ENABLED=false` to your `.env` now.\n5. Whether open surface patches are acceptable as separated parts for this milestone.\n6. Whether to add an image-review step before 3D.\n7. Whether a separate process for transformers-5 models is allowed.\n8. How many multi-view lifting views to run by default."
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "file": "E:/14-OCT-2026/Img3D/.claude/skills/img3d-part-aware/design/frontend_a_shells.md",
+   "summary": "I wrote the frontend proposal. It is a design only; no other project file was changed.\n\n**Architecture**\n- Four UI modes render over the existing `api/` and zustand stores. Shared commands go in a new `src/actions/` and derived logic in `src/hooks/`.\n- Pure, Node-testable logic goes in `src/lib/`, `src/domain/` and `src/workflow/`.\n- The Default UI stays in the first bundle and reuses today's `Header`, `AppShell` and `HistoryDrawer` from their current paths, with no file moves. Node, Mobile and Tablet load lazily.\n- Each feature panel is split into a body component and a card wrapper with the same name and path, so Default looks the same while sheets, the tablet side panel and the node inspector reuse the bodies.\n- A new preferences store saves the UI mode in `img3d.preferences` (default `'default'`). An \"App settings\" dialog switches modes and survives the switch; `?ui=` gives a temporary override that is not saved.\n- Feature code no longer switches the Default mobile tab directly. It asks a new navigation store to show a view, and each shell maps that request.\n\n**Image-to-3D stays unchanged**\n- Every mode, including Node, builds jobs through one function. A test checks that the request is identical to today's when the input is an image and parts are off.\n- On a backend without the new features endpoint, Default shows exactly today's UI plus one App settings gear.\n\n**Node UI**\n- Six nodes: Input Image, Prompt, Segmentation, Image-to-3D, Part Extraction, Export.\n- A locked \"Refinement\" group reserves the slot for future tuning nodes.\n- The graph stores only topology, node modes and layout; all settings stay in the shared stores, so Default and Node always show the same values.\n- Connections are validated, and per-node status comes from the job's progress and step updates.\n- It uses `@xyflow/react` 12.12.0 (MIT), loaded only in Node mode. A list view gives keyboard and touch use without dragging.\n\n**Mobile and Tablet**\n- Mobile: full-screen viewer, floating bottom bar with a Generate button, and slide-up sheets for create, parts, library and progress.\n- Tablet switches automatically: left side rail in landscape at 840 px or wider, bottom bar otherwise, and the phone layout below 600 px. It does not flip while the keyboard is open.\n\n**Parts in the viewer:** an assembled parts model loads as a third model. Separate parts are shown or hidden directly; regions on the continuous body are hidden or highlighted on the GPU. Clicking a part selects it in the list, and toggles never reload the model.\n\n**Backend assumptions to reconcile:** a features endpoint with an honest model registry, an optional prompt `source` and `settings.parts` on job creation, optional `kind`/`source`/`steps` on jobs, part-analysis runs plus a manifest, and two new WebSocket events. One adapter handles parts either as a separate run (recommended) or inside the job.\n\n**Tuning:** the tuner UI shows only if both a build flag and the backend allow it; `components/meshTuner/*` is not touched.\n\n**Also included:** a Default polish list (P1\u2013P20) for verified breakages, accessibility checklist, size budget (first-load JS \u2264195 kB gzip), quality gates, test plan, and five waves of slices with separate file ownership.\n\n**Before slice A1:** commit or stash the uncommitted tuner edits in four frontend files, since A1 edits `api/types.ts`.\n\nOpen questions are in \u00a721: parts shape, one-step vs two-step prompt flow, model approvals, adding `@xyflow/react`, the \"App settings\" name, segmentation preview, contrast changes, a device hint, and workflow file import/export."
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "file": "E:/14-OCT-2026/Img3D/.claude/skills/img3d-part-aware/design/backend_a_incremental.md",
+   "summary": "Wrote the risk-first backend proposal A (about 1,000 lines, no TBD placeholders). The working image-to-3D job is left completely untouched. All part-aware work happens in follow-up runs that read a finished job, plus one orchestrator that chains existing public service calls. It follows the user's DECISIONS.md (found in the part-aware folder during this task): Z-Image-Turbo for prompts, the five chosen segmentation models, eye areas cut as separate meshes, eyebrows and eyelashes kept as records with geometry deferred.\n\nHow it stays safe:\n- Generation, progress, model, schema, job-service and storage files are frozen. A new test pins their sha256 hashes, so model.glb, job.json, JobOut, the JobStage list, the percent formula and the /system keys cannot change by accident.\n- Only four small seams touch working code: a ~12-line GenerationWorker.submit_gpu_task that reuses the single gpu-worker thread; an optional ServiceContainer.part_aware field plus lifecycle start/stop (stopped before the generation worker); router, event-type and create_app(part_providers=) additions; and new optional Settings fields.\n\nNew resources, built on one generic run framework copied from the tuner pattern:\n- ig_: prompt to candidate images. \"Use candidate\" goes through the existing upload_image, so prompt-to-3D needs no change to CreateJobRequest.\n- sg_: 2D segmentation before reconstruction (on a reference image) or after (on a finished job). The crop TRELLIS used is recovered without touching the TRELLIS code (recomputed from alpha or template-matched).\n- pa_: after reconstruction. Three strategies: components (CPU, no ML, works today), semantic_regions and semantic_parts. Outputs a manifest (img3d.parts/1), an assembled multi-node GLB sharing one texture set, face labels and seam loops, and checks that the parts reassemble exactly.\n- wf_: server-side chain prompt \u2192 image \u2192 segmentation \u2192 existing job \u2192 parts \u2192 export. This is what the Node UI's Run calls.\n\nOther contents:\n- GET /features and GET /models with honest model states, licence data, the node catalog and the taxonomy. The shape is compatible with the frontend proposal B adapter.\n- Full endpoint table with status codes, five new WebSocket events, new error classes, storage layout and retention, and every feature flag.\n- Tuning gates: IMG3D_BLENDER_ENABLED=false in .env as the hard gate, /features reporting it off, an import-boundary test, and a locked part-consumer registry with no implementations.\n- Test plan; all 182 existing tests stay unmodified.\n- 13 slices with separate file ownership and acceptance criteria. Phase A runs in order (contract and guards, then skeleton and frozen interfaces), then the parallel slices, then part analysis, workflows and the frontend API slice.\n\nSix items are deferred until the user approves them, including saving TRELLIS intermediate data, per-part regeneration, a per-part texture atlas and tuning consumers. Six open questions remain:\n1. Vendoring See-through and Sapiens2 as git submodules.\n2. Whether prompt jobs pick the first candidate automatically or wait for the user.\n3. Whether to also block the tuner in code, which means editing an existing test file.\n4. Whether the eye cut should include an eyelid ring.\n5. Whether to export per-part GLBs and a zip by default.\n6. When to approve saving the TRELLIS intermediates."
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "file": "E:/14-OCT-2026/Img3D/.claude/skills/img3d-part-aware/design/frontend_b_command_engine.md",
+   "summary": "I wrote the frontend proposal B (command layer plus workflow engine) to the file above. It is about 2,170 lines. No other project file was changed; other agents' design files share that folder.\n\n**Workflow document.** One document, saved in the browser as `img3d.workflow`, describes every generation in all four UI modes. It holds the graph of the six nodes (Input Image, Prompt, Segmentation, Image-to-3D, Part Extraction, Export), their values and the node-editor layout. Generation settings and reference images stay in their existing stores, linked rather than copied, so nothing that works today moves.\n\n**Engine.** It is plain TypeScript (no React, axios or React Flow), so the tests run under Node 22's type stripping. It covers the node registry, typed ports, validation with exact messages, and building the backend request. With the default template (image input, parts off) it produces exactly today's job request, byte for byte; a golden test pins this. Node status comes from the optional new `job.steps`, or from the existing stages for old jobs.\n\n**Command layer.** About 60 commands with fixed ids and exact payloads are the only way the UI changes state. Each decides availability from one shared state snapshot. That single check drives the disabled reasons, Ctrl/Cmd+Enter, the Node Run button, the mobile Generate button and the tablet rail. The existing \"can generate\" reasons keep their wording.\n\n**The four modes.**\n- **Default** keeps today's layout and adds an Image | Prompt switch, a parts card and a settings gear. The 17-item polish list includes the breakages already measured at 320 px, 812\u00d7375 and 768\u00d71024.\n- **Mobile** has a floating bottom nav, a Generate button and bottom sheets.\n- **Tablet** switches automatically: a left rail in landscape, a bottom nav in portrait or narrow windows.\n- **Node** uses React Flow behind a small wrapper and has a keyboard-friendly list view.\n\nThe chosen mode is saved as `img3d.preferences`, default \"default\", with a `?ui=` override for testing.\n\n**Parts.** A manifest parser accepts both manifest drafts in the research. The single existing viewer gains show/hide, isolate, highlight and an exploded view. Body regions can be highlighted only if the backend includes a `_PART_ID` attribute; otherwise the UI says so.\n\n**Tuning stays hidden.** It shows only if a build flag (off by default) and the backend's `mesh_tuning.enabled` are both on, so a default build sends no `/blender` or `/tunings` requests. Future tuning nodes have a locked registry slot with no nodes in it.\n\n**Backend shapes assumed** (all additive, listed exactly with a reconciliation table):\n- `GET /features`, with installed and licence states for models;\n- optional `source` and `settings.parts` on job creation, sent only for keys the backend advertises;\n- optional `kind`, `source` and `steps` on jobs, and `parts` on results;\n- part file routes and an optional rebuild endpoint.\n\nIf the backend returns 404 for `/features`, the app falls back to image-only and says why.\n\n**Also in the file:** stores and saved keys, state machines, accessibility checklist, performance budget, test plan, quality-gate commands, and 13 slices in four waves with separate files per agent and acceptance criteria. The only new package is `@xyflow/react` 12.12.0, loaded only in Node mode.\n\n**Ten open questions** are listed. The main ones: where the features endpoint lives, which optional request fields the backend accepts, your model choices and whether the app gets an Install button, a review step for prompt jobs, one shared workflow for all modes, and adding Playwright."
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "file": "E:/14-OCT-2026/Img3D/.claude/skills/img3d-part-aware/design/backend_b_asset_model.md",
+   "summary": "This proposal designs the part-aware asset data model first and derives the pipeline, API, storage and tests from it. It is about 2,060 lines and is design only: no project file other than this one was changed.\n\n**Asset model.** A completed job is one unchanging asset revision: the untouched `model.glb` plus an optional `parts/` folder described by a versioned manifest (`img3d.parts/1`). The manifest is fully specified with a worked example. Every per-face array refers to the faces of `model.glb`, so all revisions share one face numbering. Semantic labels (`face_labels`) are stored separately from which mesh owns each face (`face_owner`), so semantic regions never cut the mesh.\n\n**Part kinds.** Four kinds: `host` (the continuous body), `physical`, `physical_deferred` and `region`.\n- Physical: eyes, hair, clothes, accessories and detachable objects.\n- Physical-deferred: eyebrows and eyelashes. TRELLIS only paints them, so they ship now as a mask plus a 3D region plus guide curves; real geometry comes later.\n- Region: face and body areas.\n\n**Splitting is reversible.** Cuts weld duplicate vertices and record ordered boundary loops (seams) and per-mesh vertex maps. Reassembling the parts reproduces the base mesh bit-exactly; this is a tested invariant. All parts share one texture atlas, and there is no re-bake. The manifest also covers the part graph, coordinate frames, cameras, provenance (models, licences, revision lineage) and a per-part `refinement` block that is locked.\n\n**Pipeline.** One GPU queue and worker, as today. Jobs get a `kind`: `image_to_3d`, `prompt_to_3d` or `part_decomposition`. Re-decomposing an existing asset creates a new job that hard-links the parent's files. A router sends legacy requests to the unchanged `ImageTo3DPipeline.run`, and the worker file is not edited. No new stages: an optional `Job.pipeline` lists the steps (`prompt`, `input_image`, `segmentation`, `image_to_3d`, `part_extraction`, `export`) with its own percent. 2D segmentation runs on the exact conditioning image through a new optional engine method, and tests must show its pixels equal upstream's. With no segmentation model, a geometry-only mode (separate pieces) still produces real output.\n\n**Model choices stay open.** Text-to-image, segmentation and mesh labelling sit behind pluggable providers and a model registry with licence data. They report honest states such as not approved, missing dependency or not installed, and a matrix shows what each approved subset of models gives you.\n\n**API.** All additions are optional: `/features` (flags, provider states, request keys, the node catalogue), `/taxonomy`, `/models`, part file routes, a whitelisted job-file route, and `/jobs/{id}/parts/rebuild`. Two new error codes (`capability_unavailable`, `feature_disabled`) and two new WebSocket events (`features.updated`, `model.updated`). `/system` and the progress formula are unchanged.\n\n**Tuning gate.** New setting `tuning_enabled=false` makes creating a tuning run return 503. The tuner tests need a one-line opt-in. The refinement plug-in registry refuses every registration.\n\n**Also included:** what the frontend needs from the API (with a name reconciliation against `frontend_b_command_engine.md`), a backward-compatibility matrix, a test plan by file and assertion, and 15 implementation slices (S0\u2013S14) in waves with disjoint file ownership and acceptance criteria. Model-dependent slices (S8, S13, S14) wait for your approval.\n\n**Open questions:** 10 for you, including which text-to-image and segmentation models, whether the app may download models, the server-side tuning gate, eyebrow/eyelash deferral, per-part files, rebuilds shown in history, and default view counts."
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "scores": [
+    {
+     "key": "frontend_a_shells",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 9,
+     "feasibility_on_this_stack": 8,
+     "extensibility_for_future_tuning": 7,
+     "clarity_implementability": 8,
+     "total": 41,
+     "strengths": [
+      "Smallest workable seam over the code that already works. DefaultShell is eager and imports today's Header, AppShell and HistoryDrawer from their current paths with no file moves. uiStore (mobileTab, historyOpen) is left unchanged. Feature panels keep their names and paths, and each XxxPanel is just Panel + XxxContent, so Default renders the same DOM, checked by a ui_probe fingerprint.",
+      "Legacy backend safety is explicit. On a 404 from /features, Default hides the prompt and parts UI and stays pixel-identical apart from the App settings gear. Every new request field is sent only when advertised and enabled, and parts:null or enabled:false is never sent.",
+      "There is one pure request builder, lib/jobRequest.buildCreateJobRequest, used by every mode including Node. Its byte- and key-order-identical test against jobStore.ts:L208-212 covers 6 form fixtures. toRequestSettings moves verbatim into a pure lib file and is re-exported, so existing imports still compile.",
+      "The Node graph is only a projection. It stores topology, mode and layout, never parameter values. deriveConfig writes through to the shared inputStore and partOptionsStore. pipelineBlock is set only while the Node shell is mounted and cleared on unmount, so a broken graph can never block Default, Mobile or Tablet generation.",
+      "It correctly spots the real chunking hazard: the vendor regex at vite.config.ts:L77 (priority 40) would capture the nested zustand@4 from @xyflow/react. It fixes this by anchoring the regex to the top-level node_modules and adding a budget check for what lands in the initial chunk.",
+      "Tuner gate needs two keys (build flag VITE_FEATURE_MESH_TUNER and features.tuning.mesh_tuner.state). It covers all choke points without touching components/meshTuner/*. There are no model install buttons; models are read-only with honest states and licence badges.",
+      "Slices are clear (A1-A4, B1-B2, C1-C4, D1-D4, E1) with disjoint ownership per wave and concrete acceptance criteria. Tests need no new tools: node --experimental-strip-types on Node 22.17, which is verified, plus import_boundaries.mjs and bundle_budget.mjs."
+     ],
+     "weaknesses": [
+      "Highlighting parts in the viewer uses a 256x1 DataTexture plus an onBeforeCompile shader patch (discard, dither, emissive) chained into the clay, normals and wireframe view materials. This is the riskiest code in the proposal, and it depends on GLTFLoader's handling of _FEATURE_ID_0, which is unverified.",
+      "It hedges between two backend shapes ('runs' and 'job') with a synthesising adapter in api/parts.ts. That is extra code and more test surface, when one variant should simply be chosen.",
+      "Its PartOptionsIn puts fine taxonomy ids in `separate` (clothing.outer, object.held) and has no `regions` key. backend_contract_map L357-362 specifies group ids (eyes, eyebrows, eyelashes, hair, clothes, accessories, detachable) plus `regions`. This must be reconciled, or an extra='forbid' backend will return 422 for parts-enabled requests.",
+      "The Node engine's semantic output is a 3-boolean PipelineConfig. Future tuning or refine nodes will need PipelineConfig, the stores and deriveConfig extended. There is no per-node param schema or contribute() hook, so it is less extensible than B.",
+      "Its prerequisite is stale. It says four tuner files have uncommitted edits, but git status shows a clean frontend tree at commit 8654b90.",
+      "It adds many new stores (preferences, navigation, features, input, partOptions, part, workflow) and new folders (actions/, domain/, shells/shared). That is still sizeable, but each one is additive."
+     ]
+    },
+    {
+     "key": "frontend_b_command_engine",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 6,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 7,
+     "total": 38,
+     "strengths": [
+      "The workflow engine is very strong and extensible: ParamDef schemas, a contribute() and compile() pipeline with a fixed key order, a locked 'refine' category the registry enforces (it throws on an unlocked refine def), templates, a docFromJob mapping, and serialize/migrate. This is the best base for future tuning nodes.",
+      "Golden request tests G1-G5 cover G1 parity with primary_image_id null, advanced overrides and a legacy FeatureSet. The plan also checks in the browser pane that the POST body equals G1 in all four modes.",
+      "request_keys gating per capability means the frontend sends an optional key (subject, segmenter_id, model_id, preset, style, ...) only when the backend advertises it. This is the right defence against extra='forbid'.",
+      "PartOptionsIn matches backend_contract_map \u00a74.3: user-facing group ids plus `regions`, with a PartGroupInfo that carries default_kind, default_selected and a note such as the eyelash 'geometry deferred' note.",
+      "The test double is good: mock --strict-requests mirrors extra='forbid', and the test-only request log at /api/__test/requests turns 'zero /blender or /tunings requests' into an automated assertion.",
+      "The viewer plan is simpler: object.visible for physical parts, an overlay mesh plus a cached index subset for regions, and an honest 'Highlight unavailable' when the attribute is missing. There is no shader patching.",
+      "There is an exact table mapping legacy job stages to node status, plus a session runIndex StepMap so nodes re-created after Run show idle. Mobile landscape switches to a rail with side sheets."
+     ],
+     "weaknesses": [
+      "It brings in many new concepts under the simplicity lens: a command bus, CommandSpec factories plus binds, a vanilla AppSnapshot kept in sync by state/sync syncers (a second copy of store state; its R3 risk is snapshot lag), state/read and state/reactions, pending, announcer and transfer stores, import.meta.glob self-registration (its R2 risk is silent misses), a linear renderer with placement maps, and a panel registry.",
+      "It rewrites a lot of working code. AppShell, Header and MobileTabBar move into renderers/default behind shims. S6 migrates every component in references, settings, generation and history off direct store access. mobileTab and historyOpen move out of uiStore. App.tsx is replaced by AppRoot. The user explicitly asked for incremental work and reuse.",
+      "The Default image-to-3D path now compiles from a persisted workflow doc shared across modes. A Node-UI edit, such as deleting Image-to-3D, blocks Generate in Default until 'Restore default workflow'. G1 parity is proven only for the canonical doc.",
+      "Its chunking mitigation is wrong. It sets the xyflow group at priority 35 and claims that outranks vendor (R5), but vendor is priority 40 with an unanchored regex (vite.config.ts:L77), so the nested zustand@4 would land in the initial chunk.",
+      "It goes beyond scope with a model-install endpoint (E10), a LicenseDialog, an install state machine and models.updated. This presumes decisions the user has not made yet, and no backend design defines it.",
+      "Ownership is harder to follow. S3 creates a temporary renderers/default entry that S7 later takes over. S2 depends on S1's bridge. S6 owns very large directory sets, and the per-slice allowlist files must shrink."
+     ]
+    }
+   ],
+   "winner": "frontend_a_shells",
+   "best_ideas_to_graft": [
+    "From B: add per-capability `request_keys` to the /features payload. A's lib/jobRequest.toPromptSourceIn and toPartOptionsIn should then emit optional keys (subject, segmenter_id, extra_terms, model_id, preset, style, part_hint, image_seed) only when they are listed. Add one unit case per gated key, plus a case for a request_keys list that lacks `subject`.",
+    "From B: replace A's PartOptionsIn and PartCategoryOut with the shape in backend_contract_map \u00a74.3 (L357-362). That means `separate` takes group ids (eyes, eyebrows, eyelashes, hair, clothes, accessories, detachable), a `regions` string[] is added, and features expose separable_groups and region_groups as PartGroupInfo {id, label, default_kind, default_selected, note}. Update PartOptionsSection, partOptionsStore and job_request.test.mjs to match.",
+    "From B: store golden request fixtures G1-G5 as JSON under test/frontend/fixtures/ and share them between A's job_request.test.mjs and ui_modes_mock_smoke.mjs. Also run G1 with primary_image_id null, with advanced overrides, and with a legacy (404) features snapshot. Add an E1 acceptance step: in the browser pane, read the POST /jobs body with default settings in each of the four modes and require it to equal G1 byte for byte.",
+    "From B: give A's mock a --strict-requests mode (on by default; unknown keys get 422 with `loc`) and a test-only GET /api/__test/requests log. Use the log to assert automatically, in B2 and E1 acceptance, that there are zero /blender or /tunings requests. Include the case where the mock reports the tuner as available but the build flag is off.",
+    "From B: make A's workflow/engine/registry.createRegistry throw on any category 'refine' def that is not locked:true with requires part_refinement. Add a unit test for it. Show the locked palette group only behind VITE_FEATURE_REFINEMENT_PREVIEW, default false.",
+    "From B: in slice C3, first ship B's lower-risk part display: object.visible for physical nodes, overlay meshes from a cached index subset for regions, and honest 'Highlight unavailable' rows when the region attribute is missing. Keep A's DataTexture/onBeforeCompile shader patch as a later optimisation, made only after a spike confirms how GLTFLoader names the attribute and that the patch interacts cleanly with applyViewMode clay and normals.",
+    "Simplify A by dropping its dual 'runs'|'job' parts adapter. Implement only the variant the backend design selects. The contract map recommends parts inside the job plus POST /jobs/{id}/parts/rebuild as a derived part_decomposition job, which needs only job.updated and no new WebSocket event.",
+    "From B: put B's exact table mapping legacy stage index to node RunStatus (\u00a75.7 Path B) into A's workflow/engine/status.ts. Add a session-only runIndex (job id to compiled node ids), so a node re-created after Run shows idle instead of the old job's state.",
+    "From B: in A's Mobile shell, under 520 px height in landscape, switch the floating nav to a NavRail with the FAB in its footer and open sheets from the side (max-width 420 px). Add 812x375 to the D1 probe acceptance.",
+    "From B: in A's normalizeManifest, add hard rejection of duplicate part ids, and add a manifest-level region_attribute name matched case-insensitively. Ask the backend to state that region labels (contract map regions/face_labels.bin) are also written as a vertex attribute in the assembled GLB, or the highlighting cannot work.",
+    "Do NOT graft B's command bus, AppSnapshot syncers, linear renderer or WorkflowSlot, the moves of the layout files, or model install (E10). These are the parts that raise risk without serving this milestone."
+   ],
+   "fatal_flaws": [
+    "No strictly fatal flaw was found in A (frontend_a_shells). It must still change one thing before slice A1 merges: its PartOptionsIn (taxonomy ids in `separate`, no `regions`) differs from backend_contract_map L357-362. Against an extra='forbid' backend that would return 422 on parts-enabled requests; the image path is unaffected because parts are omitted when off. Its prerequisite about uncommitted tuner files is also stale: git status shows a clean frontend tree at commit 8654b90.",
+    "B (frontend_b_command_engine), a must-fix build defect: its plan puts the xyflow chunk group at priority 35 and claims that outranks vendor. But the existing vendor group is priority 40 with the unanchored regex /node_modules[\\\\/](zustand|use-sync-external-store)[\\\\/]/ (vite.config.ts:L77). It would therefore capture @xyflow/react's nested zustand@4 into the initial chunk, which breaks B's own budget and its lazy-loading promise. A's fix is required: anchor the regex to frontend/node_modules.",
+    "B, a high risk to the working pipeline: Default generation is recompiled from a persisted workflow doc shared across modes (img3d.workflow). A Node-UI edit, such as deleting Image-to-3D, or a migrated doc changes or blocks Generate in the Default UI. G1 parity is proven only for the canonical doc. Together with migrating every working component off direct store access (S6) and moving AppShell, Header and MobileTabBar into renderers/default (S7), this is the large rewrite of working code the user asked to avoid.",
+    "B, out of scope for the milestone: model install from the UI (E10 POST /models/{id}/install, the LicenseDialog, the models.install command, the install state machine and models.updated) lets the app start multi-GB weight downloads. It runs ahead of the user's pending model decision, and no backend design specifies it. Cut it, and keep models read-only with honest states as A does."
+   ]
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "scores": [
+    {
+     "key": "frontend_a_shells",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 9,
+     "feasibility_on_this_stack": 8,
+     "extensibility_for_future_tuning": 7,
+     "clarity_implementability": 8,
+     "total": 41,
+     "strengths": [
+      "Changes the least of the working UI. DefaultShell imports today's Header, AppShell and HistoryDrawer from their current paths with no file moves, and uiStore stays unchanged, so the paused BlenderSetupDialog's setMobileTab still works. On a legacy backend (/features returns 404) Default stays the same as today apart from the App settings gear, and a ui_probe fingerprint test checks this.",
+      "Image-to-3D generation never depends on the node graph. Default, Mobile and Tablet build the request from stores through the pure buildCreateJobRequest(), and job_request.test.mjs checks that the image source with parts off is deep- and key-order-equal to the request jobStore.ts:L208-212 builds today. The Node shell only projects the graph onto the stores, and its pipelineBlock is cleared on unmount, so an invalid graph can never block the other modes.",
+      "Follows the research recommendation that node parameter values are not stored in the graph (frontend_architecture_map \u00a75.6). Each node binds to an existing store, and reconcile() runs on Node mount, so Default and Node always edit the same form with no duplicated logic.",
+      "Shows part relationships well. PartInspector lists the parent, what the part is attached to or held by, its side, symmetric pairs and relations, and the outliner has hierarchy and category groupings. Refinement status is shown read-only as 'Eligible \u00b7 untouched \u2014 refinement is paused'.",
+      "The manifest normaliser accepts both research manifest drafts, and the parts adapter handles both backend shapes (part-analysis runs or results embedded in the job). This keeps the frontend robust while the backend design is still open.",
+      "Covers every requested UI mode in concrete detail: the GenerateFab state machine, an accessible Sheet with snap points, the tablet posture rule (rail at \u2265840 px landscape, bottom bar otherwise, compact below 600 px) with a typing guard, a Node List view for keyboard and phone users, and a 9-viewport \u00d7 4-mode probe matrix.",
+      "Gates the tuner with two keys (build flag and backend state) without touching components/meshTuner/*. It also has no model-install UI, which matches DECISIONS.md: every chosen model is already downloaded."
+     ],
+     "weaknesses": [
+      "Optional request subkeys (subject, part_hint, preset, style, model_id) are not gated per key. If the backend's PartOptions or PromptSource schema differs, extra='forbid' returns 422 on new prompt or parts jobs.",
+      "PartOptionsIn has no 'regions' list, unlike backend_contract_map \u00a74.3. The 'kept as regions' policy appears only as info text, not as an explicit request field.",
+      "The viewer approach is complex: cloned materials, onBeforeCompile shader patches chained into the clay and normals view materials, and a 256\u00d71 DataTexture. That is riskier than overlay meshes, and the parts GLB is held as a third model next to the original.",
+      "Node definitions only carry a 'binds' enum, with no parameter schema or migrate step. Future tuning nodes would need a new store, Content component and binds value each, and createRegistry does not reject a refine definition that is not locked.",
+      "Mobile in phone landscape (812\u00d7375) has no dedicated rail posture. The floating bottom nav plus top bar squeezes the viewer.",
+      "Small stale or rough details: the 'commit uncommitted tuner edits' prerequisite no longer applies (frontend tree is clean at 8654b90), 'node --test test\\frontend\\unit\\' passes a directory instead of a glob, deferred parts that have surface regions (eyebrows and eyelashes per DECISIONS.md) are not explicitly mapped into the viewer's region binding, and model choices are still treated as pending although DECISIONS.md has decided them."
+     ]
+    },
+    {
+     "key": "frontend_b_command_engine",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 6,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 8,
+     "total": 39,
+     "strengths": [
+      "The part options match the user's list and backend_contract_map \u00a74.3 exactly. separable_groups are eyes, eyebrows, eyelashes, hair, clothes, accessories and detachable; region_groups are face and body, with default_kind physical, physical_deferred or region; and PartOptionsIn has explicit separate[] and regions[] lists.",
+      "Per-feature request_keys advertising means compile() sends an optional key only when the backend accepts it, a robust answer to extra='forbid'.",
+      "Very precise tests. Golden requests G1\u2013G5 have a fixed key order and are shared as fixtures with the mock smoke, and a cross-mode check requires the POST body from a default Generate to equal G1 byte for byte in all four modes. The mock gets a request log (/api/__test/requests) and a strict-requests mode, and an architecture allowlist can only shrink.",
+      "The most extensible design for future tuning. NodeTypeDef carries a ParamDef schema, contribute(), a version and migrate(). The registry throws on any refine definition that is not locked:true with requires:'part_refinement', and a unit test proves it. Locked nodes are never compiled, and the command catalogue gives future tuning commands an obvious home.",
+      "Good UX additions: an explode slider as a reassembly view (explode=0 restores positions exactly), docFromJob for 'Reuse settings' and 'Open in workflow', a left-rail posture for Mobile in phone landscape, an Announcer with polite and assertive live regions, and a shortcut help dialog.",
+      "Simpler part highlighting through overlay meshes and an index subset per region, with honest 'Highlight unavailable' rows when the region attribute is missing."
+     ],
+     "weaknesses": [
+      "Default's working image-to-3D path is rerouted through the command bus, a mirrored AppSnapshot and compile() of the persisted img3d.workflow document. A Node-UI edit (deleting or bypassing Image-to-3D or Export) or a migration bug blocks Default generation until 'Restore default workflow'. That is a new failure mode on the baseline path, and G1 only pins the canonical document.",
+      "S6 requires every working component (references, settings, generation, history) to stop importing stores and go through commands. That is a large rewrite of working code, against the user's 'reuse working components / implement incrementally'.",
+      "It moves layout/AppShell, Header and MobileTabBar into renderers/default and moves mobileTab and historyOpen into navigationStore. The paused BlenderSetupDialog's setMobileTab('viewer') then writes to dead state, a silent regression once the tuner is re-enabled. It also retitles the existing Settings panel to 'Generation settings' and replaces the left column with WorkflowSlot.",
+      "There are many moving parts: eager import.meta.glob registration (its own risk R2), AppSnapshot syncers (risk R3), pending, announcer and transfer stores, and read hooks. That is heavier than the 'thin actions layer' the research recommends, and the wave-1 merge order creates cross-slice coupling.",
+      "A model install endpoint and licence dialog (E10, models.install) are out of milestone scope and unnecessary, because DECISIONS.md shows every chosen model already downloaded. It also adds backend work.",
+      "Part relationships are parsed but barely shown. PartsList has no inspector for parent, attachment or symmetry relations."
+     ]
+    }
+   ],
+   "winner": "frontend_a_shells",
+   "best_ideas_to_graft": [
+    "From B: add per-feature request_keys to FeaturesOut. Have lib/jobRequest.ts (toPartOptionsIn and toPromptSourceIn) omit every optional subkey the backend does not list (subject, part_hint, preset, style, model_id, image_seed, negative_prompt), so new prompt and parts jobs never get a 422 under extra='forbid'. Extend job_request.test.mjs to cover this.",
+    "From B: align PartOptionsIn with backend_contract_map \u00a74.3. Add regions: string[], and add separable_groups and region_groups to features.parts, using the ids eyes, eyebrows, eyelashes, hair, clothes, accessories, detachable and face, body, skin, each with default_kind and a note. PartOptionsSection then renders 'Separate as physical assets' and 'Keep as regions on the body' as explicit checkbox lists. Per DECISIONS.md, eyes are physical and eyebrows and eyelashes are physical_deferred.",
+    "From B: put the golden requests G1\u2013G5 as JSON fixtures in test/frontend/fixtures, shared by job_request.test.mjs and ui_modes_mock_smoke.mjs. Add the cross-mode check: Generate with defaults in each of the four modes, read the POST body with read_network_requests, and require it to equal G1 byte for byte.",
+    "From B: add the mock's GET /api/__test/requests request log and a --strict-requests flag. The smoke then asserts zero /blender or /tunings requests after idle time plus one generation, and a 422 for any unknown key.",
+    "From B: make the import_boundaries.mjs allowlist shrink-only, failing when an allowlisted file no longer violates a rule.",
+    "From B: have createRegistry throw on a refine NodeTypeDef unless it is locked:true with requires 'part_refinement', with a unit test. Also add an optional params schema (ParamDef) and version/migrate to A's NodeTypeDef, so a future tuning node can render through a generic inspector without a new store or binds value.",
+    "From B: add an explode slider to PartsToolbar as the reassembly view. Physical nodes move along the vector from the asset centre to the part centre, regions never move, and explode=0 restores positions exactly. Keep B's overlay-mesh highlight as the fallback if A's onBeforeCompile patch conflicts with the clay or normals view materials.",
+    "From B: in Mobile with height under 520 px, switch the floating nav to a left NavRail with the FAB in its footer, and open sheets from the right as side sheets.",
+    "From B: route all status messages (job transitions, mode switch, parts loaded) through app/Announcer, with one polite and one assertive live region and a 1 s dedupe.",
+    "From B: add docFromJob-style 'Reuse settings' and 'Open in workflow', which restore inputStore.prompt and partOptionsStore from job.source and job.settings.parts and drop unknown ids with a warning.",
+    "Map deferred parts that have a feature id into ViewerPartsBinding.regions, so eyebrows and eyelashes (deferred physical records with surface regions per DECISIONS.md) can be highlighted.",
+    "Housekeeping: drop the stale 'commit tuner edits' prerequisite (the frontend tree is clean at 8654b90), run tests with a glob ('test/frontend/unit/*.test.mjs') instead of a directory, and update model wording now that DECISIONS.md has chosen the models and they are downloaded. The registry still renders backend state, with no install buttons."
+   ],
+   "fatal_flaws": [
+    "frontend_a_shells: no fatal flaw found. The legacy image-to-3D request is pinned byte for byte and never depends on the graph, the JobStage list and /system keys are untouched, the API use is additive, the only new dependency is @xyflow/react 12.12.0, lazy-loaded and verified clean in environment_audit \u00a78, and the tuner stays gated. The one hard-constraint exposure is that optional subkeys are not gated per key, so new prompt or parts jobs can hit 422 under extra='forbid'. Legacy jobs are unaffected, and the fix is the request_keys graft.",
+    "frontend_b_command_engine: near-fatal for 'do not break the existing working generation pipeline'. Default generation is compiled from the persisted img3d.workflow document through a new command bus and snapshot mirror. A Node-UI edit or a document migration bug blocks image-to-3D in Default until the user restores the default workflow, and the G1 golden test only covers the canonical document. Before adopting any of it, Default, Mobile and Tablet would have to compile from the canonical template plus the stores, or an invalid Node graph would have to never block the other modes.",
+    "frontend_b_command_engine: moving uiStore.mobileTab and historyOpen into navigationStore leaves the paused BlenderSetupDialog's setMobileTab('viewer') wired to dead state. That is a silent regression of existing (paused) functionality once the tuner is approved again.",
+    "frontend_b_command_engine: the model install flow (E10 POST /models/{id}/install plus a licence dialog) is outside this milestone, needs new backend work, and is moot because DECISIONS.md shows every chosen model already downloaded.",
+    "Both proposals: they treat model choices as pending, but DECISIONS.md, which CLAUDE.md names as authoritative, has decided them: Z-Image-Turbo; Grounding DINO, SAM 2.1, Florence-2, See-through and Sapiens2-seg (not SAM 3); eyes cut as physical parts; eyebrows and eyelashes as deferred physical records. This is not fatal, because both render whatever /features reports, but the open questions and texts are stale and should be updated."
+   ]
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "scores": [
+    {
+     "key": "backend_a_incremental",
+     "requirements_coverage": 8,
+     "backward_compat_safety": 10,
+     "feasibility_on_this_stack": 8,
+     "extensibility_for_future_tuning": 8,
+     "clarity_implementability": 8,
+     "total": 42,
+     "strengths": [
+      "It touches the working path least. Only four small seams change working code: GenerationWorker.submit_gpu_task (about 12 lines on top of the existing _submit/_executor, verified at generation_worker.py:85,123-127), an optional container field plus start/stop in lifecycle, router/EventType/_JOB_SCOPED_EVENTS additions, and new Settings fields. image_to_3d.py, progress.py, inference/**, models/job.py, schemas/jobs.py, job_service.py and job_store.py are never edited.",
+      "A hash-pinned protected-files test (test_protected_files.py) and an import-boundary AST test turn the 'byte-for-byte unchanged' and 'no torch or tuner imports' rules into checks that run automatically. No existing test file is edited (invariant I9).",
+      "CreateJobRequest, GenerationSettings, JobOut, job.json, JobStage, /system and EngineCapabilities are untouched. Prompt-to-3D goes through the existing ReferenceService.upload_image and JobService.create_job, so a legacy-UI retry becomes a deterministic image job.",
+      "It recovers the conditioning frame outside the TRELLIS adapter (exact recompute for alpha_crop, verified against preview.png; template match for background_removed; residual gate and frame_unverified warning). Masks are aligned without touching the parity-guarded generate path.",
+      "The 'components' strategy (CPU, welded connected components) proves the manifest, assembled GLB, file routes and UI end to end on real model.glb data before any ML lands, which fits the 'no fake data' rule.",
+      "The registry matches what is really on disk. local_subdir values match backend/.model/t2i/Z-Image-Turbo and backend/.model/seg/<name>, and revisions are read from seg/download_manifest.json (verified). DECISIONS.md models are approved by default, but an approved_models override, licence metadata and honest states (vendored_source_missing for See-through and Sapiens2) keep the design valid for any approved subset.",
+      "Slices have disjoint file ownership, interfaces are frozen in S1, routers start empty and are filled by their owners, and each slice has acceptance criteria. CPU-only part analyses run on their own parts-cpu thread, so they do not block the GPU queue."
+     ],
+     "weaknesses": [
+      "It adds many new concepts: four new resource types (ig_, sg_, pa_, wf_), a generic RunStore/RunWorker framework, five new WebSocket events, about 45 endpoints and per-store retention. That is broad API surface for one milestone.",
+      "The wf_ workflow orchestrator is the riskiest new piece: an EventBus subscription, a 5 s reconciliation sweep, an idempotent advance(), awaiting_input/manual selection, 'waiting' retries on 429, and cancel propagation across child resources.",
+      "Prompt-to-3D and parts are never visible on the Job itself (no Job.kind or steps). Every UI mode must learn workflows to see a single prompt\u21923D run, and the existing job history shows no provenance unless the UI queries GET /workflows?job_id=.",
+      "The Z-Image-Turbo VRAM estimate in the catalog is 15 GB, but the measured peak in DECISIONS.md is 23.3 GB. With low_vram=false the budget rule (28-17 GB) refuses T2I outright, because there is no engine offload path.",
+      "Partition uses glb.submesh(append=True), which hides vertex and face order. Bit-exact reassembly of UVs and normals is weaker than with B's explicit vertex maps.",
+      "The backend node catalog deliberately omits locked refine/tuning node types. The Node UI then has no backend-sourced placeholder for future tuning nodes."
+     ]
+    },
+    {
+     "key": "backend_b_asset_model",
+     "requirements_coverage": 8,
+     "backward_compat_safety": 5,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 7,
+     "total": 36,
+     "strengths": [
+      "It has the strongest asset model for future tuning and reassembly: one stable base face space, semantic face_labels kept separate from physical face_owner, per-mesh vmap_<pt> vertex maps built in ascending base order with trimesh.Trimesh(process=False), and bit-exact reassembly of positions, UVs and normals as a tested invariant.",
+      "A torch-free AssetReader read API and refinement 'needs' and 'constraints' (seam_lock, keep_uv_atlas, keep_frame) give future consumers what they need without re-analysis.",
+      "The manifest describes its binary buffers (dtype, count, byte_length, sha256, indexes). It records base.sha256 and re-hashes the base before publish, and staging plus os.replace give an atomic, immutable publish.",
+      "Its policy refinements are good: a physical part below min_faces is downgraded to physical_deferred (not region) with a warning, separate shells become free cuts, and a part budget caps the count.",
+      "It uses one Job resource with kind and pipeline steps, so the UI sees prompt and parts progress on the existing job.updated event. Derived part_decomposition jobs use hard links and keep the snapshot rule."
+     ],
+     "weaknesses": [
+      "It edits a lot of working code: TRELLIS generation.py, engine.py and imaging.py (_preprocess branch), inference/base.py, image_to_3d.py (overrides), job_store.py (a 'default-excluding dump' on every job.json write), job_service.py, schemas/jobs.py (reference_set_id becomes optional with a validator), reference_service.py, mesh_tuner_service.py, lifecycle.py, websocket_hub (hello payload) and system_service.py.",
+      "Its tuning gate breaks an existing test as planned. lifecycle.py would start Blender detection only when tuning_enabled (default false), but test_blender_runtime_api.py::test_detection_on_startup_runs_in_background builds settings through make_runtime_app/make_settings without tuning_enabled. B plans to edit only test_mesh_tuner_api.py.",
+      "It adds scope the user did not ask for: a model install/download endpoint (A18/A19), a licence acceptance store, a UV label texture, lineage by face IoU, PCA part frames, guides buffers and eight relation types.",
+      "It ignores DECISIONS.md. approved_models=[] and the T2I and segmentation providers default to 'none', so the already-downloaded, user-approved models report not_approved until the user configures them. The catalogue still lists FLUX, Animagine and SAM3.",
+      "CPU-heavy partition and export run inside the job on the gpu-worker thread, so queued generations wait behind them.",
+      "File ownership is spread out: S1 owns almost every seam file, job_service.py passes from S1 to S6, and api/v1/models.py passes from S5 to S14."
+     ]
+    },
+    {
+     "key": "backend_c_pipeline_graph",
+     "requirements_coverage": 8,
+     "backward_compat_safety": 6.5,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 8.5,
+     "clarity_implementability": 7,
+     "total": 37,
+     "strengths": [
+      "Legacy jobs keep plan=None, and PipelineRouter calls ImageTo3DPipeline.run with the same arguments. A test spies the call, and the 'only reconstruct may write model.glb' hash invariant covers the base model.",
+      "Its typed step model with soft and hard failure policies means a failed part step never loses the user's model.glb. Each step maps to a legacy stage, so progress keeps the contract formula while plan.percent is reported separately.",
+      "Locked refine and tune node and step types appear in the catalog (available:false, locked:true, reason), and provider kinds are reserved for future completers and part generators. This directly supports 'node engine modular for future tuning nodes'.",
+      "requires_engine lets derived part jobs skip a 16 GB TRELLIS load, and legacy_job_node_map lets the Node UI light nodes for plain jobs.",
+      "Step artifacts are browsable while a job is still running (steps/<id>/files), and models install only through a CLI with --accept-license, so the app never downloads weights itself."
+     ],
+     "weaknesses": [
+      "A server-side graph compiler (node, port and step types, templates, catalog ETag, POST /pipeline/validate, three mutually exclusive CreateJobRequest input forms with conflicting_fields) adds complexity with no gain in v1. Every node has max_instances=1, and the design itself says the simple form and the graph are equivalent. The server compiler would also duplicate the frontend's pure-TS workflow engine.",
+      "It edits working code: GenerationWorker._process (engine-wait branch plus submit_maintenance), pipelines/progress.py (update_plan), pipelines/base.py, schemas/jobs.py, job_service.py, result_service.py, and the TRELLIS adapter in S9. Every new legacy job.json also gains kind, source, plan, parent_job_id and warnings.",
+      "The provider weight root (backend/.model/providers/<id>/) does not match where the approved weights already are (backend/.model/t2i/Z-Image-Turbo, backend/.model/seg/<name>). With providers_approved=[] (ignoring DECISIONS.md), every downloaded model reports not_approved or not_installed until the user sets overrides.",
+      "BiRefNet runs twice (once in its preprocess step, again inside TRELLIS), so mask-to-geometry alignment relies on run-to-run equality, with only a 1-LSB check on a real run.",
+      "The merge order is mostly sequential (S0\u2192S1\u2192S3\u2192S2\u2192S5\u2192S4\u2192S9\u2192...), and S4 owns a very large file set (services, API, container, lifecycle, worker, main, conftest).",
+      "Partition and export run on the GPU thread inside the job, which blocks the queue."
+     ]
+    }
+   ],
+   "winner": "backend_a_incremental",
+   "best_ideas_to_graft": [
+    "From B, partition geometry: keep separate face_owner (physical ownership, uint16[F]) and face_labels (semantic) buffers. Build each mesh node explicitly from ascending base faces and vertices (vertex_map = unique(base.faces[faces]), local faces via searchsorted, positions/uv/normals gathered by the map) with trimesh.Trimesh(process=False) instead of glb.submesh(append=True). Write vmap_<part>.u32 sidecars and extend A's reassembly check to bit-exact equality of positions, UVs and normals.",
+    "From B: add a torch-free parts/reader.py AssetReader (base(), part(id), region_faces(id), seams(id)) as the only read API future consumers may use. Pair it with A's PartConsumerRegistry so the future tuning layer has a stable entry point that does not parse files ad hoc.",
+    "From B, manifest hygiene: list buffers[] with dtype/count/byte_length/sha256/indexes. Record source.model_sha256 and re-hash model.glb immediately before publish. Publish the run directory atomically (staging folder plus os.replace, refusing an existing target).",
+    "From B, refinement fields: add per-part refinement.needs (occluded_geometry | geometry | closure | low_confidence) and refinement.constraints {seam_lock, keep_uv_atlas, keep_frame}. Keep status always 'untouched' and locked:true while part_refinement_enabled=false.",
+    "From B, policy: when a group selected for physical separation has fewer than min_part_faces faces, downgrade it to physical_deferred with warning too_small_for_geometry, not to region. Then the user's 'separate this asset' intent stays recorded. Also add B's parts_max_parts budget (merge extras into unknown with max_parts_exceeded).",
+    "From C: put the refine and tuning node types (part_refine, mesh_tune, eye_correction, rig_correction) in /features.nodes as available:false, locked:true, reason 'Paused until approved', with no executors. The Node UI's modular engine then has backend-sourced placeholders and the user's tuning gate still holds.",
+    "From C: publish a legacy_job_node_map (preprocessing\u2192input_image, conditioning..decoding\u2192image_to_3d, exporting/finalizing/done\u2192export) in /features. The Node UI can then light nodes for plain POST /jobs runs without opening a workflow.",
+    "From C: add a dry-run validation endpoint for the Node UI (POST /workflows/validate, same body as POST /workflows). It returns per-node issues (unknown node, missing input, capability_unavailable, graph_too_large) without creating any child run.",
+    "A's own scope: ship wf_ v1 linear and fail-fast. Drop the 'waiting' retry on 429 (return 429 at creation or fail the step), and decide whether 'manual' candidate selection ships in v1 or defers (open question Q2). This removes the riskiest state-machine branches while keeping the event-plus-sweep reconciliation.",
+    "Correct the Z-Image-Turbo catalog VRAM peak to the measured 23.3 GB (DECISIONS.md probe). Keep the pipeline resident in CPU RAM between runs, and note the optional one-time bf16 re-save to cut the 307 s cold .to('cuda')."
+   ],
+   "fatal_flaws": [
+    "B (as written): core/lifecycle.py would run Blender startup detection only when the new tuning_enabled=False is set. That breaks the existing test/backend/test_blender_runtime_api.py::test_detection_on_startup_runs_in_background, because make_runtime_app calls make_settings without tuning_enabled. B's plan edits only test_mesh_tuner_api.py, so the 'existing suite stays green' acceptance criterion fails. Fix: leave lifecycle.py alone and gate only MeshTunerService.create_run, or follow A/C and rely on IMG3D_BLENDER_ENABLED=false plus the /features flag.",
+    "B (risk to the frozen path): the 'default-excluding dump' in storage/job_store.py changes how every job.json is written. If it is implemented as model_dump(exclude_defaults=True), legacy keys such as error:null, result:null, cancel_requested:false and advanced:null disappear from all job.json files and the legacy key set is no longer identical. It must exclude only the new fields explicitly. Together with the _preprocess branch in the parity-guarded TRELLIS adapter, this is the largest exposure among the three proposals to the 'unchanged when part features are off' constraint.",
+    "C (not fatal, but blocks on this machine): the provider weight root backend/.model/providers/<id>/ and providers_approved=[] mean the user-approved models already downloaded under backend/.model/t2i/ and backend/.model/seg/ report not_approved or not_installed until IMG3D_PROVIDER_PATHS and IMG3D_PROVIDERS_APPROVED are set by hand.",
+    "A: no fatal flaws found. Its submit_gpu_task builds on the real _submit/_executor/_stopping members (verified), it edits no existing test, it leaves every pinned shape untouched, and every dependency it uses is installed."
+   ]
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "scores": [
+    {
+     "key": "backend_a_incremental",
+     "requirements_coverage": 8,
+     "backward_compat_safety": 10,
+     "feasibility_on_this_stack": 9,
+     "extensibility_for_future_tuning": 7,
+     "clarity_implementability": 9,
+     "total": 43,
+     "strengths": [
+      "Leaves the working path untouched. image_to_3d.py, progress.py, inference/**, models/job.py, schemas/jobs.py, job_service.py and job_store.py are all frozen behind a sha256 protected-files test. model.glb, job.json, JobOut, JobStage, the percent formula and /system stay byte- and key-identical, and no existing test file is edited.",
+      "Only four small seams touch existing code. The main one is GenerationWorker.submit_gpu_task, about 12 lines on the existing single 'gpu-worker' executor. I checked _submit, _inflight, is_busy and _stopping in generation_worker.py:84-140. Everything else is new modules, with an AST import-boundary test that keeps torch out of API and services and keeps tuner modules out of the new code.",
+      "Lifts labels onto the exported model.glb (about 2M faces), which avoids the 2^24 nvdiffrast face-ID limit and the remesh topology mismatch. Physical cuts share one PBRMaterial (one atlas, no re-bake), and reassembly is verified.",
+      "The CPU-only 'components' strategy runs with zero ML models, so the whole manifest, GLB, route and UI contract can be proven on real output before any segmenter lands.",
+      "The model catalog matches what is actually on disk and in DECISIONS.md: backend/.model/t2i/Z-Image-Turbo, the backend/.model/seg/* folders, revisions from seg/download_manifest.json, and diffusers 0.39.0 and accelerate 1.15.0 already installed (I verified the dist-infos). See-through and Sapiens2 honestly report vendored_source_missing, because backend/third_party has no such folders (verified). The registry still accepts an IMG3D_APPROVED_MODELS override, so any subset of models works.",
+      "Tuning stays off without breaking tests: IMG3D_BLENDER_ENABLED=false in .env, /features flags, a PartConsumer registry that refuses registration, and an import-boundary test. The blender_enabled default pinned at test_blender_runtime_api.py:311 is not touched.",
+      "Very concrete: endpoint tables with status codes, JSON shapes, the run state machine, a retention plan, slices with disjoint ownership and acceptance criteria, and an honest list of deferred items (D1-D6)."
+     ],
+     "weaknesses": [
+      "Adds a second orchestration layer (ig_/sg_/pa_ runs plus wf_ workflows, with an EventBus subscription and a 5 s reconciliation sweep) next to jobs. Prompt-to-3D and parts go through POST /workflows, not POST /jobs, so the frontend needs adapters.",
+      "The Node-UI graph is stored as opaque JSON and compiled client-side into a fixed WorkflowRequest shape. The server never validates the graph, and adding future tuning nodes means adding new workflow step kinds by hand.",
+      "The 'components' strategy makes the largest welded component the body and every other component a physical part. For closed bodies, the remeshed double shell (|UDF-eps| band) likely leaves the inner wall as a large disconnected component, which would come out as a bogus 'component_001' physical part.",
+      "Uses Z-Image-Turbo vram_peak_gb=15, but the DECISIONS.md probe measured a 23.3 GB peak and a 307 s cold .to('cuda'). The static aux_vram_budget_gb=28 still passes with low_vram=true, but the numbers in /features would be wrong.",
+      "The reassembly check compares welded positions only, not UVs or normals. _FEATURE_ID_0 is written as float32. The latents and RGBA conditioning capture (D1) are deferred, so relabelling depends on frame-recovery heuristics (template match for background_removed)."
+     ]
+    },
+    {
+     "key": "backend_b_asset_model",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 5,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 8,
+     "total": 38,
+     "strengths": [
+      "Has the strongest asset model for future tuning. face_labels is kept separate from face_owner, and there are per-mesh vmap_<pt> buffers with dtype, count and sha256 descriptors. Reassembly is bit-exact for positions, UVs and normals. It adds an AssetReader API, refinement.constraints (seam_lock, keep_uv_atlas, keep_frame), 'needs' facts, immutable revisions and face-IoU lineage across re-decompositions.",
+      "Treats geometry honestly: physical_deferred is used for brows and lashes, separate shells under 25% of faces become free physical cuts, and floaters are tagged and never deleted. Cut openings are recorded and the double-wall inner and outer sheets go into the same seam record.",
+      "Keeps one Job as the GPU unit, with a PipelineRouter whose legacy branch calls ImageTo3DPipeline.run unchanged. Prompt-to-3D goes through POST /jobs with a reserved image id, so a legacy retry becomes a deterministic image job.",
+      "The prepared-conditioning path has a pixel-equality test against upstream preprocess_image. The atomic publish of parts/ via os.replace and the staging validation are solid.",
+      "Prompt hygiene is good: control characters are rejected, logs keep only the final prompt's length and sha256, and provenance carries the model revision and licence."
+     ],
+     "weaknesses": [
+      "The server-side tuning gate breaks existing tests, contrary to the proposal's own claim. tuning_enabled=False by default plus the lifecycle change (detection only if blender_enabled and tuning_enabled) fails test_mesh_tuner_api.py::test_shutdown_interrupts_running_tuning, which builds settings with make_settings directly rather than make_tuner_app, so start_tuning gets 503. It also fails test_blender_runtime_api.py::test_detection_on_startup_runs_in_background, where make_runtime_app gets no opt-in. test_real_blender_plumbing would likely fail too on this machine.",
+      "Invasive edits to the working path: TrellisGenerationRun._preprocess gains a 'prepared' branch, plus changes to JobStore dumping, JobService, schemas/jobs.py (reference_set_id becomes optional), inference/base.py and image_to_3d.py. Each is guarded by tests, but together they are a large regression surface on the live generator.",
+      "Every model defaults to not_approved and providers to 'none', which ignores the DECISIONS.md approvals and the weights already downloaded. It also re-asks questions that are already settled (FLUX.2-klein, Animagine).",
+      "Writes per-part GLB files by default, each embedding the full atlas, so disk use is roughly 2x model.glb per job. Part extraction and export run on the GPU thread inside the job, which blocks the queue.",
+      "Adds features to hello.data. test_websocket only checks data.system, so this is safe, but it is unnecessary coupling."
+     ]
+    },
+    {
+     "key": "backend_c_pipeline_graph",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 7,
+     "feasibility_on_this_stack": 8,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 8,
+     "total": 41,
+     "strengths": [
+      "A server-side graph\u2192plan compiler (PlanCompiler.from_simple and from_graph produce equal plans) means the Node UI and the simple forms share one canonical JobPlan. POST /pipeline/validate, a catalog with ETag and templates, and typed ports with exact GraphIssue codes make the node engine modular.",
+      "Canonicalization sends a trivial input_image\u2192image_to_3d\u2192export graph to plan=None, which is exactly the legacy ImageTo3DPipeline.run path.",
+      "Refine and tune node types (part_refine, mesh_tune, eye_correction, rig_correction) are already in the catalog as locked:true with a reason, and the compiler rejects them with step_locked. That gives future tuning a stable slot with no implementation now.",
+      "The requires_engine gate lets derived part_decomposition jobs skip the 16 GB TRELLIS load. Step artifacts are servable while the job runs (node thumbnails). legacy_job_node_map maps legacy jobs onto nodes.",
+      "GpuResidencyManager checks free memory live via mem_get_info plus a margin, and offers an optional engine.release_vram() for low_vram=false. It runs only on the single GPU thread, with private RNG generators.",
+      "The tuning gate is exposure-only (feature_mesh_tuning plus the .env hard switch), so no existing tests break."
+     ],
+     "weaknesses": [
+      "Every new legacy image job's job.json gains kind/source/plan/parent_job_id/warnings. The model.glb bytes are unchanged and no test pins key sets (verified), but the stored job.json is no longer key-identical.",
+      "Edits shared infrastructure: GenerationWorker._process (engine gate plus submit_maintenance), pipelines/base.py, pipelines/progress.py (an additive update_plan), schemas/jobs.py (three mutually exclusive input forms), and the existing test/backend/conftest.py.",
+      "The provider weight root defaults to backend/.model/providers/<id>, which does not match the weights already downloaded to backend/.model/t2i/Z-Image-Turbo and backend/.model/seg/*. They would report not_installed until IMG3D_PROVIDER_PATHS is set. Everything also defaults to not_approved, despite DECISIONS.md.",
+      "The preprocess step runs BiRefNet separately from TRELLIS's own _preprocess. That is safe for the generate path, but GPU non-determinism could shift the crop by a pixel, and it duplicates work.",
+      "The S4 slice is a bottleneck: it owns jobs schema, services, API, container, lifecycle, worker, main and conftest, so it limits parallelism. ImageTo3DParams subclasses GenerationSettings 'without parts', which needs explicit exclusion. Capability errors return 422 here while A and B return 503, an inconsistency the frontend must handle."
+     ]
+    }
+   ],
+   "winner": "backend_a_incremental",
+   "best_ideas_to_graft": [
+    "From C: replace A's opaque WorkflowRequest.graph with a server-side compiler. Add services/workflow_compiler.py plus POST /pipeline/validate and a /pipeline/catalog with an ETag and templates. It validates Node-UI graphs (cycle, type_mismatch, multiple_sources, missing_required_input, too_many_instances) and compiles them to WorkflowRequest. A trivial input_image\u2192image_to_3d\u2192export graph should compile to a plain POST /jobs (legacy path).",
+    "From C: list the future refine and tune node types (part_refine, mesh_tune, eye_correction, rig_correction) in A's /features.nodes as locked:true with a reason, and make the compiler reject them with 422 step_locked. Future tuning then gets a stable catalog slot with zero implementation.",
+    "From B: strengthen A's manifest and buffers. Store face_owner (mesh index per base face) separately from face_labels. Write per-mesh vmap_<part>.u32 buffers. Give each buffer a descriptor {dtype, count, indexes, sha256}. Extend parts/reassembly.py to verify positions, UVs and normals bit-exactly, not just welded positions.",
+    "From B: build part meshes from arrays with trimesh.Trimesh(process=False), gathering positions, UVs and normals through the vmap, instead of glb.submesh(append=True), so vertex and face order are explicit. Write _FEATURE_ID_0 as uint16 rather than float32; trimesh keeps a leading '_' as is (verified in exchange/gltf/__init__.py:997-999).",
+    "From B: add parts/reader.py AssetReader (base(), part(id), region_faces(id), seams(id)). Add refinement.constraints {seam_lock, keep_uv_atlas, keep_frame} and a 'needs' list (occluded_geometry, geometry, closure, low_confidence) per part. Record lineage.derived_from with face-set IoU \u22650.5 between pa_ runs on the same model.glb sha256.",
+    "Fix A's 'components' strategy using B's shell policy. Before emitting shells as parts, merge components that lie inside, and within about 2.5/effective_resolution of, a larger component into that host; this is the remeshed double-shell inner wall. Make other components under 25% of faces physical, tag tiny ones floater_candidate, and never delete them.",
+    "From C: replace A's static aux_vram_budget_gb with a live check: inference/device.py mem_get_info minus a margin of about 1.5 GB before each GPU step, with an InsufficientVramError (503 capability_unavailable). Correct the Z-Image-Turbo catalog to the measured 23.3 GB peak and document the 307 s cold .to('cuda'). Optionally schedule a one-time bf16 re-save.",
+    "From B and C: specify A's deferred D1 now as a flag-off feature (IMG3D_PERSIST_GENERATION_INTERMEDIATES). Capture latents.npz after decode_latent, consuming no RNG, plus an RGBA conditioning.png/json. Back it with a parity test (test_generation_parity.py unchanged, plus a capture-on equality test) so the voxel-space labelling upgrade needs no redesign.",
+    "From C: return a legacy_job_node_map in /features so the Node UI can light nodes for plain POST /jobs jobs. Expose step artifacts (segmentation overlay, generated candidate) as node thumbnails while the workflow is still running.",
+    "From B: apply prompt hygiene in A's ig_ runs. Reject control characters other than \\n and \\t, log only the final prompt's length and sha256, and store final_prompt_sha256 together with the model revision and licence in the run's provenance and the parts manifest."
+   ],
+   "fatal_flaws": [
+    "backend_b_asset_model: the default-false server-side tuning gate (tuning_enabled=False in MeshTunerService.create_run, plus core/lifecycle.py detecting Blender only if blender_enabled and tuning_enabled) breaks existing tests that B says stay green with a one-line edit to make_tuner_app. test/backend/test_mesh_tuner_api.py::test_shutdown_interrupts_running_tuning (line 404) builds its settings with make_settings directly, so start_tuning gets 503 feature_disabled. test/backend/test_blender_runtime_api.py::test_detection_on_startup_runs_in_background (line 106) uses make_runtime_app with no opt-in, so startup detection never runs and the test times out. test_real_blender_plumbing (line 522) would likely fail as well when Blender 5.2 is present. This breaks the rule that the existing 182 tests stay green, and fixing it means editing more existing test files. Fix: drop the code gate and keep the .env IMG3D_BLENDER_ENABLED=false switch plus the /features exposure flag, as A and C do.",
+    "backend_b_asset_model (high risk, not fatal on its own): in the same wave it edits the live generate path (a TrellisGenerationRun._preprocess 'prepared' branch), JobStore serialization, JobService and the CreateJobRequest optionality. A defect in any of these reaches legacy image jobs; only new tests guard them.",
+    "backend_c_pipeline_graph: none fatal. Note the provider weight-root mismatch: backend/.model/providers/<id> versus the real backend/.model/t2i and backend/.model/seg locations, so the downloaded models report not_installed without IMG3D_PROVIDER_PATHS. Also, every new legacy job's job.json gains five keys, so it is no longer key-identical (model.glb is unaffected).",
+    "backend_a_incremental: none fatal. Fix before implementing: the 'components' strategy will probably emit the remeshed double-shell inner wall as a bogus physical part, and the Z-Image-Turbo VRAM estimate (15 GB) is below the measured 23.3 GB peak."
+   ]
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "scores": [
+    {
+     "key": "frontend_a_shells",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 8,
+     "feasibility_on_this_stack": 8,
+     "extensibility_for_future_tuning": 7,
+     "clarity_implementability": 8,
+     "total": 40,
+     "strengths": [
+      "Smallest change to the working Default UI. DefaultShell is eager and imports today's Header, AppShell and HistoryDrawer from their current paths, with no file moves. Feature components keep their own store subscriptions. Each XxxPanel keeps its path and DOM, and a fingerprint probe checks that the legacy-backend Default UI equals today's plus one gear.",
+      "There is one request builder (lib/jobRequest.buildCreateJobRequest) for every mode. A key-order test checks that the image request with parts off is byte-identical to today's body. jobStore.submit() with no arguments keeps today's path, and toRequestSettings moves to a pure, strip-safe lib/settingsRequest.ts and is re-exported from settingsStore.",
+      "The Node graph stores only topology. Parameters stay in the shared stores and write-through is a 3-flag PipelineConfig. pipelineBlock is set only while the Node shell is mounted and is cleared on unmount, so a stale or invalid graph can never block Default, Mobile or Tablet.",
+      "Backend-agnostic parts adapter (api/parts.ts) handles both features.parts.api='runs' (backend_a's part-analyses) and 'job' (backend_b/c's /jobs/{id}/parts + rebuild). Every URL comes from the manifest or summary, never from a naming convention.",
+      "Gets the chunk-splitting detail right. Its nodeui group has priority 35 and vendor (priority 40) would capture any node_modules/zustand path. A anchors the vendor regex to the top-level frontend/node_modules, so the nested zustand@4 under @xyflow/react no longer lands in the initial chunk. The App settings dialog body is lazy. xyflow is imported only under shells/node.",
+      "Two-key tuner gate (build flag AND features.tuning.mesh_tuner.state==='available') at every verified choke point, without editing components/meshTuner/*. Install buttons are explicitly left out and model choice stays read-only, which matches 'model choices pending'.",
+      "Concrete Default polish list (P1\u2013P20) tied to the verified breakages at 320, 812\u00d7375, 740\u00d7360 and 768\u00d71024. The waves have disjoint file ownership and each has acceptance criteria."
+     ],
+     "weaknesses": [
+      "VERIFIED: the gate command `node --experimental-strip-types --test test\\frontend\\unit\\` (passing a directory) fails on the installed Node v22.17.0 with MODULE_NOT_FOUND for the directory. A glob such as \"test/frontend/unit/**/*.test.mjs\" is required.",
+      "Backward-compatibility hole: inputStore.source is persisted, but on a legacy backend (/features 404) Default hides the InputSourceCard. If source='prompt' was saved earlier, Default generation is blocked with 'Prompt-to-3D needs a newer Img3D backend' and there is no visible way to switch back. The effective source should be forced to 'image' when prompt support is unsupported.",
+      "Optional prompt keys (preset, style, part_hint, model_id, image_seed) and parts keys (subject) are sent based on A's own contract assumption, not on per-key backend advertisement. Under extra='forbid', a naming mismatch gives a 422 for prompt or parts jobs (the image path is unaffected).",
+      "Hiding regions with a GPU lookup table depends on a per-vertex _feature_id_0 attribute. It does not specify `flat` varyings or vertices duplicated at region boundaries, so boundary triangles would interpolate ids or colours. It also chains onBeforeCompile patches into the clay and normals view materials, which adds complexity.",
+      "Weaker extensibility: deriveConfig, PipelineConfig and buildCreateJobRequest are central, so every future node type (for example a refine node) means editing all three. NodeTypeDef has no per-node parameter schema, version or migrate hook.",
+      "Its prerequisite is stale. It asks the user to commit or stash 'uncommitted tuner edits', but they are committed in 8654b90 and the frontend tree is clean (git status verified).",
+      "The Mobile shell does not cover phone landscape explicitly (P7 fixes only Default).",
+      "The React Flow controlled adapter handles only position and selection changes. It never stores the 'dimensions' changes (node.measured), which risks hidden nodes or misplaced handles in xyflow 12 controlled mode."
+     ]
+    },
+    {
+     "key": "frontend_b_command_engine",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 6,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 7,
+     "total": 38,
+     "strengths": [
+      "Most extensible engine. NodeTypeDef carries ParamDef schemas, version plus migrate(), requires capability keys and a per-node contribute(draft) for compiling. The registry throws on any 'refine' def that is not locked, and compile never calls locked nodes. A StepMap and runIndex limit node status to the nodes that were actually compiled for that job. Future tuning nodes plug in without central edits.",
+      "Defensive contract handling. compile emits an optional key only if it appears in the backend's features.*.request_keys, which avoids 422 under extra='forbid'. This matches backend_b exactly. describeSubmitError maps a 422 loc to a part-options or prompt message.",
+      "Strong parity verification. Golden outputs G1\u2013G5 fix the exact JSON key order. G1 is also checked with advanced overrides, with primary_image_id null and with the legacy FeatureSet. A browser-pane check confirms the POST body equals G1 in all four modes. The mock gets strict-request emulation and a request log (GET /api/__test/requests) that proves zero /blender and /tunings calls.",
+      "Correct test-runner invocation for Node 22.17. The glob form \"test/frontend/**/*.test.mjs\" works (verified). The precondition reflects the real git state (tuner WIP committed in 8654b90, frontend tree clean).",
+      "Fuller mode coverage: phone landscape switches the Mobile UI to a NavRail with side sheets. One GenerateAction component has card, bar, fab, rail and toolbar variants. A single global Announcer provides polite and assertive live regions. Regions are highlighted with an index-subset overlay that holds up at region boundaries and degrades honestly (toggle disabled) when the attribute is missing."
+     ],
+     "weaknesses": [
+      "Largest blast radius on working code. The Default UI's generate path is rerouted through the persisted canonical workflow doc, the command bus and compile. If a user edits the doc in Node mode or the doc is corrupted, Default image-to-3D is blocked until 'Restore default workflow'.",
+      "Every existing feature component must stop importing stores and move to state/read plus commands. Slice S6 alone owns all of components/{references,settings,generation,history,prompt,workflow}/**. Layout files move to renderers/default.",
+      "The Default UI changes even on a legacy backend. It always shows the source switch and a disabled Parts options card, and it retitles the Settings panel to 'Generation settings', which drifts from 'preserve the existing UI'.",
+      "Internal inconsistency on chunking. \u00a712 puts the xyflow group at priority 35 and claims the nested zustand@4 will land there, but vendor is priority 40 and its regex matches any node_modules/zustand path. R5 says xyflow ranks above vendor, which is not the case, and the vendor regex is never anchored. As written, the nested zustand@4 goes to the initial vendor chunk.",
+      "As specified, the G1 parity test cannot import toRequestSettings under strip-types. settingsStore.ts uses extensionless relative imports (verified: `from '../api/types'`) and zustand persist with localStorage. The function has to move to a pure module, and the design does not plan that move.",
+      "The initial bundle must hold the engine, the command core, specs and binds, ~60 commands, the AppSnapshot syncers, the linear renderer and an eager App settings dialog, all within +15 kB gzip. That is tight. Side-effect registration through import.meta.glob also hides wiring, which the design itself lists as risks R2 and R3.",
+      "The parts store is keyed by job (the backend_b and backend_c variant). If backend_a's part-analysis runs are chosen, more than the four adapter files would change.",
+      "Designs an Install-model UI flow (E10 POST /models/{id}/install, plus a licence dialog). It is gated by 'approved' and 'install.supported', but it widens scope while model choices are still pending. The S4 slice also adds an in-app dev harness route (?debug=parts) in src/.",
+      "The adapter has the same xyflow controlled-mode gap: it never keeps node.measured from 'dimensions' changes."
+     ]
+    }
+   ],
+   "winner": "frontend_a_shells",
+   "best_ideas_to_graft": [
+    "Add request_keys gating from B. Extend A's FeaturesOut so each capability can report request_keys. toPromptSourceIn and toPartOptionsIn then emit optional keys (preset, style, part_hint, model_id, image_seed, subject, segmenter_id, extra_terms) only when advertised, so an extra='forbid' mismatch never produces a 422.",
+    "Add B's golden request suite to test/frontend/unit/job_request.test.mjs. G1 (image, parts off, byte-identical including key order, with advanced overrides, primary_image_id null and a legacy features snapshot), G2 image+parts, G3 prompt, G4 a missing request key, G5 legacy features with parts on returning not ok. Also add B's browser-pane check that the default-run POST body equals G1 in all four modes.",
+    "Add B's test-double hardening in test/frontend/mock_backend.mjs: --strict-requests (unknown keys get 422 with loc, mirroring extra='forbid') and a GET /api/__test/requests log. Then assert zero /blender or /tunings requests after 30 s idle plus one generation, with the mock reporting the tuner as available and the build flag off.",
+    "Fix A's gate command to `node --experimental-strip-types --test \"test/frontend/unit/**/*.test.mjs\"`. The directory form fails on Node 22.17.0 (verified).",
+    "Close A's persisted-source trap. Derive effectiveSource = (features.prompt.state==='unsupported') ? 'image' : inputStore.source inside requestFromStores and computeGenerateAvailability. Alternatively, render the InputSourceSwitch in Default whenever the source is not 'image', even on a legacy backend.",
+    "Add B's StepMap and runIndex. When startGeneration succeeds, store the submitted PipelineConfig per job id for the session. projectRunState then lights only the nodes that were part of that run, and nodes added later show idle.",
+    "Region highlighting: either add B's cached index-subset overlay (faces whose three vertices share the region value, about 50 ms per 2M faces, then cached) as the primary or fallback path, or make A's lookup-table path require a `flat` varying and backend vertex duplication at region boundaries. Keep B's honest 'Highlight unavailable' state when the attribute is missing.",
+    "Give A's NodeTypeDef B's per-node extension points (version, migrate, an optional contribute(draft, ctx) used only by non-built-in or future nodes, and a registry guard that rejects any refine def that is not locked). buildCreateJobRequest stays the single entry point and keeps the G1 parity test.",
+    "Take B's Mobile landscape posture (height < 520 gives a NavRail with the FAB in its footer, and sheets open as right-side sheets with a 420 px maximum) for A's Mobile shell.",
+    "Replace A's separate GenerateFab, RailGenerateButton and GenerateCard logic with B's single GenerateAction component, variants card/bar/fab/rail/toolbar, over useGenerateAction.",
+    "Mount B's global Announcer (polite plus assertive regions, a 4 s clear and a 1 s dedupe) once in app/GlobalOverlays, instead of one live region per shell.",
+    "Add B's workflow-import limits (64 nodes or fewer, 256 edges or fewer, unknown node types kept and forced to bypass, a newer persisted version moved to img3d.workflow.backup) to A's serialize.ts.",
+    "Fix a gap both designs share: the xyflow adapter must keep 'dimensions' NodeChanges (node.measured) in adapter-local state, or apply all changes via applyNodeChanges on a layout projection. Rebuilding node objects every render otherwise drops the measurements in React Flow 12 controlled mode.",
+    "Drop A's stale prerequisite. The tuner WIP is already committed (8654b90) and the frontend tree is clean."
+   ],
+   "fatal_flaws": [
+    "A: none fatal. One gate does not run as written on this stack: `node --experimental-strip-types --test test\\frontend\\unit\\` fails with MODULE_NOT_FOUND on Node v22.17.0 (verified in the scratchpad). The fix is to pass a glob.",
+    "A (near-fatal edge case): a persisted inputStore.source='prompt' on a legacy or downgraded backend blocks Default image-to-3D, because the source switch is hidden in Default when /features returns 404. Force the effective source to 'image' when prompt support is unsupported.",
+    "B: none strictly fatal, but its largest risk is to the working pipeline. Default image-to-3D now depends on a persisted, user-editable workflow doc compiled through a new command and snapshot layer, so an edited or corrupted img3d.workflow blocks Default generation until a manual restore. It also requires migrating every working feature component off direct store access.",
+    "B: as specified, the G1 parity test cannot run under Node strip-types if it imports toRequestSettings from store/settingsStore.ts. That file has extensionless imports (`from '../api/types'`) and uses zustand persist with localStorage. The function must move to a pure module with .ts imports first.",
+    "B: the chunking plan contradicts itself. The xyflow group at priority 35 sits below vendor at 40, and vendor's regex matches nested node_modules/zustand, so the nested zustand@4 lands in the initial vendor chunk, contrary to R5 and its own budget assertion. The fix is to anchor the vendor regex (A's fix). The result is a bundle-size issue, not breakage."
+   ]
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": {
+   "scores": [
+    {
+     "key": "backend_a_incremental",
+     "requirements_coverage": 8,
+     "backward_compat_safety": 10,
+     "feasibility_on_this_stack": 8.5,
+     "extensibility_for_future_tuning": 7,
+     "clarity_implementability": 9,
+     "total": 42.5,
+     "strengths": [
+      "Safest plan for the working path. It freezes image_to_3d.py, progress.py, inference/**, models/job.py, schemas/jobs.py, job_service.py, job_store.py and paths.py, and a CRLF-normalised sha256 test (test_protected_files.py) enforces the freeze. POST /jobs, job.json, JobOut, JobStage, /system and EngineCapabilities stay key-for-key unchanged, and no existing test file is edited (I9).",
+      "Only four seams touch working code. The GPU seam is a 12-line submit_gpu_task on GenerationWorker, and it matches the real code: _submit, _inflight, _stopping and is_busy at generation_worker.py:85-128. Every extra GPU step therefore runs FIFO on the single gpu-worker thread.",
+      "Prompt-to-3D works within this milestone. An ig_ run produces candidates, the existing ReferenceService.upload_image imports one, and the existing create_job runs it. No new ReferenceService method is needed, and a legacy retry becomes a deterministic image job. Selection can be manual or auto_first.",
+      "The model registry matches the disk layout (.model/t2i/Z-Image-Turbo and .model/seg/*). It uses the revisions pinned in download_manifest.json and the installed diffusers 0.39.0 and accelerate 1.15.0. States are honest, including vendored_source_missing and insufficient_vram, and every model has licence metadata. The registry works with any approved subset through IMG3D_APPROVED_MODELS.",
+      "Segmentation can run before reconstruction (sg_ on a reference image) and after it (job conditioning image). Part analysis (pa_) follows reconstruction. The CPU 'components' strategy proves the manifest, GLB, routes and UI contract with real data and no ML.",
+      "The part policy matches the request. Eyes, hair, clothes, accessories and detachable objects are physical cuts that share the atlas. Eyebrows and eyelashes are physical_deferred, with a mask, a region and a lid curve. Face and body stay regions via _FEATURE_ID_0 plus face_labels.u16. Relations, seams and a verified reassembly are recorded.",
+      "The plan is concrete enough to build from: endpoint tables with status and error codes, five WS event types, error classes, retention, import-boundary tests, and slices with disjoint ownership. Phase B (S2/S3/S5/S6/S6b/S8/S9) can run in parallel."
+     ],
+     "weaknesses": [
+      "The requirement 'tuning remains disabled' is met in the UI only. The tuner endpoints stay live server-side unless the user adds IMG3D_BLENDER_ENABLED=false to their own .env; the code gate is left as open question Q3.",
+      "It adds five new resource kinds (ig_, sg_, pa_, wf_, plus features/models) and a workflow orchestrator driven by an EventBus subscription and a 5 s sweep. That is a larger API and WS surface for all four UIs, and prompt and parts provenance lives on workflows rather than on the job.",
+      "The workflow is a fixed six-step chain and the Node-UI graph is stored as opaque JSON. Node connections are not validated server-side. The catalog explicitly contains no refine or tune node types, even locked ones, which is weaker for 'keep the node engine modular for future tuning nodes'.",
+      "For background_removed inputs, frame recovery is a heuristic: cv2.matchTemplate on the premultiplied BiRefNet preview. It can return 'partial' results. The exact fix (D1, persisting the conditioning RGBA) is deferred.",
+      "The future-consumer interface is thin: PartConsumer has only plan(), there is no reader API, and partition uses glb.submesh, so vertex order is implicit. Per-part GLBs are off by default.",
+      "It default-approves the six DECISIONS.md models (default_approved=True), although the task frames model choice as pending. It also uses 15 GB VRAM for Z-Image-Turbo where the DECISIONS.md probe measured a 23.3 GB peak."
+     ]
+    },
+    {
+     "key": "backend_b_asset_model",
+     "requirements_coverage": 9,
+     "backward_compat_safety": 7,
+     "feasibility_on_this_stack": 8,
+     "extensibility_for_future_tuning": 9.5,
+     "clarity_implementability": 8.5,
+     "total": 42,
+     "strengths": [
+      "Best asset model for reassembly and future consumers. Semantic face_labels are kept separate from physical face_owner. Per-mesh vmap_<pt> buffers allow bit-exact reassembly of positions, UVs and normals (invariant I4, tested). Seams record host_opening and open chains at non-manifold junctions. The manifest has explicit frames (asset, trellis, conditioning), the registered view camera, buffers with dtype, count and sha256, provenance and lineage.",
+      "It provides a read API for future tuning: parts/reader.py AssetReader with part(), region_faces() and seams(). Each part's refinement block carries locked, lock_reason, needs[] (occluded_geometry, geometry, closure, low_confidence), constraints{seam_lock, keep_uv_atlas, keep_frame} and history.",
+      "Tuning is gated in code. MeshTunerService.create_run returns 503 feature_disabled unless tuning_enabled=true, the only test change is a one-line opt-in in make_tuner_app, and /features hides the tuner in all four UIs.",
+      "Segmentation before reconstruction uses the exact conditioning pixels. The optional prepare_conditioning path is proven by an np.array_equal test against upstream preprocess_image, and test_generation_parity.py stays unchanged. Persisting latents is optional and consumes no RNG.",
+      "Job remains the single unit of GPU work and the UI gets one job.updated stream. The PipelineRouter sends legacy jobs to ImageTo3DPipeline.run unchanged. Job.pipeline has its own percent while the 9 frozen stages stay intact.",
+      "Failure semantics are explicit: a part-step failure leaves the job completed with parts.status=failed. Rebuilds are derived jobs (revision n+1, hard-linked base files). A \u00a714.6 table shows what each approved model subset yields."
+     ],
+     "weaknesses": [
+      "It touches the working path in more places. It edits the TRELLIS adapter (a _preprocess branch, latents capture, offload), adds a keyword to the ImageTo3DPipeline.run signature, and changes models/job.py, schemas/jobs.py, job_service.py and job_store.py ('default-excluding dump', which is ambiguous; a global exclude_defaults would change job.json). Each change is guarded, but the risk is higher than in A.",
+      "It would break an existing pinned test. \u00a716 and S7 gate startup Blender detection on blender_enabled and tuning_enabled and blender_detect_on_startup. test_blender_runtime_api.py::test_detection_on_startup_runs_in_background (lines 107-111) sets only blender_detect_on_startup=True, so it would time out. This contradicts the claim that only one existing test line is edited.",
+      "approved_models defaults to [] and the T2I and segmentation providers default to 'none'. The real T2I and segmentation providers are Wave 5, 'only after the user approves models', so prompt-to-3D and semantic parts may not work when the milestone ends.",
+      "Per-part GLBs are on by default, and each embeds the full texture atlas, so disk use grows N-fold per job. Emitting _FEATURE_ID_0 as UNSIGNED_SHORT through trimesh is unverified [A].",
+      "Several facts are stale. backend/constraints.txt is listed as 'new', though it already exists, and segmentation catalog revisions are null although download_manifest.json pins them. CPU-heavy partition and export run inside the job on the GPU thread.",
+      "The node catalog maps nodes to request paths, but there is no server-side graph validation and no locked future tuning nodes. S1 is a very broad sequential bottleneck."
+     ]
+    },
+    {
+     "key": "backend_c_pipeline_graph",
+     "requirements_coverage": 8,
+     "backward_compat_safety": 7,
+     "feasibility_on_this_stack": 7,
+     "extensibility_for_future_tuning": 9,
+     "clarity_implementability": 7,
+     "total": 38,
+     "strengths": [
+      "The graph-first PlanCompiler fits the Node-UI requirement best. The simple form and the graph compile to the same JobPlan (tested). POST /pipeline/validate returns typed GraphIssue codes (cycle, type_mismatch, multiple_sources and others), and the catalog has templates and an ETag. A trivial graph canonicalises to plan=null, which is the byte-identical legacy path.",
+      "It is ready for future tuning nodes. part_refine, tune, mesh_tune, eye_correction and rig_correction are reserved and listed as locked; the compiler rejects them with step_locked. PartConsumer.run and PartConsumerRequest are defined with zero implementations. Provider kinds already exist for segmentation_3d, completion and part_generation, reported as unsupported.",
+      "Soft and hard step failure policies keep the base model.glb when an optional part step fails. requires_engine lets derived part jobs skip the 16 GB TRELLIS load. Step artifacts are served while the job is still running.",
+      "Plan progress is separate from the frozen stage table, with a worked example. legacy_job_node_map lights Node-UI nodes for plan=null jobs.",
+      "Provider states are honest and every provider carries licence metadata. Restricted licences are hidden by default, and the plan works with any approved subset."
+     ],
+     "weaknesses": [
+      "Legacy image jobs gain new top-level job.json keys (kind, source:null, plan:null, parent_job_id:null, warnings:[]), so job.json is not byte-identical when part features are off. It also edits generation_worker.py, pipelines/progress.py, pipelines/base.py, schemas/jobs.py (three input forms), test/backend/conftest.py, and the TRELLIS adapter in S9.",
+      "The provider weights root is backend/.model/providers/<id>/, but the models already sit in backend/.model/t2i/ and backend/.model/seg/. Every provider would report not_installed, and the install CLI would download about 37 GB again unless IMG3D_PROVIDER_PATHS is set. The example ProviderOut still lists diffusers as missing, which is stale.",
+      "The preprocess step calls prepare_conditioning separately from TrellisGenerationRun._preprocess. BiRefNet then runs twice, and the segmentation pixels only approximately match what TRELLIS conditions on (the acceptance allows 1 LSB). The export relies on trimesh TextureVisuals.face_subset internals.",
+      "Graph validation lives on the server and in the client TS engine, and the two must stay in sync. capability_unavailable and feature_disabled are 422, which is inconsistent with the 503 pattern used elsewhere.",
+      "Tuning is disabled only through an exposure flag plus the user's .env, not in code (same gap as A). The asset model is less rich than B's: there are no vertex maps or reader API.",
+      "Slices are mostly sequential (merge order S0\u2192S1\u2192S3\u2192S2\u2192S5\u2192S4\u2192S9\u2192\u2026). S4 alone owns services, API, worker, container, lifecycle, main.py and conftest, which makes it poorly suited to parallel implementer agents."
+     ]
+    }
+   ],
+   "winner": "backend_a_incremental",
+   "best_ideas_to_graft": [
+    "From B \u00a72, \u00a75: store physical ownership separately from semantic labels. Add parts/buffers/face_owner (uint16 per base face, mesh index) next to A's face_labels.u16, plus per-mesh vmap_<part> uint32 buffers. Build each part mesh from arrays with trimesh.Trimesh(process=False) (positions[vmap], remapped faces, uv[vmap], normals[vmap]) instead of A \u00a79.5 step 7's glb.submesh(append=True). Extend A's reassembly check to bit-exact equality of positions, UVs and normals (B test_weld_partition.py).",
+    "From B \u00a79: add parts/reader.py AssetReader(job_dir) with base(), part(id), region_faces(id) and seams(id) as the read API future tuning will consume, tested by B's test_reader_consumers.py. Replace A's thin PartConsumer.plan() with B's accepts(part, manifest) and describe(); keep registration refused while part_refinement_enabled=false.",
+    "From B \u00a77.2, \u00a79, \u00a710.3, \u00a76.2: enrich A's manifest part record. Add refinement{status:'untouched', locked:true, lock_reason, needs[occluded_geometry|geometry|closure|low_confidence], constraints{seam_lock, keep_uv_atlas, keep_frame}, history:[]}, frame{pivot, axes, method}, placement{transform, method:'identity', error}, geometry.status (surface|open_surface|texture_only), and seams[].host_opening. Give relations metrics, source and confidence, add expected_missing relations for prompt nouns that were not found, and list buffer descriptors (dtype, count, byte_length, sha256) validated before publish.",
+    "From B \u00a716 and \u00a721.4 (test_tuning_gate.py): enforce 'tuning remains disabled' in code. In MeshTunerService.create_run, after the existing 404/409 checks, raise 503 feature_disabled unless tuning_enabled (default false). Add a one-line opt-in make_settings(**{'tuning_enabled': True, **overrides}) in test_mesh_tuner_api.py:57 (ask the user first, since it edits an existing test). Do NOT copy B's lifecycle change that gates startup Blender detection on tuning_enabled; it breaks test_blender_runtime_api.py::test_detection_on_startup_runs_in_background. This resolves A's Q3.",
+    "From C \u00a73.3 and \u00a78.5: list future refine node types in A's /features nodes catalog as locked entries: part_refine, mesh_tune, eye_correction, rig_correction with available:false, locked:true, reason:'Paused until approved'. Do not just omit them; listing them satisfies 'keep the node engine modular for future tuning nodes' while nothing executes. Also add C's catalog templates (image_to_3d, image_to_3d_parts, prompt_to_3d, prompt_to_3d_parts, rebuild_parts) and legacy_job_node_map so the Node UI can light nodes for plain jobs.",
+    "From C \u00a75.2 and \u00a78.1: add POST /workflows/validate (same body as POST /workflows, never creates children). It returns GraphIssue[] with C's codes (no_source, multiple_sources, missing_required_input, type_mismatch, cycle, node_locked, capability_unavailable). The Node UI then gets server-side validation of connections instead of A's opaque graph blob.",
+    "From B \u00a714.1 and C \u00a77.2: replace A's template-matching frame recovery for alpha inputs with a torch-free processing/conditioning.py that reproduces the upstream crop exactly. Pin it with B's pixel-equality test (test/engine/test_prepared_conditioning.py pattern). Propose A's D1 (persisting conditioning RGBA plus crop json from the adapter, behind a flag, with the parity test unchanged) as the first upgrade once the user approves, to remove the background_removed heuristic.",
+    "From B \u00a715: add an optional ReferenceImage.source provenance field (kind 't2i', model id, revision, licence id, seed, prompt sha256) when an ig_ candidate is used. History in all four UIs can then show 'from prompt' without a workflow lookup.",
+    "Correct the Z-Image-Turbo catalog numbers from the measured probe in DECISIONS.md: a 23.3 GB VRAM peak, not 15 GB, and a 307 s cold first .to('cuda'). Set vram_peak_gb to about 24 and report a 'loading' state while it warms up. Keep aux_vram_budget_gb=28, so low_vram=false correctly yields insufficient_vram.",
+    "Confirm with the user that DECISIONS.md really records their approval. If it does not, flip A's default_approved to False (approved_models=[]). A's registry already handles any subset, so nothing else changes."
+   ],
+   "fatal_flaws": [
+    "No proposal is disqualified: none would break the existing image-to-3D path or change model.glb when part features are off. The items below are must-fix defects to address before or while implementing.",
+    "backend_b_asset_model: \u00a716 and slice S7 change core/lifecycle.py so startup Blender detection requires blender_enabled AND tuning_enabled (default false). The existing pinned test test/backend/test_blender_runtime_api.py::test_detection_on_startup_runs_in_background (lines 107-111) sets only blender_detect_on_startup=True and would time out. This contradicts B's 'only one existing test line is edited'. Fix: gate only MeshTunerService.create_run.",
+    "backend_b_asset_model (S8) and backend_c_pipeline_graph (S3): both treat backend/constraints.txt as a new file to create, but it already exists with the frozen TRELLIS.2 stack pins (DECISIONS.md). An implementer following the slice could overwrite it and drop pins that protect transformers 4.57.6 and huggingface-hub 0.36.2. It must be edited in place.",
+    "backend_c_pipeline_graph: provider_model_root defaults to backend/.model/providers/<id>/, but the weights already live in backend/.model/t2i/Z-Image-Turbo and backend/.model/seg/*. As written, every provider would report not_installed and the install CLI would download about 37 GB again. The root and local_dir must point at the existing layout.",
+    "backend_c_pipeline_graph: every new legacy image job's job.json gains five top-level keys (kind, source, plan, parent_job_id, warnings), so job.json is not byte-identical when part features are off. Old backends still load these files (extra='ignore'), but this departs from the strict backward-compatibility reading; exclude them when they hold defaults, as A and B do.",
+    "backend_a_incremental: by default the tuner endpoints stay callable server-side. The requirement 'tuning/refinement remains disabled until I approve' is met only if the user edits backend/.env, or once B's code gate is grafted on. Close this before declaring the milestone done.",
+    "All three: Z-Image-Turbo is budgeted at about 15 GB VRAM, but the DECISIONS.md probe measured a 23.3 GB peak. Correct the catalog value so the insufficient_vram check stays meaningful when low_vram=false."
+   ]
+  }
+ },
+ {
+  "label": "",
+  "keys": [
+   "type",
+   "key",
+   "agentId",
+   "result"
+  ],
+  "value": "I wrote the authoritative backend design to `E:/14-OCT-2026/Img3D/.claude/skills/img3d-part-aware/DESIGN.md` (about 2,640 lines, sections 0\u201313 as requested, plus a record of how each judge finding was resolved).\n\n**Base and constraints.** It starts from proposal A, the top scorer.\n- The image-to-3D job is frozen: 32 files on that path are pinned by a hash test.\n- `job.json`, `JobOut`, `CreateJobRequest`, `JobStage`, the percent formula and `/system` do not change.\n- All part-aware work runs as separate resources: `ig_` (prompt \u2192 image), `sg_` (2D segmentation), `pa_` (part analysis) and `wf_` (workflows chaining them).\n- Every GPU step goes through a new ~15-line `GenerationWorker.submit_gpu_task` on the existing single `gpu-worker` thread.\n\n**Grafted from B:**\n- Semantic labels (`face_labels`) are stored separately from physical ownership (`face_owner`). Per-part vertex maps let parts reassemble bit-exactly (positions, UVs, normals and faces), checked on the written files.\n- A `parts/gltf_io.py` writer copies the texture atlas bytes unchanged, so there is one material and no re-encode.\n- `AssetReader` is the read API for future tuning, behind a consumer registry that refuses registrations while refinement is disabled. Part records carry refinement status, needs and constraints, frames, seams, relations, lineage, and buffers with sha256.\n- Publishing is atomic, and prompts are cleaned and only logged as length plus hash.\n\n**Grafted from C:**\n- Future tuning nodes (`part_refine`, `mesh_tune`, `eye_correction`, `rig_correction`) appear in the catalog as locked; 3D segmenters are listed as \"unsupported\".\n- Workflow templates and `legacy_job_node_map`; `POST /workflows/validate` checks graphs server-side with typed issue codes.\n- A live VRAM check runs before each GPU step.\n- A torch-free copy of the TRELLIS input crop is pinned to the original by a pixel-equality test.\n\n**Judge flaws fixed:**\n- **Tuning gate:** it is in code (`create_run` returns 503 `feature_disabled`). Existing tuner tests opt in through one environment line in `test/conftest.py`, so no assertion changes and B's startup-detection change is not copied.\n- **`constraints.txt`:** it already exists and is never recreated.\n- **Model folders:** the registry points at the real `.model/t2i` and `.model/seg` folders.\n- **Z-Image numbers:** corrected to the measured 23.3 GB peak (budgeted as 24 GB) and 337 s cold start, with a `loading` state and a warm-up endpoint.\n- **Inner wall as a fake part:** the remeshed double shell's inner wall is merged back into its host instead of becoming a part.\n- **CPU work on the GPU thread:** part analysis runs its CPU steps on a separate thread.\n\n**Policy and pipeline:**\n- Eyes, hair, clothes, accessories and detachable objects become open-surface cuts sharing the atlas, with seams and the openings they leave recorded.\n- Eyebrows and eyelashes are deferred parts: mask, surface region and lid curve now; geometry later.\n- Face and body stay regions on the continuous mesh.\n- Labels are lifted from segmentation of the job's own `preview.png`, which is exactly the image TRELLIS saw. That keeps prompt-to-3D jobs aligned without guessing the crop.\n- Prompt-to-3D is either one-shot (workflow picks the first candidate) or review-first (generate, pick, then run).\n\n**Slices.** S0 contract and guards \u2192 S1 skeleton and frozen interfaces. Then in parallel: S2 registry and features, S3a/S3b parts library, S4 text-to-image, S5 segmentation, S6 vendored parsers, S7 lifter, S8 retention, S9 tuning gate. Then S10 part analysis and S11 workflows. Two slices wait for your approval (SD1, SD2). Each slice owns its files exclusively and has acceptance criteria.\n\n**Still open \u2014 your decisions (Q1\u2013Q7):**\n1. Do the six models in `DECISIONS.md` count as approved by default? Setting `IMG3D_APPROVED_MODELS=[]` turns them all off.\n2. Do you want a workflow step that pauses so you can pick among several generated images?\n3. May S9 add one line to `test/conftest.py` for the tuning code gate? The alternative is only `IMG3D_BLENDER_ENABLED=false` in your `.env`.\n4. May See-through and Sapiens2 be vendored as git submodules? Until then the anime and realistic segmentation profiles report \"vendored source missing\".\n5. May the TRELLIS adapter save the input crop and latents behind a flag (SD1)? This edits two protected files.\n6. Should Z-Image-Turbo be re-saved once in bf16 to roughly halve the cold load (SD2)?\n7. Should the eye cut also include the eyelid ring? The default keeps the ring as face regions.\n\nNothing has been implemented yet and no code was changed. The `[A]`-marked figures are still unmeasured (part-analysis timings, the hand-written GLB loading in three.js and Blender) and get checked in the slice acceptance runs."
+ }
+]

@@ -1,0 +1,16 @@
+{
+  "_doc": "Real TRELLIS.2 outputs generated 2026-10-16 with test/engine/run_generation_smoke.py (seed 42, resolution 1536, texture 4096, polygons 2000000) under test/part_aware/gpu_lock.py. Job-like folders: inputs/, preview.png (conditioning image), model.glb, summary.json. Read-only fixtures for part-aware development: copy them into a test runtime before any analysis writes files. test/outputs is gitignored, so regenerate with the command below if missing.",
+  "regenerate": "backend\python\python.exe -s test\part_aware\gpu_lock.py --label fixture -- backend\python\python.exe -s test\engine\run_generation_smoke.py --image <image> --resolution 1536 --texture-size 4096 --polygons 2000000 --seed 42",
+  "fixtures": {
+    "alice_front": {
+      "image": "test/images/ALICE/ALICE_full_front_view.png",
+      "dir": "test/outputs/engine_smoke/job_smoke165749",
+      "faces": 1936495, "vertices": 1618334, "total_s": 330.1, "peak_vram_mb": 16844
+    },
+    "anime_alice": {
+      "image": "test/images/ANIME_CHARACTER_01/Alice.png",
+      "dir": "test/outputs/engine_smoke/job_smoke170427",
+      "faces": 1870532, "vertices": 1577171, "total_s": 249.9, "peak_vram_mb": 17772
+    }
+  }
+}
