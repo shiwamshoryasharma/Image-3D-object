@@ -356,7 +356,9 @@ export const PREVIEW_VIEW_LABEL: Record<string, string> = {
   front: 'Front',
   three_quarter: '3/4',
   side: 'Side',
+  back: 'Back',
   face: 'Face',
+  face_texture: 'Face (texture)',
 }
 
 export interface PreviewPair {
@@ -366,7 +368,7 @@ export interface PreviewPair {
   after: TuningPreview | null
 }
 
-const VIEW_ORDER = ['front', 'three_quarter', 'side', 'face']
+const VIEW_ORDER = ['front', 'three_quarter', 'side', 'back', 'face', 'face_texture']
 
 /** Group previews into before/after pairs per view (known views first, in a stable order). */
 export function pairPreviews(previews: readonly TuningPreview[]): PreviewPair[] {

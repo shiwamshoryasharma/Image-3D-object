@@ -37,9 +37,12 @@ Machine-local private notes (gitignored): `CLAUDE.local.md` in the repo root —
 - `.claude\skills\img3d-repo-publishing\` — git/GitHub publishing, `.gitignore` policy, licenses, pre-push checks.
 - `.claude\skills\img3d-auto-mesh-tuner\` — tuner design contract, handoff, progress reports, research.
 
-## In progress (2026-10-15): Auto Mesh Tuner (Blender >= 5.1 runtime + mesh repair)
-PAUSED mid-implementation. Resume from `.claude\skills\img3d-auto-mesh-tuner\HANDOFF.md` (status table + next steps);
-contract in `DESIGN.md` next to it. The paused code was pushed as-is (marked experimental in README).
+## In progress: Auto Mesh Tuner (Blender >= 5.1 runtime + mesh repair)
+PAUSED (2026-10-15, and again 2026-10-16 so the user can add/optimize something new first). Resume from
+`.claude\skills\img3d-auto-mesh-tuner\HANDOFF.md` (status table, what changed, numbered resume plan); agent prompts in
+`progress\resume_briefs.md`; contract in `DESIGN.md`. The 2026-10-15 code is pushed (marked experimental in README);
+the 2026-10-16 resume edits (framework-test stubbing, rig_* options, frontend fixes, one symmetry.py change) are
+uncommitted on `main`.
 
 ## History
 - 2026-10-14: backend, frontend, native extensions, BiRefNet + SS decoder done and verified (138 tests green).

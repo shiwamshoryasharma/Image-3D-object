@@ -326,11 +326,13 @@ export const useMeshTunerStore = create<MeshTunerState>()(
           } catch (error) {
             const apiError = await toApiError(error)
             const message =
-              apiError.status === 409
+              apiError.code === 'blender_download_in_progress'
                 ? 'A Blender download is already in progress.'
-                : apiError.status === 403
+                : apiError.code === 'blender_download_disabled' || apiError.status === 403
                   ? 'Blender downloads are disabled on this server.'
-                  : describeRuntimeError(apiError, 'The download could not be started.')
+                  : apiError.code === 'confirmation_required'
+                    ? 'The download was not confirmed. Use the download button to confirm it.'
+                    : describeRuntimeError(apiError, 'The download could not be started.')
             reportActionError('download', 'Could not start the Blender download', message)
             if (apiError.status === 409) void get().refreshRuntime()
             return false

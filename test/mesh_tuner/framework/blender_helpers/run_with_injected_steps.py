@@ -4,6 +4,8 @@ Run:
   blender --background --factory-startup --python-exit-code 86 --python run_with_injected_steps.py -- \
       --scripts <backend/blender_scripts> --mode <mode> -- <tuner args...>
 Modes:
+  stubs              all four processing steps return skipped (framework-only runs; real steps have their
+                     own suites)
   optional_failures  repair: done + visible mask + hidden_faces metric; face: mutates mesh/modifiers/store then
                      raises StepError; topology: raises ZeroDivisionError; rig: returns a warning outcome
   required_failure   repair raises StepError (run must abort with exit 4)
@@ -53,6 +55,13 @@ def rig_warning(ctx):
     return StepOutcome("warning", "Injected rig warning", {"k": 1})
 
 
+STUB_MESSAGE = "stubbed for the framework test"
+
+
+def stub_step(ctx):
+    return StepOutcome("skipped", STUB_MESSAGE, {})
+
+
 def repair_fail(ctx):
     raise StepError("repair_test_failure", "Injected repair failure")
 
@@ -69,7 +78,9 @@ def face_edit_mode(ctx):
     return StepOutcome("done", "left in edit mode", {})
 
 
-if mode == "optional_failures":
+if mode == "stubs":
+    repair.run = face.run = topology.run = rig.run = stub_step
+elif mode == "optional_failures":
     repair.run, face.run, topology.run, rig.run = repair_with_mask, face_mutate_then_fail, topology_crash, rig_warning
 elif mode == "required_failure":
     repair.run = repair_fail

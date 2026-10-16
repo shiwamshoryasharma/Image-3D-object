@@ -1,5 +1,7 @@
 """Real-Blender tests of the Auto Mesh Tuner framework (entry script, protocol, pipeline, I/O, analysis, validation,
-previews, report) with the stub step modules. Marker ``blender``; artifacts in test/outputs/mesh_tuner/framework/.
+previews, report). The four processing steps are stubbed (``tuner`` fixture -> run_with_injected_steps.py --mode
+stubs) so this suite stays independent of the real steps. Marker ``blender``; artifacts in
+test/outputs/mesh_tuner/framework/.
 
 Run:
   backend\\python\\python.exe -s -m pytest -c test\\pytest.ini test\\mesh_tuner\\framework -q -p no:cacheprovider
@@ -155,7 +157,7 @@ def test_synthetic_end_to_end(tuner, synthetic: dict[str, Any], inspect_models) 
     assert run.returncode == 0, run.tail()
     finals = assert_protocol_sequence(run)
     for sid in STUB_STEPS:
-        assert finals[sid]["status"] == "skipped" and finals[sid]["message"] == "not implemented yet"
+        assert finals[sid]["status"] == "skipped" and finals[sid]["message"] == "stubbed for the framework test"
     for sid in ("load", "analyze", "validation", "export"):
         assert finals[sid]["status"] == "done", finals[sid]
     assert any(e["level"] == "warning" and "bogus_option" in e["message"] for e in run.of("log"))
@@ -384,13 +386,17 @@ def test_bad_config_exit_2(tuner, case: str) -> None:
 
 
 @pytest.mark.blender
-def test_malformed_json_and_missing_args_exit_2(tuner) -> None:
+def test_malformed_json_and_missing_args_exit_2(blender52: Path) -> None:
+    """Goes through the real entry script (the other 5.2 tests use the stubbed helper)."""
+    from amt_testlib import ENTRY_SCRIPT
+
     out = fresh_dir("bad_json")
     cfg = out / "cfg.json"
     cfg.write_text("{not json", encoding="utf-8")
-    run = tuner(["--config", str(cfg)], tag="bad_json", timeout=120)
+    run = run_blender(blender52, ENTRY_SCRIPT, ["--config", str(cfg)], tag="bad_json", timeout=120)
     assert run.returncode == 2 and run.errors[0]["code"] == "bad_config", run.tail()
-    run = tuner([], tag="missing_args", timeout=120)
+    assert run.events[0]["event"] == "hello" and run.events[0]["blender_version"].startswith("5.")
+    run = run_blender(blender52, ENTRY_SCRIPT, [], tag="missing_args", timeout=120)
     assert run.returncode == 2 and run.errors[0]["code"] == "bad_arguments", run.tail()
 
 

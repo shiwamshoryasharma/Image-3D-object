@@ -38,8 +38,11 @@ SCORE_SAMPLES = 20_000
 MEASURE_CAP_PCT = 5.0
 """Mirror distances are clipped at this (% of diag) - beyond it a model is simply asymmetric."""
 YAW_STEPS_DEG = (-2.0, -1.0, -0.5, 0.5, 1.0, 2.0)
-CLUSTER_MAX_EXTENT_PCT = 2.5
+CLUSTER_MAX_EXTENT_PCT = 4.0
 """Defect clusters (pits / blobs / dents) larger than this (% of diag) are intentional details - left alone."""
+NOISE_SAMPLES = 20_000
+TAU_MIN_PCT = 0.15
+"""Lower bound of the defect threshold (% of diag): TRELLIS sides differ by ~0.03-0.06 % from voxel noise."""
 CLUSTER_MAX_EXTENT_FILLED_PCT = 6.0
 """Hole-fill patches (``amt_filled``) may be larger."""
 CLUSTER_MAX_ERROR_PCT = 1.0
@@ -254,18 +257,28 @@ def local_repair(co: np.ndarray, tris: np.ndarray, topo: smoothing.MeshTopology,
     side = plane.signed_distance(co)
     away = np.abs(side) > 2.0 * l_med
     filled = np.zeros(n, bool) if filled is None else np.asarray(filled, dtype=bool).copy()
-    # 1. screening: vertex -> nearest vertex of the mirrored point set
+    # 1. screening: distance of each vertex's mirror image to the surface. The nearest mirrored VERTEX (KD-tree,
+    #    ~2 us) is an upper bound; the exact surface distance (BVH, ~5 us) is computed only where that bound is not
+    #    already below the hysteresis level, so the result does not depend on how the two sides are tessellated.
     report(0.05, "Comparing both sides")
     err = np.zeros(n, np.float64)
     ids = np.nonzero(away)[0]
-    d, _ = nearest_vertices(tree, plane.reflect(co[ids]))
-    err[ids] = d
-    noise = float(np.median(d)) if len(d) else 0.0
-    tau = max(2.5 * noise, 1.2 * l_med, 0.0015 * diag)
+    d_kd, _ = nearest_vertices(tree, plane.reflect(co[ids]))
+    cap = max(CLUSTER_MAX_ERROR_PCT / 100.0 * diag * 4.0, 1e-9)
+    rng = np.random.default_rng(0)
+    sample = rng.choice(len(ids), size=min(len(ids), NOISE_SAMPLES), replace=False) if len(ids) else ids
+    d_sample = np.minimum(mirror_distances(bvh, co[ids[sample]], plane, cap), d_kd[sample])
+    noise = float(np.median(d_sample)) if len(d_sample) else 0.0
+    tau = max(2.5 * noise, TAU_MIN_PCT / 100.0 * diag)
+    refine = np.nonzero(d_kd > HYSTERESIS * tau)[0]
+    if len(refine):
+        d_kd[refine] = np.minimum(d_kd[refine], mirror_distances(bvh, co[ids[refine]], plane, cap))
+    err[ids] = d_kd
     flagged = (err > tau) | filled
     flagged &= away
     details: dict[str, Any] = {"noise_floor_pct": round(100.0 * noise / diag, 5), "threshold_pct":
-                               round(100.0 * tau / diag, 5), "flagged_vertices": int(flagged.sum())}
+                               round(100.0 * tau / diag, 5), "surface_checked_vertices": int(len(refine)),
+                               "flagged_vertices": int(flagged.sum())}
     if not flagged.any():
         details.update(clusters=0, repaired_clusters=0, moved_vertices=0)
         return co.copy(), details
@@ -416,7 +429,7 @@ def local_repair(co: np.ndarray, tris: np.ndarray, topo: smoothing.MeshTopology,
     moved = np.linalg.norm(delta, axis=1)
     mv = moved > 0
     ids_ok = np.concatenate(err_ids)
-    after, _ = nearest_vertices(tree, plane.reflect(new[ids_ok]))
+    after = mirror_distances(bvh, new[ids_ok], plane, cap)
     details.update({"moved_vertices": int(mv.sum()), "projected_vertices": n_projected,
                     "unprojected_vertices": n_unprojected,
                     "move_mean_pct": round(100.0 * float(moved[mv].mean()) / diag, 5) if mv.any() else 0.0,

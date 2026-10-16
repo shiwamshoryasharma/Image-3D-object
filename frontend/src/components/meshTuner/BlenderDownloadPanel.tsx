@@ -55,7 +55,7 @@ function ReleaseDetails({ release }: { release: BlenderRelease }) {
       </div>
       <div>
         <dt>Source</dt>
-        <dd>{hostOf(release.url)}</dd>
+        <dd>{release.host ?? hostOf(release.url)}</dd>
       </div>
       <div>
         <dt>Architecture</dt>

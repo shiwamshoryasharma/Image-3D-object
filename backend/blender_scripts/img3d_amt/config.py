@@ -55,6 +55,12 @@ _OPTION_SPECS: dict[str, tuple[str, Any]] = {
     "optimize_rig": ("bool", None),
     "render_previews": ("bool", None),
     "save_blend": ("bool", None),
+    # Rig cleanup knobs (rig.py; cfg.json / CLI only - not part of the REST TuningOptions body)
+    "rig_min_weight": ("float", (0.0, 0.1)),
+    "rig_max_influences": ("int", (1, 8)),
+    "rig_smooth_iterations": ("int", (0, 20)),
+    "rig_pose_checks": ("bool", None),
+    "rig_pose_bones": ("int", (0, 200)),
 }
 _TRUE = frozenset({"true", "1", "yes", "on"})
 _FALSE = frozenset({"false", "0", "no", "off"})
@@ -96,6 +102,11 @@ class TuningOptions:
     optimize_rig: bool = True
     render_previews: bool = True
     save_blend: bool = False
+    rig_min_weight: float = 0.001
+    rig_max_influences: int = 4
+    rig_smooth_iterations: int = 3
+    rig_pose_checks: bool = True
+    rig_pose_bones: int = 40
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any] | None, *, warnings: list[str] | None = None) -> TuningOptions:

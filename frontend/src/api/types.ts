@@ -476,6 +476,8 @@ export interface BlenderRelease {
   architecture: string
   is_lts: boolean | null
   release_date: string | null
+  /** Host serving the ZIP (backend addition, e.g. "download.blender.org"). */
+  host?: string | null
 }
 
 /** `BlenderRuntimeOut` — full runtime snapshot (REST and `blender.updated`). */
@@ -598,10 +600,12 @@ export interface TuningProgress {
 
 export interface TuningPreview {
   name: string
-  /** front · three_quarter · side · face */
+  /** front · three_quarter · side · back · face · face_texture */
   view: string
   /** before · after */
   variant: string
+  /** matcap · texture (Blender-side addition; absent on older runs) */
+  shading?: string
   url: string
 }
 

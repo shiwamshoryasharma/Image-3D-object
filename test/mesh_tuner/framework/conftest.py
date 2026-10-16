@@ -8,8 +8,7 @@ from typing import Any
 
 import pytest
 
-from amt_testlib import (BLENDER_42, BLENDER_52, ENTRY_SCRIPT, HELPERS_DIR, OUTPUT_ROOT, BlenderRun,
-                         run_blender)
+from amt_testlib import BLENDER_42, BLENDER_52, HELPERS_DIR, OUTPUT_ROOT, SCRIPTS_DIR, BlenderRun, run_blender
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -45,10 +44,15 @@ def synthetic(blender52: Path) -> dict[str, Any]:
 
 @pytest.fixture(scope="session")
 def tuner(blender52: Path):
-    """``tuner(args, tag, timeout=900) -> BlenderRun`` for the real entry script."""
+    """``tuner(args, tag, timeout=900) -> BlenderRun``: the real CLI with the four processing steps stubbed.
+
+    The framework suite tests the framework only (I/O, protocol, analysis, validation, previews, report); the real
+    repair/refine/rig steps are covered by their own suites and test/mesh_tuner/test_pipeline_real.py.
+    """
 
     def _run(args: list[str], tag: str, timeout: float = 900.0) -> BlenderRun:
-        return run_blender(blender52, ENTRY_SCRIPT, args, tag=tag, timeout=timeout)
+        return run_blender(blender52, HELPERS_DIR / "run_with_injected_steps.py",
+                           ["--scripts", str(SCRIPTS_DIR), "--mode", "stubs", "--", *args], tag=tag, timeout=timeout)
 
     return _run
 
