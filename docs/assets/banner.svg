@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-labelledby="t d">
+  <title id="t">Img3D</title>
+  <desc id="d">Img3D turns a single image into a textured 3D model locally with TRELLIS.2, FastAPI, React and Blender.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#090d1c"/>
+      <stop offset="0.55" stop-color="#121838"/>
+      <stop offset="1" stop-color="#26113f"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#b9a9ff"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5b8cff"/>
+      <stop offset="1" stop-color="#c06bff"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3a7a"/>
+      <stop offset="1" stop-color="#6a4bb8"/>
+    </linearGradient>
+    <linearGradient id="arrow" gradientUnits="userSpaceOnUse" x1="838" y1="0" x2="916" y2="0">
+      <stop offset="0" stop-color="#5b8cff"/>
+      <stop offset="1" stop-color="#c06bff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7c5cff" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#7c5cff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <clipPath id="frame"><rect width="1200" height="360" rx="24"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="360" fill="url(#bg)"/>
+    <rect width="1200" height="360" fill="url(#grid)"/>
+    <circle cx="1000" cy="180" r="210" fill="url(#glow)"/>
+
+    <!-- left: name, tagline, stack chips -->
+    <text x="64" y="150" font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif" font-size="104" font-weight="800" letter-spacing="-2" fill="url(#title)">Img3D</text>
+    <rect x="68" y="170" width="72" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="64" y="215" font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif" font-size="25" font-weight="600" fill="#e6e9f8">Single image → textured 3D model</text>
+    <text x="64" y="249" font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif" font-size="21" fill="#a9b1d6">100% local · your GPU · your files</text>
+
+    <g font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="600" fill="#ddd6ff">
+      <rect x="64" y="276" width="132" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="130" y="298" text-anchor="middle">TRELLIS.2-4B</text>
+      <rect x="206" y="276" width="94" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="253" y="298" text-anchor="middle">FastAPI</text>
+      <rect x="310" y="276" width="164" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="392" y="298" text-anchor="middle">React · Three.js</text>
+      <rect x="484" y="276" width="128" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="548" y="298" text-anchor="middle">Blender 5.1+</text>
+    </g>
+
+    <!-- right: photo card -> arrow -> wireframe mesh -->
+    <g transform="translate(686 108) rotate(-6)">
+      <rect width="132" height="152" rx="14" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.25"/>
+      <rect x="12" y="12" width="108" height="98" rx="8" fill="url(#sky)"/>
+      <circle cx="96" cy="36" r="10" fill="#ffd27a"/>
+      <polygon points="12,110 46,62 70,92 88,74 120,110" fill="#8fa2ff" fill-opacity="0.9"/>
+      <rect x="12" y="120" width="72" height="8" rx="4" fill="#ffffff" fill-opacity="0.22"/>
+      <rect x="12" y="134" width="46" height="6" rx="3" fill="#ffffff" fill-opacity="0.14"/>
+    </g>
+
+    <line x1="838" y1="184" x2="898" y2="184" stroke="url(#arrow)" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 10"/>
+    <polygon points="898,174 916,184 898,194" fill="#c06bff"/>
+
+    <ellipse cx="1010" cy="290" rx="104" ry="14" fill="#000000" fill-opacity="0.45" filter="url(#blur)"/>
+
+    <!-- faces -->
+    <polygon points="1010,95 1088,140 1010,185 932,140" fill="#8b7bff" fill-opacity="0.28"/>
+    <polygon points="932,140 1010,185 1010,275 932,230" fill="#5b8cff" fill-opacity="0.2"/>
+    <polygon points="1010,185 1088,140 1088,230 1010,275" fill="#c06bff" fill-opacity="0.16"/>
+
+    <!-- hidden edges -->
+    <g stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5" stroke-dasharray="4 6" fill="none">
+      <path d="M1010 95V185"/>
+    </g>
+
+    <!-- subdivision lines -->
+    <g stroke="#cfc6ff" stroke-opacity="0.45" stroke-width="1.2" fill="none">
+      <path d="M1049 117.5L971 162.5M1049 162.5L971 117.5"/>
+      <path d="M971 162.5V252.5M932 185L1010 230"/>
+      <path d="M1049 162.5V252.5M1010 230L1088 185"/>
+    </g>
+
+    <!-- visible edges -->
+    <g stroke="#ece8ff" stroke-width="2.5" stroke-linejoin="round" fill="none">
+      <polygon points="1010,95 1088,140 1010,185 932,140"/>
+      <path d="M932 140V230L1010 275L1088 230V140M1010 185V275"/>
+    </g>
+
+    <!-- vertices -->
+    <g fill="#ffffff">
+      <circle cx="1010" cy="95" r="4"/><circle cx="1088" cy="140" r="4"/><circle cx="1010" cy="185" r="4"/>
+      <circle cx="932" cy="140" r="4"/><circle cx="932" cy="230" r="4"/><circle cx="1010" cy="275" r="4"/>
+      <circle cx="1088" cy="230" r="4"/>
+    </g>
+    <g fill="#cfc6ff" fill-opacity="0.8">
+      <circle cx="1049" cy="117.5" r="2.5"/><circle cx="971" cy="162.5" r="2.5"/><circle cx="1049" cy="162.5" r="2.5"/>
+      <circle cx="971" cy="117.5" r="2.5"/><circle cx="971" cy="252.5" r="2.5"/><circle cx="932" cy="185" r="2.5"/>
+      <circle cx="1010" cy="230" r="2.5"/><circle cx="1049" cy="252.5" r="2.5"/><circle cx="1088" cy="185" r="2.5"/>
+    </g>
+
+    <!-- sparkles -->
+    <g fill="#ffffff">
+      <circle cx="1140" cy="70" r="2" fill-opacity="0.7"/><circle cx="880" cy="70" r="1.5" fill-opacity="0.5"/>
+      <circle cx="1150" cy="290" r="1.5" fill-opacity="0.5"/><circle cx="660" cy="60" r="1.5" fill-opacity="0.4"/>
+    </g>
+  </g>
+</svg>

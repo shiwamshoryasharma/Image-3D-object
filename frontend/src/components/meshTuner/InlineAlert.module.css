@@ -1,0 +1,19 @@
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgb(244 63 94 / 0.4);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: #ffc2cd;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+  animation: img3d-fade-in var(--duration-fast) ease;
+}
+
+.alert svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--color-danger);
+}

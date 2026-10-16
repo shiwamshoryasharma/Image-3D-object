@@ -1,0 +1,261 @@
+.heading {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* Prompt ---------------------------------------------------------------------------------------- */
+.prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid rgb(245 158 11 / 0.4);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-warning-soft), transparent 140px), var(--color-surface-2);
+}
+
+.promptHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.promptIcon {
+  flex: none;
+  color: var(--color-warning);
+}
+
+.promptMessage {
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+}
+
+.release {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+}
+
+.release > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.release dt,
+.stats dt {
+  font-size: var(--text-2xs);
+  color: var(--color-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.release dd,
+.stats dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.releaseVersion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+
+.resolving {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.releaseError {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: #ffc2cd;
+  font-size: var(--text-sm);
+}
+
+.note {
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--color-text-subtle);
+}
+
+.promptActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Progress -------------------------------------------------------------------------------------- */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--color-accent-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-accent-soft), transparent 140px), var(--color-surface-2);
+}
+
+.progress.completed {
+  border-color: rgb(34 197 94 / 0.4);
+  background: var(--color-surface-2);
+}
+
+.progress.failed {
+  border-color: rgb(244 63 94 / 0.45);
+  background: var(--color-surface-2);
+}
+
+.progress.cancelled {
+  border-color: rgb(245 158 11 / 0.4);
+  background: var(--color-surface-2);
+}
+
+.progressHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.progressHead .heading {
+  margin-right: auto;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.stats > div {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+}
+
+.stats dd {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-xs);
+}
+
+.phases li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-subtle);
+}
+
+.phaseIcon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface-2);
+}
+
+.phase_done {
+  color: var(--color-text-muted);
+}
+
+.phase_done .phaseIcon {
+  border-color: rgb(34 197 94 / 0.5);
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.phases .phase_active {
+  color: var(--color-text);
+}
+
+.phase_active .phaseIcon {
+  border-color: var(--color-accent-border);
+  color: var(--color-accent-hover);
+}
+
+.spin {
+  animation: img3d-spin 1s linear infinite;
+}
+
+.meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-subtle);
+  overflow-wrap: anywhere;
+}
+
+.error {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: #ffc2cd;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 767px) {
+  .prompt,
+  .progress {
+    padding: var(--space-3);
+  }
+
+  .release,
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .promptActions > * {
+    width: 100%;
+  }
+}

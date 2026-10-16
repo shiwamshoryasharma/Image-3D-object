@@ -1,0 +1,37 @@
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 0 var(--space-1);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-text-subtle);
+}
+
+.live {
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px rgb(34 197 94 / 0.18);
+}
+
+.pending {
+  background: var(--color-warning);
+  animation: img3d-pulse 1.4s ease-in-out infinite;
+}
+
+.offline {
+  background: var(--color-danger);
+}
+
+.idle {
+  background: var(--color-text-subtle);
+}
+
+.label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

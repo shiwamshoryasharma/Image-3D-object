@@ -1,0 +1,64 @@
+# Img3D - what stays on the local machine.
+#
+# Large, machine-specific or third-party folders are NOT pushed. Each of them keeps a README.md
+# (re-included below) that says what belongs there, where it comes from and under which license.
+# Full license overview: THIRD_PARTY_NOTICES.md
+
+# ----------------------------------------------------------------- private / agent-local
+.prompt/
+.prompts/
+CLAUDE.local.md
+.claude/settings.local.json
+
+# ----------------------------------------------------------------- secrets
+.env
+.env.*
+!.env.example
+
+# ----------------------------------------------------------------- backend: third-party runtime (README.md kept)
+# Embedded CPython 3.14 + installed packages (PSF License + each package's own license)
+backend/python/*
+!backend/python/README.md
+# CUDA 13.4 build toolchain assembled from NVIDIA pip wheels (NVIDIA CUDA EULA)
+backend/.toolchain/*
+!backend/.toolchain/README.md
+# Model weights (TRELLIS.2-4B, DINOv3, BiRefNet, RMBG-2.0, TRELLIS-image-large) + HF cache
+backend/.model/*
+!backend/.model/README.md
+
+# ----------------------------------------------------------------- backend: generated data
+backend/runtime/*
+!backend/runtime/.gitkeep
+backend/logs/*
+!backend/logs/.gitkeep
+
+# ----------------------------------------------------------------- frontend (see also frontend/.gitignore)
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ----------------------------------------------------------------- tests: generated data only (scripts + configs are tracked)
+test/outputs/
+test/.runtime/
+test/.logs/
+test/**/.pytest_tmp/
+test/**/.hf_home/
+test/aux_models/outputs/
+test/env_setup/cache/
+test/env_setup/out/
+test/env_setup/smoke_build/
+test/**/*.obj
+# Sample input images are personal test data (README.md kept)
+test/images/*
+!test/images/README.md
+
+# ----------------------------------------------------------------- generic
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

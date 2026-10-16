@@ -1,0 +1,48 @@
+.top {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+.modes {
+  flex: 0 1 236px;
+  min-width: 0;
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(8px);
+}
+
+.modes > div {
+  background: rgb(17 20 27 / 0.82);
+}
+
+.group {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.bottom {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-3);
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgb(11 13 18 / 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 2;
+}

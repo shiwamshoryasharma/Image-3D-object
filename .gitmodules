@@ -1,0 +1,16 @@
+[submodule "backend/third_party/TRELLIS.2"]
+	path = backend/third_party/TRELLIS.2
+	url = https://github.com/microsoft/TRELLIS.2.git
+	ignore = dirty
+[submodule "backend/third_party/extensions/CuMesh"]
+	path = backend/third_party/extensions/CuMesh
+	url = https://github.com/JeffreyXiang/CuMesh.git
+	ignore = dirty
+[submodule "backend/third_party/extensions/FlexGEMM"]
+	path = backend/third_party/extensions/FlexGEMM
+	url = https://github.com/JeffreyXiang/FlexGEMM.git
+	ignore = dirty
+[submodule "backend/third_party/extensions/nvdiffrast"]
+	path = backend/third_party/extensions/nvdiffrast
+	url = https://github.com/NVlabs/nvdiffrast.git
+	ignore = dirty

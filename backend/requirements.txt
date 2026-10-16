@@ -1,0 +1,74 @@
+# Img3D backend - pinned to the versions installed in the embedded interpreter (backend\python, CPython 3.14.2).
+#
+# Install ONLY into the embedded interpreter (never system Python / venv / conda):
+#   $py = "E:\14-OCT-2026\Img3D\backend\python\python.exe"
+#   & $py -m uv pip install --python $py --link-mode=copy -r backend\requirements.txt
+#
+# ---------------------------------------------------------------------------------------------------
+# PyTorch (CUDA 13.0 build, includes sm_120 / RTX 50xx). Already installed - NEVER reinstall, upgrade or
+# downgrade these two; they come from the PyTorch cu130 index, not PyPI.
+# ---------------------------------------------------------------------------------------------------
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.14.1+cu130
+torchvision==0.29.1+cu130
+
+# ---------------------------------------------------------------------------------------------------
+# Web API
+# ---------------------------------------------------------------------------------------------------
+fastapi==0.143.0
+starlette==1.8.0
+uvicorn[standard]==0.54.0
+httptools==0.9.0
+watchfiles==1.3.0
+websockets==17.2
+pydantic==2.14.1
+pydantic-core==2.50.1
+pydantic-settings==2.15.0
+python-multipart==0.0.32
+python-dotenv==1.2.4
+psutil==7.2.2
+colorama==0.4.6
+
+# ---------------------------------------------------------------------------------------------------
+# Image / mesh processing
+# ---------------------------------------------------------------------------------------------------
+pillow==12.3.0
+numpy==2.4.1
+opencv-python-headless==5.0.0.93
+imageio==2.38.1
+trimesh==5.1.1
+scipy==1.18.1
+plyfile==1.1.5
+zstandard==0.25.0
+
+# ---------------------------------------------------------------------------------------------------
+# TRELLIS.2 runtime
+# ---------------------------------------------------------------------------------------------------
+transformers==4.57.6          # pinned: TRELLIS.2's DINOv3 wrapper uses transformers internals
+huggingface-hub==0.36.2       # must stay < 1.0 for transformers 4.57.x
+safetensors==0.8.0
+tokenizers==0.22.2
+easydict==1.13
+einops==0.8.2
+tqdm==4.70.1
+ninja==1.13.2
+triton-windows==3.8.0.post29  # Triton JIT kernels used by FlexGEMM (sparse convolution)
+kornia==0.8.3
+timm==1.0.30
+
+# ---------------------------------------------------------------------------------------------------
+# Tests / tooling (test suite lives in ..\test; e2e client uses httpx + websockets)
+# ---------------------------------------------------------------------------------------------------
+httpx==0.28.1
+pytest==9.1.1
+
+# ---------------------------------------------------------------------------------------------------
+# Native CUDA extensions - NOT on PyPI. Built from the vendored sources in backend\third_party with the local
+# CUDA 13.4 toolchain + MSVC 14.51 by:
+#     backend\scripts\build_extensions.cmd
+#   o_voxel    <- third_party\TRELLIS.2\o-voxel
+#   cumesh     <- third_party\extensions\CuMesh
+#   flex_gemm  <- third_party\extensions\FlexGEMM
+#   nvdiffrast <- third_party\extensions\nvdiffrast (v0.4.0)
+# The trellis2 package itself is imported from backend\third_party\TRELLIS.2 (added to sys.path at runtime).
+# ---------------------------------------------------------------------------------------------------

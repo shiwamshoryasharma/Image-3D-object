@@ -1,0 +1,112 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+}
+
+.bar {
+  border-radius: 0;
+  border-width: 1px 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: rgb(11 13 18 / 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.kbd {
+  margin-left: var(--space-1);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  background: rgb(255 255 255 / 0.16);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.4;
+}
+
+@media (hover: none) {
+  .kbd {
+    display: none;
+  }
+}
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.status svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.reason {
+  color: var(--color-text-muted);
+}
+
+.note {
+  color: #cdeefe;
+}
+
+.note svg {
+  color: var(--color-info);
+}
+
+/* Engine unavailable / failed to load: compact summary, collapsible diagnostics, retry. */
+.problem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  min-width: 0;
+}
+
+.problemSummary {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: #ffc2cd;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.problemSummary svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.problemDetails {
+  width: 100%;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.problemDetails summary {
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.problemDetails pre {
+  margin: var(--space-2) 0 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: var(--space-2);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 0.3);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

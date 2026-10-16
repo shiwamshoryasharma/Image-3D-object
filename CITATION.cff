@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+message: "If you use Img3D, please cite it as below, together with TRELLIS.2."
+title: "Img3D: local image-to-3D generation with TRELLIS.2"
+type: software
+authors:
+  - family-names: "Sharma"
+    given-names: "Shiwam Shorya"
+repository-code: "https://github.com/shiwamshoryasharma/Image-3D-object"
+license: GPL-3.0-only
+date-released: "2026-10-16"
+keywords:
+  - image-to-3d
+  - 3d-generation
+  - trellis
+  - fastapi
+  - react
+  - three.js
+  - blender
+references:
+  - type: report
+    title: "Native and Compact Structured Latents for 3D Generation"
+    authors:
+      - family-names: "Xiang"
+        given-names: "Jianfeng"
+      - family-names: "Chen"
+        given-names: "Xiaoxue"
+      - family-names: "Xu"
+        given-names: "Sicheng"
+      - family-names: "Wang"
+        given-names: "Ruicheng"
+      - family-names: "Lv"
+        given-names: "Zelong"
+      - family-names: "Deng"
+        given-names: "Yu"
+      - family-names: "Zhu"
+        given-names: "Hongyuan"
+      - family-names: "Dong"
+        given-names: "Yue"
+      - family-names: "Zhao"
+        given-names: "Hao"
+      - family-names: "Yuan"
+        given-names: "Nicholas Jing"
+      - family-names: "Yang"
+        given-names: "Jiaolong"
+    year: 2025
+    url: "https://arxiv.org/abs/2512.14692"

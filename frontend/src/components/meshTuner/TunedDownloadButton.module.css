@@ -1,0 +1,11 @@
+.download {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.size {
+  margin-left: var(--space-2);
+  opacity: 0.75;
+  font-weight: var(--weight-regular);
+}

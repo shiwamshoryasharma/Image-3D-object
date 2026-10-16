@@ -1,0 +1,119 @@
+/*
+ * Img3D design tokens. Every component consumes these variables; never hard-code colors in modules.
+ * The UI is dark-only by design (3D work is easier to judge on a neutral dark background).
+ */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-bg: #0b0d12;
+  --color-bg-gradient: radial-gradient(1200px 600px at 70% -10%, rgb(124 92 255 / 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgb(34 211 238 / 0.05), transparent 60%);
+  --color-surface-1: #11141b;
+  --color-surface-2: #161a23;
+  --color-surface-3: #1c212d;
+  --color-surface-4: #242a38;
+  --color-overlay: rgb(5 7 12 / 0.72);
+  --color-viewer-bg: radial-gradient(ellipse at 50% 35%, #1a1f2b 0%, #0e1118 70%);
+
+  /* Borders */
+  --color-border: #222838;
+  --color-border-strong: #313849;
+  --color-border-focus: #8b6cff;
+
+  /* Text */
+  --color-text: #e8ebf2;
+  --color-text-muted: #a1a9ba;
+  --color-text-subtle: #6d7588;
+  --color-text-inverse: #0b0d12;
+
+  /* Brand */
+  --color-accent: #8b6cff;
+  --color-accent-hover: #9d83ff;
+  --color-accent-active: #7a58f5;
+  --color-accent-soft: rgb(139 108 255 / 0.14);
+  --color-accent-border: rgb(139 108 255 / 0.45);
+  --color-accent-2: #22d3ee;
+  --gradient-brand: linear-gradient(135deg, #8b6cff 0%, #22d3ee 100%);
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-success-soft: rgb(34 197 94 / 0.14);
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgb(245 158 11 / 0.14);
+  --color-danger: #f43f5e;
+  --color-danger-hover: #fb5a76;
+  --color-danger-soft: rgb(244 63 94 / 0.14);
+  --color-info: #38bdf8;
+  --color-info-soft: rgb(56 189 248 / 0.14);
+  --color-primary-star: #fbbf24;
+
+  /* Typography — system stacks only (no network fonts) */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.375rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  /* Spacing (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 6px 18px rgb(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.5), 0 2px 8px rgb(0 0 0 / 0.35);
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-border-focus);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+
+  /* Layout */
+  --header-height: 56px;
+  --tabbar-height: 60px;
+  --layout-gap: 12px;
+  --column-left: minmax(300px, 360px);
+  --column-right: minmax(320px, 388px);
+
+  /* Z-index scale */
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-dropdown: 40;
+  --z-drawer: 60;
+  --z-toast: 80;
+  --z-modal: 90;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+  }
+}
