@@ -211,6 +211,8 @@ def test_prompt_term_phrases_and_box_selection():
     [
         ("An anime girl with long blonde hair", "anime_character"),
         ("a cartoon drawing of a knight", "anime_character"),
+        ("The image shows an animated girl in a blue and white dress with long blonde hair.", "anime_character"),
+        ("A woman in a blue and white dress with long blonde hair.", "realistic_human"),
         ("A photo of a woman in a red dress", "realistic_human"),
         ("a man standing", "realistic_human"),
         ("a wooden chair", "object"),

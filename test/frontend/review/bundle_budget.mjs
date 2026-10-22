@@ -127,7 +127,10 @@ if (!existsSync(manifestPath)) {
   }
   const entryStatic = reach('index.html', { dynamic: false })
   const jsOf = (keys) => [...new Set([...keys].map((key) => manifest[key]?.file).filter((file) => file?.endsWith('.js')))]
-  const lazySet = (key, stop) => (manifest[key] ? new Set([...reach(key, { stop })].filter((k) => !entryStatic.has(k) && !isVendor(k))) : null)
+  // Stop at the entry's static chunks: every lazy chunk imports index.html, and walking on through the entry's own
+  // dynamic imports would charge featureBundle, tunerBundle, the viewer and the other shells to this one.
+  const lazySet = (key, stop = new Set()) =>
+    manifest[key] ? new Set([...reach(key, { stop: new Set([...stop, ...entryStatic]) })].filter((k) => !isVendor(k))) : null
   const ownChunk = (key) => (manifest[key] ? gz(manifest[key].file) : null)
 
   row('Feature bundle (featureBundle)', ownChunk('src/components/featureBundle.ts'), 30_000)

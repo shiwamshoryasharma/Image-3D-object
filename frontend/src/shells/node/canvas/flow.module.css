@@ -1,0 +1,345 @@
+/*
+ * React Flow theme (UI_DESIGN §4.3.12), ComfyUI-like: a gridded canvas, thick bezier links coloured by port type,
+ * nodes with a category-tinted title bar, slot dots on the node edges and widget rows. `--xy-*` variables are mapped
+ * onto the app tokens.
+ */
+.canvas {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 240px;
+
+  --bypass-color: #b07cff;
+  --xy-background-color: color-mix(in srgb, var(--color-bg) 82%, #000);
+  --xy-background-pattern-color: color-mix(in srgb, var(--color-border) 55%, transparent);
+  --xy-node-color: var(--color-text);
+  --xy-edge-stroke: var(--color-border-strong);
+  --xy-edge-stroke-selected: var(--color-text);
+  --xy-edge-stroke-width: 3;
+  --xy-connectionline-stroke: var(--color-text-muted);
+  --xy-connectionline-stroke-width: 3;
+  --xy-handle-background-color: var(--color-surface-3);
+  --xy-minimap-background-color: color-mix(in srgb, var(--color-surface-1) 88%, transparent);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--color-bg) 65%, transparent);
+  --xy-minimap-mask-stroke-color: var(--color-border-strong);
+  --xy-minimap-mask-stroke-width: 1;
+  --xy-minimap-node-background-color: var(--color-surface-4);
+  --xy-minimap-node-stroke-color: transparent;
+  --xy-selection-background-color: var(--color-accent-soft);
+  --xy-selection-border: 1px dashed var(--color-accent-border);
+  --xy-attribution-background-color: transparent;
+}
+
+/* The global `svg { max-inline-size: 100% }` reset would squeeze each edge's svg (inside a 0-wide container) to 0 px,
+   which hides every link. */
+.canvas svg {
+  max-inline-size: none;
+}
+
+.canvas :global(.react-flow__attribution) {
+  font-size: var(--text-2xs);
+  color: var(--color-text-subtle);
+  opacity: 0.6;
+}
+.canvas :global(.react-flow__attribution a) {
+  color: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------ chrome */
+.canvas :global(.react-flow__controls) {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.canvas :global(.react-flow__controls-button) {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  inline-size: max(30px, var(--hit-min));
+  block-size: max(30px, var(--hit-min));
+}
+.canvas :global(.react-flow__controls-button:hover) {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+.canvas :global(.react-flow__controls-button svg) {
+  fill: currentColor;
+}
+.canvas :global(.react-flow__minimap) {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  opacity: 0.7;
+  transition: opacity 120ms ease;
+}
+.canvas :global(.react-flow__minimap:hover) {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------------------------------------ links */
+.canvas :global(.react-flow__edge-path) {
+  stroke-linecap: round;
+}
+.canvas :global(.react-flow__edge:hover .react-flow__edge-path) {
+  stroke-width: 4;
+}
+.canvas :global(.react-flow__edge.selected .react-flow__edge-path) {
+  stroke-width: 4.5;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-text) 45%, transparent));
+}
+.canvas :global(.react-flow__edge.animated .react-flow__edge-path) {
+  stroke-dasharray: 8 6;
+}
+
+.canvas :global(.react-flow__node:focus-visible) {
+  outline: none;
+}
+.canvas :global(.react-flow__node:focus-visible) > .node {
+  box-shadow: var(--focus-ring), var(--shadow-lg);
+}
+
+/* ------------------------------------------------------------------------------------------------ node */
+.node {
+  --node-body: var(--color-surface-2);
+  --node-head: color-mix(in srgb, var(--node-accent) 24%, var(--color-surface-3));
+
+  inline-size: 260px;
+  background: var(--node-body);
+  border: 1px solid color-mix(in srgb, var(--node-accent) 30%, var(--color-border-strong));
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 10px 28px rgb(0 0 0 / 0.45),
+    0 1px 0 rgb(255 255 255 / 0.03) inset;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transition:
+    box-shadow 120ms ease,
+    border-color 120ms ease;
+}
+.nodeSelected {
+  border-color: var(--color-text);
+  box-shadow:
+    0 0 0 1px var(--color-text),
+    0 12px 32px rgb(0 0 0 / 0.55);
+}
+.node[data-state='running'],
+.node[data-state='queued'] {
+  border-color: var(--color-success);
+  box-shadow:
+    0 0 0 1px var(--color-success),
+    0 0 18px color-mix(in srgb, var(--color-success) 35%, transparent),
+    0 10px 28px rgb(0 0 0 / 0.45);
+}
+.node[data-state='failed'] {
+  border-color: var(--color-danger);
+  box-shadow:
+    0 0 0 1px var(--color-danger),
+    0 10px 28px rgb(0 0 0 / 0.45);
+}
+/* ComfyUI marks a bypassed node with a purple wash; it stays readable and keeps its slots. */
+.nodeBypassed {
+  --node-body: color-mix(in srgb, var(--bypass-color) 16%, var(--color-surface-2));
+  --node-head: color-mix(in srgb, var(--bypass-color) 32%, var(--color-surface-3));
+
+  border-color: color-mix(in srgb, var(--bypass-color) 55%, transparent);
+  opacity: 0.82;
+}
+
+.nodeHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: 34px;
+  padding: 0 var(--space-2) 0 var(--space-1);
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+  border-block-end: 1px solid color-mix(in srgb, var(--node-accent) 28%, transparent);
+  background: var(--node-head);
+}
+.nodeTitle {
+  flex: 1;
+  min-inline-size: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.collapse {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: max(24px, var(--hit-min));
+  block-size: max(24px, var(--hit-min));
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: color-mix(in srgb, var(--node-accent) 70%, var(--color-text));
+  cursor: pointer;
+}
+.collapse:hover {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+.collapse:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.badge,
+.bypassTag,
+.statusPill {
+  flex: none;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.badge {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text-muted);
+}
+.badgeIssue {
+  background: var(--color-danger);
+  color: #fff;
+  font-weight: 600;
+}
+.bypassTag {
+  background: color-mix(in srgb, var(--bypass-color) 35%, transparent);
+  color: var(--color-text);
+}
+.statusPill {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text);
+}
+.statusPill[data-state='running'],
+.statusPill[data-state='queued'],
+.statusPill[data-state='done'] {
+  background: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+.statusPill[data-state='warning'] {
+  background: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+.statusPill[data-state='failed'],
+.statusPill[data-state='cancelled'] {
+  background: color-mix(in srgb, var(--color-danger) 35%, transparent);
+}
+.progress {
+  padding: var(--space-1) var(--space-3) 0;
+}
+
+/* ------------------------------------------------------------------------------------------------ slots */
+.slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+.slotColumn {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+.port {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 22px;
+  font-size: var(--text-xs);
+}
+.portIn {
+  padding-inline-start: var(--space-3);
+}
+.portOut {
+  flex-direction: row-reverse;
+  padding-inline-end: var(--space-3);
+}
+.portGlyph {
+  color: var(--port-color);
+  font-size: 9px;
+  line-height: 1;
+}
+.portLabel {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.required {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+.handle {
+  inline-size: 12px;
+  block-size: 12px;
+  border: 2px solid var(--port-color, var(--color-border-strong));
+  border-radius: 50%;
+  background: var(--node-body);
+  transition: transform 100ms ease;
+}
+.handle[data-connected='true'] {
+  background: var(--port-color, var(--color-border-strong));
+}
+.handle:hover {
+  transform: translate(var(--handle-shift, -50%), -50%) scale(1.25);
+}
+.handle:global(.react-flow__handle-right) {
+  --handle-shift: 50%;
+}
+.handle::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+}
+@media (pointer: coarse) {
+  .handle::before {
+    inset: -16px;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------ widgets */
+.widgets {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+}
+.widget {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-block-size: 24px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--node-body));
+  font-size: var(--text-xs);
+}
+.widgetLabel {
+  color: var(--color-text-subtle);
+  white-space: nowrap;
+}
+.widgetValue {
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget[data-empty='true'] .widgetValue {
+  color: var(--color-warning);
+  font-weight: 400;
+  font-style: italic;
+}
+.message {
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}

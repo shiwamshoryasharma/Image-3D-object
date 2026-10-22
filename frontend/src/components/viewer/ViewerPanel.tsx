@@ -1,15 +1,17 @@
 import { Box, ImagePlus, LoaderCircle, MousePointer2, Sparkles } from 'lucide-react'
-import { Suspense, lazy, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 
+import { fileUrl } from '../../api/files'
 import { jobModelUrl } from '../../api/jobs'
 import { tunedModelUrl } from '../../api/tunings'
-import { useBreakpoint } from '../../hooks/useBreakpoint'
 import { useFullscreen } from '../../hooks/useFullscreen'
+import { useTunerVisible } from '../../hooks/useTunerVisible'
 import { useViewedTuning } from '../../hooks/useViewedTuning'
 import { saveUrl } from '../../lib/download'
 import { formatCompact } from '../../lib/format'
 import { isTerminal, selectActiveJob, selectViewedJob, useJobStore } from '../../store/jobStore'
 import { useMeshTunerStore, type ModelVariant } from '../../store/meshTunerStore'
+import { selectLatestSet, usePartStore } from '../../store/partStore'
 import { useReferenceStore } from '../../store/referenceStore'
 import { useSystemStore } from '../../store/systemStore'
 import { useUiStore } from '../../store/uiStore'
@@ -19,8 +21,8 @@ import { SegmentedControl } from '../common/SegmentedControl'
 import { Spinner } from '../common/Spinner'
 import { ViewerErrorBoundary } from './ViewerErrorBoundary'
 import { ViewerToolbar } from './ViewerToolbar'
-import { useViewerRuntime } from './viewerRuntime'
-import type { ViewerApi } from './viewerTypes'
+import { useLowMemory, useViewerRuntime } from './viewerRuntime'
+import type { ViewerApi, ViewerPartsProps } from './viewerTypes'
 import styles from './ViewerPanel.module.css'
 
 const ModelViewer = lazy(() => import('./ModelViewer'))
@@ -128,25 +130,92 @@ function VariantBar({ variant, hasTuned }: { variant: ModelVariant; hasTuned: bo
   )
 }
 
+/** Loading / error / caption chips of the parts model (UI_DESIGN §6.6), top right below the actions. */
+function PartsBar({ count }: { count: number }) {
+  const status = useViewerRuntime((s) => s.partsStatus)
+  const loaded = useViewerRuntime((s) => s.partsLoadedBytes)
+  const total = useViewerRuntime((s) => s.partsTotalBytes)
+  const retry = useViewerRuntime((s) => s.retryParts)
+  const regionMissing = useViewerRuntime((s) => s.hasRegionAttribute === false)
+  return (
+    <div className={styles.partsBar} data-ui-addition>
+      {status === 'loading' && (
+        <span className={styles.variantChip} role="status">
+          <Spinner size={11} />
+          Loading parts model{total > 0 ? ` ${Math.round((loaded / total) * 100)} %` : '…'}
+        </span>
+      )}
+      {status === 'error' && (
+        <span className={`${styles.variantChip} ${styles.variantError}`} role="alert">
+          Parts model failed to load
+          {retry && (
+            <button type="button" className={styles.variantRetry} onClick={() => retry()}>
+              Retry
+            </button>
+          )}
+        </span>
+      )}
+      {status === 'ready' && (
+        <span className={styles.variantChip}>
+          Parts view · {count} {count === 1 ? 'part' : 'parts'}
+        </span>
+      )}
+      {status === 'ready' && regionMissing && (
+        <span className={styles.variantChip}>Highlight unavailable for body regions</span>
+      )}
+    </div>
+  )
+}
+
+/** Any part interaction mounts the parts model (UI_DESIGN §6.6: first "Parts view" toggle, hover, select, hide, isolate). */
+const partsInteracted = (s: ReturnType<typeof usePartStore.getState>): boolean =>
+  s.view.show || s.view.hovered !== null || s.view.selected !== null || s.view.isolated !== null || s.view.hidden.length > 0
+
 /** 3D viewer card: lazy R3F canvas, overlay toolbar, empty/progress states, fullscreen and screenshots. */
 export function ViewerPanel({ active = true }: { active?: boolean }) {
   const job = useJobStore(selectViewedJob)
   const options = useUiStore((s) => s.viewer)
-  const { latestRun, tunedRun, variant } = useViewedTuning()
-  const breakpoint = useBreakpoint()
+  const { latestRun: viewedLatestRun, tunedRun: viewedTunedRun, variant: viewedVariant } = useViewedTuning()
+  // Only the Default shell has tuner mount points (§3.9): elsewhere the viewer shows the original only.
+  const tunerVisible = useTunerVisible()
+  const latestRun = tunerVisible ? viewedLatestRun : null
+  const tunedRun = tunerVisible ? viewedTunedRun : null
+  const variant: ModelVariant = tunerVisible ? viewedVariant : 'original'
+  const lowMemory = useLowMemory()
   const containerRef = useRef<HTMLElement>(null)
   const [api, setApi] = useState<ViewerApi | null>(null)
   const [mountedTunedUrl, setMountedTunedUrl] = useState<string | null>(null)
+  const [mountedPartsId, setMountedPartsId] = useState<string | null>(null)
   const { isFullscreen, toggle, supported } = useFullscreen(containerRef)
 
   const result = job?.status === 'completed' ? job.result : null
   const url = result ? jobModelUrl(result) : null
   const tunedUrl = tunedRun ? tunedModelUrl(tunedRun.result) : null
   const showTuned = variant === 'tuned' && tunedUrl !== null
-  // Phones mount the tuned model only once it was shown (memory); larger screens preload it for an instant toggle.
+  // Low-memory devices mount the tuned model only once it was shown; others preload it for an instant toggle.
   if (showTuned && mountedTunedUrl !== tunedUrl) setMountedTunedUrl(tunedUrl)
-  const secondaryUrl = tunedUrl && (breakpoint !== 'mobile' || mountedTunedUrl === tunedUrl) ? tunedUrl : null
+  const secondaryUrl = tunedUrl && (!lowMemory || mountedTunedUrl === tunedUrl) ? tunedUrl : null
   const tunedFaces = tunedRun?.result.stats?.faces ?? null
+
+  // Parts model: the viewed job's latest ready part set, mounted on the first part interaction (not preloaded).
+  const latestSet = usePartStore((s) => selectLatestSet(s, job?.id ?? null))
+  const partSet = url && latestSet?.status === 'ready' && latestSet.set?.jobId === job?.id ? latestSet.set : null
+  const partsLatched = partSet !== null && mountedPartsId === partSet.analysisId
+  const partsShow = usePartStore((s) => s.view.show)
+  // Once latched the selector is constant, so later hovers never re-render this panel.
+  const partsWanted = usePartStore((s) => partsLatched || partsInteracted(s))
+  const focusPending = useViewerRuntime((s) => s.focusRequest !== null)
+  if (partSet && !partsLatched && (partsWanted || focusPending)) setMountedPartsId(partSet.analysisId)
+  const partsMounted = partSet !== null && (lowMemory ? partsShow : partsLatched)
+  const parts: ViewerPartsProps | null =
+    partsMounted && partSet
+      ? { analysisId: partSet.analysisId, url: fileUrl(partSet.urls.assembled), regionAttribute: partSet.regionAttribute }
+      : null
+
+  // A focus request never carries over to another model.
+  useEffect(() => {
+    useViewerRuntime.getState().clearFocusRequest()
+  }, [url])
 
   const screenshot = () => {
     const dataUrl = api?.screenshot()
@@ -179,6 +248,7 @@ export function ViewerPanel({ active = true }: { active?: boolean }) {
                 options={options}
                 active={active}
                 onApi={setApi}
+                parts={parts}
               />
             </Suspense>
           </ViewerErrorBoundary>
@@ -194,9 +264,11 @@ export function ViewerPanel({ active = true }: { active?: boolean }) {
         onResetCamera={() => api?.resetCamera()}
         onScreenshot={screenshot}
         onToggleFullscreen={() => void toggle()}
+        partsCount={partSet ? partSet.counts.parts : null}
       />
 
       {url && (tunedRun || latestRun) && <VariantBar variant={variant} hasTuned={tunedRun !== null} />}
+      {partSet && partsShow && partsMounted && <PartsBar count={partSet.counts.parts} />}
 
       {job && result && (
         <div className={styles.caption}>

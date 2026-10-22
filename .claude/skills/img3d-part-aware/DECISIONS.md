@@ -76,3 +76,16 @@ below holds until the user says otherwise.
   weights into RAM in a CPU step instead; Q6 is re-asked only if that measures ≥ 30 s for the first GPU transfer.
 - **Q7 Eye cut scope:** cut only the lifted eye faces; the eyelid ring (taxonomy values 26/27) stays a base region.
 - **Q3 UI amendment (user spec alignment, 2026-10-16; follows the user's milestone spec "Preserve the existing UI" / "Do not delete existing working functionality"):** replaces the "hidden in all four UI modes" clause of Q3 above (and DESIGN.md §8.2 G4 / §12 Q3 wording) for the UI: the Default UI keeps the existing tuner UI where it is today, rendered but LOCKED while `/features.mesh_tuning.enabled` is false (start/configure tuning and Blender download/setup disabled with the notice "Paused until you approve the part-aware milestone"; Blender pill read-only; existing tuned results stay viewable); the same flag unlocks it with no code change; a legacy backend behaves as today; Mobile/Tablet/Node add no tuner UI; refine nodes stay locked and hidden; no tuner file is edited (UI_DESIGN.md §3.9).
+
+## User decisions 2026-10-22 (session resume)
+- **Cut consistency gate = face-weighted.** `summary.cut_partner_consistency` is the face-weighted share over all cut
+  parts (was: min over cut parts). Reason: at the API default `views=8` the min was set by 74–105-face fragment
+  instances (0.747 ALICE / 0.676 anime) while the face-weighted value was 0.987. Gate stays `≥ 0.90`. No new thresholds.
+  Code: `parts/export.py::cut_partner_consistency` (+ regression test in `test_parts_labels.py`); DESIGN §3.11 row updated.
+- **Partner-wall label rule accepted (deviation from DESIGN §4.6.5 step 6).** When both walls of a thin sheet are voted
+  with different classes, the wall with the weaker vote takes its partner's label (partners are always the two walls of
+  one sheet a few mm apart, never two nested garments). Implemented in `parts/labels.py` by the S10 agent.
+- **Tripo-style part completion** (regenerating hidden surfaces so each part is a closed mesh) is NOT in this milestone;
+  plan it as the next milestone after this one is approved.
+- **UI feedback:** Node mode must look like ComfyUI (done: links fixed + restyle); part splitting must be one click
+  from the model like Tripo Studio (done: viewer-toolbar "Split into parts", auto parts view + colorize on finish).

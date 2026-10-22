@@ -788,8 +788,8 @@ class Reassembly(ManifestModel):
 
 class Summary(ManifestModel):
     """Headline numbers. ``partner_filled_ratio`` = share of faces with ``face_flags`` bit 0;
-    ``cut_partner_consistency`` = min over cut parts of the share of faces whose partner has the same owner (``None``
-    without cuts); ``camera_fit_iou`` is ``None`` for the ``components`` strategy."""
+    ``cut_partner_consistency`` = face-weighted share, over all cut parts, of the partnered faces whose partner has the
+    same owner (``None`` without cuts); ``camera_fit_iou`` is ``None`` for the ``components`` strategy."""
 
     part_count: NonNegInt
     physical_count: NonNegInt

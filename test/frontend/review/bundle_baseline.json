@@ -1,14 +1,16 @@
 {
   "$comment": "gzip -9 bytes (node:zlib) of the clean 8654b90 production build (UI_DESIGN.md §8.1). Recorded by bundle_budget.mjs --record-baseline; F11 adds nodeShell.",
+  "$rebaseline": "F11 (2026-10-22): chunks.r3f re-measured after F8 (drei <Bvh> pulls three-mesh-bvh into the lazy r3f chunk, +13.3 kB; files[] keep the 8654b90 numbers). nodeShell = Node shell + engine + workflowStore excl. canvas as measured by bundle_budget.mjs at F11 (limit = nodeShell + 10 %).",
   "commit": "8654b90",
   "unit": "bytes",
   "initialJs": 178454,
   "initialCss": 14514,
   "chunks": {
     "three": 204625,
-    "r3f": 79012,
+    "r3f": 92280,
     "ModelViewer": 5597
   },
+  "nodeShell": 33455,
   "files": {
     "index.js": 108610,
     "rolldown-runtime.js": 428,

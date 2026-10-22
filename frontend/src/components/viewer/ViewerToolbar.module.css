@@ -46,3 +46,34 @@
   backdrop-filter: blur(8px);
   z-index: 2;
 }
+
+/* Parts / Colorize toggles (a marked part-aware addition), after the display options. */
+.partsGroup {
+  display: flex;
+  gap: var(--space-1);
+  padding-left: var(--space-1);
+  border-left: 1px solid var(--color-border);
+}
+
+/* P6: at <= 359 px the view-mode control gets its own row, so every segment fits (scrollWidth <= clientWidth). */
+@container viewer-toolbar (max-width: 359px) {
+  .top {
+    flex-wrap: wrap;
+  }
+
+  .modes {
+    flex: 1 1 100%;
+  }
+
+  .group {
+    margin-left: auto;
+  }
+}
+
+/* Touch density: every toolbar control is at least a --hit-min square. */
+:global(:root[data-density='touch']) .group > *,
+:global(:root[data-density='touch']) .bottom > *,
+:global(:root[data-density='touch']) .partsGroup > * {
+  min-block-size: var(--hit-min);
+  min-inline-size: var(--hit-min);
+}

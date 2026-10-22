@@ -37,6 +37,9 @@ from parts.taxonomy import BY_VALUE, CLASSES, UNKNOWN
 from parts.types import FACE_FLAG_COMPONENT_FILL, FACE_FLAG_PARTNER, FACE_FLAG_PROPAGATED
 
 VOTE_MIN_TOTAL: Final = 0.2
+PARTNER_EDGE_COST: Final = 1e-6
+"""Propagation cost between opposite-sheet partners (step 5.3): the two walls of a thin sheet act as one surface."""
+PARTNER_AGREEMENT_PASSES: Final = 3
 PARTNER_CONFIDENCE: Final = 0.9
 PROPAGATION_MAX_COST: Final = 64.0
 PROPAGATION_LAB_SCALE: Final = 10.0
@@ -260,6 +263,18 @@ def assign_labels(
     # 5.2 partner fill: only voted faces donate (single pass).
     has_partner = partners != NO_PARTNER
     safe_partner = np.where(has_partner, partners, 0)
+    # Both walls voted with different classes: the two walls of one thin sheet cannot be two classes, so the wall
+    # with the weaker winning vote takes its partner's label (partner-filled, donor = the partner).
+    weight = np.asarray(votes.winner_weight, dtype=np.float64)
+    other = safe_partner
+    conflict = voted & has_partner & voted[other] & (labels != labels[other])
+    weaker = conflict & ((weight < weight[other]) | ((weight == weight[other]) & (np.arange(face_count) > other)))
+    original = labels.copy()
+    labels[weaker] = original[other[weaker]]
+    confidence[weaker] = confidence[other[weaker]] * PARTNER_CONFIDENCE
+    flags[weaker] |= FACE_FLAG_PARTNER
+    donor[weaker] = other[weaker]
+    stats["partner_conflicts"] = float(weaker.sum())
     fill = ~voted & has_partner & voted[safe_partner]
     labels[fill] = labels[safe_partner[fill]]
     confidence[fill] = confidence[safe_partner[fill]] * PARTNER_CONFIDENCE
@@ -283,7 +298,7 @@ def assign_labels(
             stats["inner_sheet_filled"] = float(targets.size)
 
     # 5.3 colour-affinity propagation (multi-source Dijkstra, cost limit 64).
-    propagated = _propagate(topology, labels, confidence, face_lab)
+    propagated = _propagate(topology, labels, confidence, face_lab, partners)
     flags[propagated] |= FACE_FLAG_PROPAGATED
     stats["propagated"] = float(propagated.sum())
 
@@ -304,6 +319,10 @@ def assign_labels(
     # 5.7 island merge.
     stats["island_merged"] = float(_merge_islands(topology.adjacency, labels, min_island_faces(face_count)))
 
+    # Partner agreement: an unvoted wall follows its opposite-sheet partner (either direction of the pairing),
+    # voted partners first, then the more confident one, so both walls of a thin sheet end with one label.
+    stats["partner_agreed"] = float(_partner_agreement(labels, confidence, flags, donor, partners, voted))
+
     confidence[labels == 0] = 0.0
     return LabelAssignment(
         labels=labels,
@@ -315,10 +334,61 @@ def assign_labels(
     )
 
 
+def _partner_agreement(
+    labels: np.ndarray,
+    confidence: np.ndarray,
+    flags: np.ndarray,
+    donor: np.ndarray,
+    partners: np.ndarray,
+    voted: np.ndarray,
+) -> int:
+    """In place: every unvoted face linked to a partner with another label takes the best linked label.
+
+    Links are the partner pairs in both directions. A voted partner outranks an unvoted one; among equals the higher
+    confidence wins (ties: the lower face index). Up to :data:`PARTNER_AGREEMENT_PASSES` passes; returns the number
+    of faces changed (partner-filled, donor = the partner).
+    """
+    source = np.flatnonzero(partners != NO_PARTNER)
+    if source.size == 0:
+        return 0
+    target = partners[source].astype(np.int64)
+    a = np.concatenate([source, target])
+    b = np.concatenate([target, source])
+    keep = ~voted[a]
+    a, b = a[keep], b[keep]
+    changed = np.zeros(labels.shape[0], dtype=bool)
+    for _ in range(PARTNER_AGREEMENT_PASSES):
+        priority_b = voted[b] * 2.0 + confidence[b].astype(np.float64)
+        priority_a = confidence[a].astype(np.float64) * (labels[a] > 0)
+        better = (priority_b > priority_a) | ((priority_b == priority_a) & (b < a))
+        candidate = (labels[b] > 0) & (labels[b] != labels[a]) & better
+        if not candidate.any():
+            break
+        ca, cb, cp = a[candidate], b[candidate], priority_b[candidate]
+        order = np.lexsort((cb, -cp, ca))
+        first = np.ones(order.size, dtype=bool)
+        first[1:] = ca[order][1:] != ca[order][:-1]
+        faces, sources = ca[order][first], cb[order][first]
+        labels[faces] = labels[sources]
+        confidence[faces] = confidence[sources] * PARTNER_CONFIDENCE
+        flags[faces] |= FACE_FLAG_PARTNER
+        donor[faces] = sources
+        changed[faces] = True
+    return int(changed.sum())
+
+
 def _propagate(
-    topology: MeshTopology, labels: np.ndarray, confidence: np.ndarray, face_lab: np.ndarray | None
+    topology: MeshTopology,
+    labels: np.ndarray,
+    confidence: np.ndarray,
+    face_lab: np.ndarray | None,
+    partners: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Step 5.3 in place; returns the mask of propagated faces. Confidence decays to half at the cost limit."""
+    """Step 5.3 in place; returns the mask of propagated faces. Confidence decays to half at the cost limit.
+
+    The two walls of a thin sheet (``partners``) are linked at :data:`PARTNER_EDGE_COST`, so an unvoted wall pair
+    is reached from the same source and keeps one label (a cut then takes both walls).
+    """
     face_count = topology.face_count
     sources = np.flatnonzero(labels > 0)
     if sources.size == 0 or sources.size == face_count:
@@ -334,6 +404,12 @@ def _propagate(
         cost = 1.0 + (delta / PROPAGATION_LAB_SCALE) ** 2
     else:
         cost = np.ones(row.size, dtype=np.float64)
+    if partners is not None:
+        partner = np.asarray(partners, dtype=np.int64)
+        linked = np.flatnonzero(partner >= 0)
+        row = np.concatenate([row, linked, partner[linked]])
+        col = np.concatenate([col, partner[linked], linked])
+        cost = np.concatenate([cost, np.full(2 * linked.size, PARTNER_EDGE_COST)])
     graph = sparse.csr_array((cost, (row, col)), shape=(face_count, face_count))
     distance, _predecessors, origin = csgraph.dijkstra(
         graph, directed=True, indices=sources, min_only=True, limit=PROPAGATION_MAX_COST, return_predecessors=True
@@ -386,12 +462,21 @@ def _mirror_complete(
             distance, nearest = tree.query(mirrored, k=1, workers=-1)
             if float(np.median(distance)) > threshold:
                 continue
-            mirrored_normals = normals[faces] * np.array([-1.0, 1.0, 1.0], dtype=np.float32)
-            agree = np.einsum("ij,ij->i", mirrored_normals, normals[nearest]) > MIRROR_MIN_NORMAL_DOT
-            accept = (distance <= threshold) & agree & eligible[nearest]
-            targets = nearest[accept]
+            # Every eligible face within the tolerance of a mirrored source centroid takes the counterpart label
+            # (queried from the target side, so a target is covered even when no source maps onto it exactly).
+            candidates = np.flatnonzero(eligible)
+            if candidates.size == 0:
+                continue
+            gap, donor_index = cKDTree(mirrored).query(centroids[candidates], k=1, distance_upper_bound=threshold,
+                                                        workers=-1)
+            found = np.isfinite(gap)
+            targets = candidates[found]
+            donors = faces[donor_index[found]]
+            mirrored_normals = normals[donors] * np.array([-1.0, 1.0, 1.0], dtype=np.float32)
+            agree = np.einsum("ij,ij->i", mirrored_normals, normals[targets]) > MIRROR_MIN_NORMAL_DOT
+            targets, donors = targets[agree], donors[agree]
             labels[targets] = target
-            confidence[targets] = confidence[faces[accept]] * PARTNER_CONFIDENCE
+            confidence[targets] = confidence[donors] * PARTNER_CONFIDENCE
             eligible[targets] = False
             result[targets] = True
     return result

@@ -1,0 +1,80 @@
+/* Downloads (UI_DESIGN §6.7). Container queries only (§4.1). */
+.root {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.heading {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-block-size: max(36px, var(--hit-min));
+  font-size: var(--text-sm);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  font-size: var(--text-2xs);
+  color: var(--color-text-subtle);
+}
+
+.progress {
+  grid-column: 1 / -1;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: max(24px, var(--hit-min));
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.check input {
+  accent-color: var(--color-accent);
+}
+
+.details > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: max(24px, var(--hit-min));
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.details[open] > summary {
+  margin-bottom: var(--space-1);
+}

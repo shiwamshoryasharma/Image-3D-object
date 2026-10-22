@@ -1,14 +1,19 @@
-import { Box, Eye, ImageOff, Square, Trash, WandSparkles } from 'lucide-react'
+import { Box, Ellipsis, Eye, ImageOff, PencilLine, Sparkles, Square, Trash, WandSparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { regenerateFromPrompt, reusePrompt } from '../../actions/generation'
 import { jobPreviewUrl } from '../../api/jobs'
 import type { Job } from '../../api/types'
+import { useTunerVisible } from '../../hooks/useTunerVisible'
 import { formatCompact, formatDuration, formatRelativeTime } from '../../lib/format'
 import { isTerminal, useJobStore } from '../../store/jobStore'
 import { useMeshTunerStore } from '../../store/meshTunerStore'
+import { useRunStore } from '../../store/runStore'
 import { Button, IconButton } from '../common/Button'
+import { Menu } from '../common/Menu'
 import { ProgressBar } from '../common/ProgressBar'
 import { StatusBadge } from '../common/StatusBadge'
+import { Tag } from '../common/Tag'
 import styles from './HistoryItem.module.css'
 
 export interface HistoryItemProps {
@@ -51,13 +56,26 @@ export function HistoryItem({ job, now, onOpened }: HistoryItemProps) {
   const cancelling = useJobStore((s) => s.cancellingIds.includes(job.id))
   const deleting = useJobStore((s) => s.deletingIds.includes(job.id))
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const tuned = useMeshTunerStore((s) => job.id in s.latestTunedByJob)
+  // Tuner parts only where the shell has tuner mount points (Default, UI_DESIGN §3.9).
+  const tunerVisible = useTunerVisible()
+  const tunedResult = useMeshTunerStore((s) => job.id in s.latestTunedByJob)
+  const tuned = tunerVisible && tunedResult
+  // Badges from the session's workflow index (GET /workflows + events): a prompt source, part-aware output.
+  const fromPrompt = useRunStore((s) => {
+    const id = s.workflowByJobId[job.id]
+    return id ? s.workflows[id]?.request.source?.kind === 'prompt' : false
+  })
+  const withParts = useRunStore((s) => {
+    const id = s.workflowByJobId[job.id]
+    const workflow = id ? s.workflows[id] : undefined
+    return !!workflow && (workflow.request.parts != null || workflow.outputs.part_analysis_id != null)
+  })
   const completed = job.status === 'completed'
 
   // Tuning runs are fetched lazily for listed completed jobs (deduplicated by the store) to show the marker.
   useEffect(() => {
-    if (completed) void useMeshTunerStore.getState().loadRunsForJob(job.id)
-  }, [completed, job.id])
+    if (completed && tunerVisible) void useMeshTunerStore.getState().loadRunsForJob(job.id)
+  }, [completed, job.id, tunerVisible])
 
   useEffect(() => {
     if (!confirmDelete) return
@@ -95,6 +113,16 @@ export function HistoryItem({ job, now, onOpened }: HistoryItemProps) {
               <WandSparkles size={11} aria-hidden />
               tuned
             </span>
+          )}
+          {fromPrompt && (
+            <Tag tone="accent" title="Generated from a text prompt">
+              Prompt
+            </Tag>
+          )}
+          {withParts && (
+            <Tag tone="info" title="Generated with part-aware output">
+              Parts
+            </Tag>
           )}
         </p>
         {!terminal && (
@@ -145,6 +173,31 @@ export function HistoryItem({ job, now, onOpened }: HistoryItemProps) {
                 onClick={() => setConfirmDelete(true)}
               />
             ))}
+          {fromPrompt && terminal && (
+            <Menu
+              label="Prompt actions"
+              icon={<Ellipsis size={15} />}
+              triggerVariant="ghost"
+              sections={[
+                {
+                  items: [
+                    {
+                      id: 'regenerate',
+                      label: 'Regenerate from prompt',
+                      icon: <Sparkles size={14} />,
+                      onSelect: () => void regenerateFromPrompt(job.id),
+                    },
+                    {
+                      id: 'reuse',
+                      label: 'Reuse prompt',
+                      icon: <PencilLine size={14} />,
+                      onSelect: () => void reusePrompt(job.id),
+                    },
+                  ],
+                },
+              ]}
+            />
+          )}
         </div>
       </div>
     </li>

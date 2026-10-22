@@ -641,7 +641,7 @@ Field names follow the frontend parser (`design/frontend_b_command_engine.md` §
 | `expectations` | `{source: "prompt"\|"extra_terms"\|null, expected_classes[], missing[]}` | |
 | `provenance`, `refinement` | §3.8, §3.9 | |
 | `reassembly` | `{method: "vmap_gather", verified, positions_exact, uvs_exact, normals_exact, faces_exact}` | all must be true to publish |
-| `summary` | `{part_count, physical_count, deferred_count, region_count, unlabelled_face_ratio, partner_filled_ratio, cut_partner_consistency, camera_fit_iou}` | `partner_filled_ratio` = share of faces with `face_flags` bit 0; `cut_partner_consistency` = min over cut parts of the share of the part's faces whose partner (if any) has the same owner (`null` without cuts) |
+| `summary` | `{part_count, physical_count, deferred_count, region_count, unlabelled_face_ratio, partner_filled_ratio, cut_partner_consistency, camera_fit_iou}` | `partner_filled_ratio` = share of faces with `face_flags` bit 0; `cut_partner_consistency` = face-weighted share, over all cut parts, of the partnered faces whose partner has the same owner (`null` without cuts; was "min over cut parts" until the user's 2026-10-22 decision, DECISIONS.md) |
 | `warnings` | `[{code, message, part_id}]` | codes in §6.8 |
 
 - The analysis directory `jobs/<job>/parts/<pa>/` holds `run.json` (the `RunStore` record, created when the run is

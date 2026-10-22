@@ -21,6 +21,7 @@ and packages, toolchains and weights are downloaded by each user from the offici
 | **DINOv3** (Meta) | DINOv3 License: acceptable use + trade-control terms; research publications must acknowledge DINOv3; redistribution must include the license | Required image encoder; every user accepts the license on Hugging Face themselves |
 | **RMBG-2.0** (BRIA AI) | Bria RMBG-2.0 license (CC BY-NC 4.0): **non-commercial only** | **Optional.** Img3D uses MIT-licensed BiRefNet by default |
 | **Blender** (Blender Foundation) | GNU GPL; Python scripts that use the `bpy` API must be GPL-compatible | `backend/blender_scripts/` is GPL-3.0 as part of Img3D; Blender runs as a separate program and is never bundled |
+| **Sapiens2** (Meta) — code and `sapiens2-seg-0.4b` weights | [Sapiens2 License](https://github.com/facebookresearch/sapiens2/blob/main/LICENSE.md) (custom): commercial use allowed **with conditions** — no biometric identification or processing, no deepfakes or impersonation, no military use, no surveillance (full list in §1.b.vi of the license) | **Optional** part-aware `realistic` segmentation profile. The UI shows the conditions (`/api/v1/models` → `license.conditions`). Redistributing the code or weights requires passing the Sapiens2 License on |
 
 Other notes:
 - Img3D is distributed as **source code only**. It does not ship nvdiffrast, model weights, Python, CUDA or Blender.
@@ -45,6 +46,8 @@ Other notes:
 | Grounding DINO base (part-aware segmentation; in progress) | IDEA Research | Apache-2.0 | [huggingface.co/IDEA-Research/grounding-dino-base](https://huggingface.co/IDEA-Research/grounding-dino-base) |
 | SAM 2.1 hiera-large (part-aware segmentation; in progress) | Meta AI | Apache-2.0 | [huggingface.co/facebook/sam2.1-hiera-large](https://huggingface.co/facebook/sam2.1-hiera-large) |
 | Florence-2-large (part-aware segmentation; in progress) | Microsoft (transformers port: florence-community) | MIT | [huggingface.co/florence-community/Florence-2-large](https://huggingface.co/florence-community/Florence-2-large) |
+| See-through `l2d_sam_iter2` anime part parser (part-aware segmentation, `anime` profile; in progress) | shitagaki-lab (checkpoint by 24yearsold) | Apache-2.0 | [huggingface.co/24yearsold/l2d_sam_iter2](https://huggingface.co/24yearsold/l2d_sam_iter2) |
+| Sapiens2-seg 0.4B (part-aware segmentation, `realistic` profile; in progress) | Meta AI | [Sapiens2 License](https://github.com/facebookresearch/sapiens2/blob/main/LICENSE.md) — conditions in §1 above | [huggingface.co/facebook/sapiens2-seg-0.4b](https://huggingface.co/facebook/sapiens2-seg-0.4b) |
 
 Downloads go through the Hugging Face Hub and are subject to the
 [Hugging Face Terms of Service](https://huggingface.co/terms-of-service).
@@ -61,6 +64,14 @@ Downloads go through the Hugging Face Hub and are subject to the
 | nvdiffrast | `v0.4.0` | [NVIDIA Source Code License (1-Way Commercial)](https://github.com/NVlabs/nvdiffrast/blob/main/LICENSE.txt) — © 2020 NVIDIA Corporation | [github.com/NVlabs/nvdiffrast](https://github.com/NVlabs/nvdiffrast) |
 | Eigen (nested in o-voxel) | upstream pin | MPL-2.0 | [gitlab.com/libeigen/eigen](https://gitlab.com/libeigen/eigen) |
 | cubvh (nested in CuMesh) | upstream pin | MIT — © 2022 kiui | [github.com/ashawkey/cubvh](https://github.com/ashawkey/cubvh) |
+| See-through (model code only: `common/modules`, `common/utils`) | `df019de` | Apache-2.0 — © shitagaki-lab contributors | [github.com/shitagaki-lab/see-through](https://github.com/shitagaki-lab/see-through) |
+| Sapiens2 (standalone backbone `sapiens/backbones/standalone/sapiens2.py` only) | `7e5bae8` | [Sapiens2 License](https://github.com/facebookresearch/sapiens2/blob/main/LICENSE.md) — © Meta Platforms, Inc. (conditions in §1) | [github.com/facebookresearch/sapiens2](https://github.com/facebookresearch/sapiens2) |
+
+See-through and Sapiens2 are imported through `backend/inference/providers/vendor_import.py` under a private
+module namespace (never via `sys.path`); their `requirements*.txt` / `pyproject.toml` dependencies are **not**
+installed. The Sapiens2 segmentation head (`ConvTranspose2d`/`InstanceNorm2d`/`SiLU` layers) is re-declared in
+`backend/inference/segmentation/sapiens2.py` with the upstream parameter names so the official weights load; the
+upstream `sapiens` package itself is not imported (its training engine needs packages Img3D does not install).
 
 The files in `backend/third_party/patches/` modify MIT-licensed upstream files for build compatibility only and
 are provided under the same MIT terms. Upstream copyright and license notices are kept unchanged.
@@ -131,6 +142,13 @@ Direct dependencies from [`frontend/package.json`](frontend/package.json) (insta
 | axios | 1.20.0 | MIT | [axios/axios](https://github.com/axios/axios) |
 | react-dropzone | 20.1.3 | MIT | [react-dropzone/react-dropzone](https://github.com/react-dropzone/react-dropzone) |
 | lucide-react | 1.57.0 | ISC | [lucide-icons/lucide](https://github.com/lucide-icons/lucide) |
+| @xyflow/react (Node UI canvas; lazy chunk) | 12.12.0 | MIT | [xyflow/xyflow](https://github.com/xyflow/xyflow) |
+| @xyflow/system (via @xyflow/react) | 0.0.83 | MIT | [xyflow/xyflow](https://github.com/xyflow/xyflow) |
+| zustand (nested copy of @xyflow/react) | 4.5.7 | MIT | [pmndrs/zustand](https://github.com/pmndrs/zustand) |
+| use-sync-external-store (via nested zustand 4) | 1.7.0 | MIT | [react/react](https://github.com/react/react) |
+| classcat (via @xyflow/react) | 5.0.5 | MIT | [jorgebucaran/classcat](https://github.com/jorgebucaran/classcat) |
+| d3-color, d3-dispatch, d3-drag, d3-interpolate, d3-selection, d3-timer, d3-transition, d3-zoom (via @xyflow/system) | 3.1.0, 3.0.1, 3.0.0, 3.0.1, 3.0.0, 3.0.1, 3.0.1, 3.0.0 | ISC | [d3/d3](https://github.com/d3/d3) |
+| d3-ease (via d3-transition) | 3.0.1 | BSD-3-Clause | [d3/d3-ease](https://github.com/d3/d3-ease) |
 | vite (dev) | 8.3.4 | MIT | [vitejs/vite](https://github.com/vitejs/vite) |
 | @vitejs/plugin-react (dev) | 6.1.2 | MIT | [vitejs/vite-plugin-react](https://github.com/vitejs/vite-plugin-react) |
 | @rolldown/plugin-babel (dev) | 0.2.4 | MIT | [rolldown/plugins](https://github.com/rolldown/plugins) |

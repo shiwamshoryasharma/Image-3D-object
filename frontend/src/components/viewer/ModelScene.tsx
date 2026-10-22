@@ -1,33 +1,34 @@
 /**
  * Everything rendered inside the R3F canvas: lights, local studio environment (no network HDRs), the GLB
- * model, grid, contact shadows, orbit controls and the imperative viewer API (fit / reset / screenshot).
+ * model, grid, contact shadows, orbit controls and the imperative viewer API (fit / reset / screenshot / focusPart).
+ * The parts model (UI_DESIGN §6.6) is a third role: it replaces the original on screen only while the parts view is
+ * on and its GLB is ready; this component re-renders only when that changes (never on hover).
  */
 import { ContactShadows, Environment, Grid, Lightformer, OrbitControls } from '@react-three/drei'
 import { useLoader, useThree } from '@react-three/fiber'
 import { Component, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import type { PerspectiveCamera } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
+import { usePartStore } from '../../store/partStore'
 import type { ViewerOptions, ViewMode } from '../../store/uiStore'
+import { PartsModel } from './PartsModel'
 import {
   applyViewMode,
+  cancelDisposal,
+  configureLoader,
   fitCameraToLayout,
   computeLayout,
   createViewMaterials,
   disposeScene,
   restoreOriginalMaterials,
+  scheduleDisposal,
   setWireframeOverlay,
   type ModelLayout,
   type OrbitControlsLike,
 } from './sceneUtils'
-import { useViewerRuntime } from './viewerRuntime'
-import type { ViewerApi } from './viewerTypes'
-
-function configureLoader(loader: GLTFLoader): void {
-  // Meshopt decoder is bundled (wasm inlined) — no network access. Draco is intentionally not configured.
-  loader.setMeshoptDecoder(MeshoptDecoder)
-}
+import { useLowMemory, useViewerRuntime } from './viewerRuntime'
+import type { ViewerApi, ViewerPartsProps } from './viewerTypes'
 
 function onLoadProgress(event: ProgressEvent): void {
   useViewerRuntime.getState().setBytes(event.loaded, event.lengthComputable ? event.total : 0)
@@ -38,26 +39,8 @@ function onSecondaryLoadProgress(event: ProgressEvent): void {
   useViewerRuntime.getState().setSecondaryBytes(event.loaded, event.lengthComputable ? event.total : 0)
 }
 
-// Deferred disposal survives React StrictMode's mount → unmount → mount simulation in development.
-const pendingDisposals = new Map<string, number>()
-
-function scheduleDisposal(url: string, dispose: () => void): void {
-  pendingDisposals.set(
-    url,
-    window.setTimeout(() => {
-      pendingDisposals.delete(url)
-      dispose()
-    }, 250),
-  )
-}
-
-function cancelDisposal(url: string): void {
-  const timer = pendingDisposals.get(url)
-  if (timer !== undefined) {
-    window.clearTimeout(timer)
-    pendingDisposals.delete(url)
-  }
-}
+const sameLayout = (a: ModelLayout, b: ModelLayout): boolean =>
+  a.radius === b.radius && a.offset.every((v, i) => v === b.offset[i]) && a.size.every((v, i) => v === b.size[i])
 
 interface ModelProps {
   url: string
@@ -114,10 +97,18 @@ function Model({ url, viewMode, wireframe, visible, role, onLayout, offset }: Mo
   )
 }
 
+/** Suspense fallback of the parts model: marks it loading only while it really suspends. */
+function PartsLoading() {
+  useLayoutEffect(() => {
+    useViewerRuntime.getState().startParts()
+  }, [])
+  return null
+}
+
 interface ModelErrorBoundaryProps {
   children: ReactNode
-  /** Secondary models report to their own status so a failed tuned model never hides the original. */
-  role?: 'primary' | 'secondary'
+  /** Secondary / parts models report to their own status so a failed one never hides the original. */
+  role?: 'primary' | 'secondary' | 'parts'
 }
 
 /** Error boundary inside the canvas: reports loader errors to the DOM overlay instead of unmounting the canvas. */
@@ -133,6 +124,7 @@ class ModelErrorBoundary extends Component<ModelErrorBoundaryProps, { error: Err
     // Loader errors include the request URL; never surface the auth token.
     const message = raw.replace(/([?&])token=[^&\s"']+/g, '$1token=***')
     if (this.props.role === 'secondary') useViewerRuntime.getState().setSecondaryError(message || 'Failed to load the tuned model')
+    else if (this.props.role === 'parts') useViewerRuntime.getState().setPartsError(message || 'Failed to load the parts model')
     else useViewerRuntime.getState().setError(message || 'Failed to load the model')
   }
 
@@ -182,6 +174,7 @@ function ViewerController({ layout, onApi }: ControllerProps) {
         gl.render(scene, camera)
         return gl.domElement.toDataURL('image/png')
       },
+      focusPart: (partId) => useViewerRuntime.getState().focusPart(partId),
     })
     return () => onApi(null)
   }, [fit, gl, scene, camera, onApi])
@@ -199,16 +192,39 @@ export interface ModelSceneProps {
   /** Changes when the secondary model is retried on its own. */
   secondaryRetryKey: number
   onApi: (api: ViewerApi | null) => void
+  /** Parts model; `null` = not mounted. */
+  parts: ViewerPartsProps | null
+  /** Changes when the parts model is retried on its own. */
+  partsRetryKey: number
 }
 
-export function ModelScene({ url, secondaryUrl, showSecondary, options, retryKey, secondaryRetryKey, onApi }: ModelSceneProps) {
+export function ModelScene({
+  url,
+  secondaryUrl,
+  showSecondary,
+  options,
+  retryKey,
+  secondaryRetryKey,
+  onApi,
+  parts,
+  partsRetryKey,
+}: ModelSceneProps) {
   const [layout, setLayout] = useState<ModelLayout | null>(null)
   const secondaryReady = useViewerRuntime((s) => s.secondaryStatus === 'ready')
+  const partsReady = useViewerRuntime((s) => s.partsStatus === 'ready')
+  const partsShow = usePartStore((s) => s.view.show)
+  const lowMemory = useLowMemory()
   const extent = layout ? Math.max(layout.size[0], layout.size[2], layout.size[1] * 0.5) : 1
   const resetKey = `${url}#${retryKey}`
   const secondaryKey = `${secondaryUrl}#${retryKey}.${secondaryRetryKey}`
-  // Keep the original on screen until the tuned model is ready (no blank frame while it downloads).
-  const showingSecondary = !!secondaryUrl && showSecondary && secondaryReady
+  const partsKey = `${parts?.url}#${retryKey}.${partsRetryKey}`
+  // Keep the original on screen until the tuned / parts model is ready (no blank frame while it downloads).
+  const showingParts = parts !== null && partsShow && partsReady
+  const showingSecondary = !!secondaryUrl && showSecondary && secondaryReady && !showingParts
+  // Low memory (UI_DESIGN §6.6): the original is unmounted while the parts model shows.
+  const primaryMounted = !(lowMemory && showingParts)
+  // A remounted original reports an equal layout: keep the old object so the camera is not refitted.
+  const onLayout = useCallback((next: ModelLayout) => setLayout((prev) => (prev && sameLayout(prev, next) ? prev : next)), [])
 
   return (
     <>
@@ -217,19 +233,21 @@ export function ModelScene({ url, secondaryUrl, showSecondary, options, retryKey
       <directionalLight position={[-4, 2.5, -3]} intensity={options.environment ? 0.35 : 0.8} />
       {options.environment && <StudioEnvironment />}
 
-      <ModelErrorBoundary key={`model:${resetKey}`}>
-        <Suspense fallback={null}>
-          <Model
-            key={resetKey}
-            url={url}
-            role="primary"
-            visible={!showingSecondary}
-            viewMode={options.viewMode}
-            wireframe={options.wireframe}
-            onLayout={setLayout}
-          />
-        </Suspense>
-      </ModelErrorBoundary>
+      {primaryMounted && (
+        <ModelErrorBoundary key={`model:${resetKey}`}>
+          <Suspense fallback={null}>
+            <Model
+              key={resetKey}
+              url={url}
+              role="primary"
+              visible={!showingSecondary && !showingParts}
+              viewMode={options.viewMode}
+              wireframe={options.wireframe}
+              onLayout={onLayout}
+            />
+          </Suspense>
+        </ModelErrorBoundary>
+      )}
       {secondaryUrl && (
         <ModelErrorBoundary key={`secondary:${secondaryKey}`} role="secondary">
           <Suspense fallback={null}>
@@ -239,6 +257,21 @@ export function ModelScene({ url, secondaryUrl, showSecondary, options, retryKey
               role="secondary"
               visible={showingSecondary}
               offset={layout?.offset ?? null}
+              viewMode={options.viewMode}
+              wireframe={options.wireframe}
+            />
+          </Suspense>
+        </ModelErrorBoundary>
+      )}
+      {parts && layout && (
+        <ModelErrorBoundary key={`parts:${partsKey}`} role="parts">
+          <Suspense fallback={<PartsLoading />}>
+            <PartsModel
+              key={partsKey}
+              analysisId={parts.analysisId}
+              url={parts.url}
+              regionAttribute={parts.regionAttribute}
+              offset={layout.offset}
               viewMode={options.viewMode}
               wireframe={options.wireframe}
             />
@@ -264,7 +297,7 @@ export function ModelScene({ url, secondaryUrl, showSecondary, options, retryKey
       )}
       {layout && options.shadows && (
         <ContactShadows
-          key={`shadows:${resetKey}:${showingSecondary ? 'tuned' : 'original'}`}
+          key={`shadows:${resetKey}:${showingParts ? 'parts' : showingSecondary ? 'tuned' : 'original'}`}
           position={[0, 0, 0]}
           scale={extent * 3}
           opacity={0.55}

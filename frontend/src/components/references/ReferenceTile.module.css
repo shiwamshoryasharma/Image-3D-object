@@ -306,3 +306,107 @@
   height: var(--hit-min) !important;
   margin: calc((18px - var(--hit-min)) / 2);
 }
+
+/*
+ * P17 thumbnail shimmer. CSS only: a skeleton layer under the thumbnail sweeps while the image loads (an opaque
+ * thumbnail covers it as soon as it paints), then fades out, so transparent references show today's checkerboard
+ * again. Static (then removed) under reduced motion.
+ */
+.filled::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--skeleton-base);
+  background-image: linear-gradient(90deg, transparent 0%, var(--skeleton-highlight) 50%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  pointer-events: none;
+  animation:
+    img3d-tile-shimmer 1.2s ease-in-out 2,
+    img3d-tile-shimmer-out 240ms ease 2.4s forwards;
+}
+
+.filled > .thumb,
+.filled > .placeholder {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filled::before {
+    animation: img3d-tile-shimmer-out 0s 1.2s forwards;
+  }
+}
+
+:global(:root[data-motion='reduce']) .filled::before {
+  animation: img3d-tile-shimmer-out 0s 1.2s forwards;
+}
+
+@keyframes img3d-tile-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes img3d-tile-shimmer-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* "From prompt" chip (UI_DESIGN §5.5): bottom-right, opposite the slot badge; both share the width when present. */
+.promptChip {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: calc(50% - 9px);
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: rgb(8 10 15 / 0.78);
+  backdrop-filter: blur(4px);
+  color: var(--color-accent-hover);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  line-height: inherit;
+  white-space: nowrap;
+}
+
+.promptChipText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile:has(.promptChip) .slotBadge {
+  max-width: calc(50% - 9px);
+}
+
+.promptChipLink {
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+
+.promptChipLink:hover {
+  background: rgb(8 10 15 / 0.92);
+}
+
+.promptChipLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 1px;
+}
+
+/* P12: the link keeps its small chip and gets a --hit-min hit area anchored to the tile's corner (inside the tile). */
+:global(:root[data-density='touch']) .promptChipLink::before {
+  content: '';
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: max(calc(100% + 12px), var(--hit-min));
+  height: max(calc(100% + 12px), var(--hit-min));
+}

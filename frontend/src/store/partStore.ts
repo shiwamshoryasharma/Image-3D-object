@@ -197,6 +197,10 @@ export const usePartStore = create<PartState>()((set, get) => ({
     const becameTerminal = isTerminalRunStatus(run.status) && (!previous || !isTerminalRunStatus(previous.status))
     if (!becameTerminal) return
     if (run.status === 'completed' && get().sets[run.id]?.status !== 'ready') void get().loadSet(run.id)
+    // A split seen finishing live on the viewed model is shown right away: parts view on, coloured by part.
+    if (run.status === 'completed' && previous && get().view.jobId === run.job_id) {
+      set((state) => ({ view: { ...state.view, show: true, colorize: true } }))
+    }
     // Only transitions seen live are announced; workflow-owned analyses are announced by the run store.
     if (run.workflow_id !== null || !previous) return
     if (run.status === 'completed') {

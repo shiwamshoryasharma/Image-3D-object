@@ -4,7 +4,8 @@
   border-top: 1px solid var(--color-border);
   background: rgb(11 13 18 / 0.94);
   backdrop-filter: blur(12px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* P19: home indicator below, landscape notch at the sides (0 elsewhere). */
+  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 
 .list {
@@ -25,6 +26,8 @@
   color: var(--color-text-subtle);
   font-size: var(--text-2xs);
   font-weight: var(--weight-medium);
+  /* P12: each tab is a full-height cell (60px), never below the touch minimum. */
+  min-block-size: var(--hit-min);
 }
 
 .tab:focus-visible {
@@ -74,4 +77,10 @@
 
 .label {
   white-space: nowrap;
+}
+
+/* P14: the selected tab colour changes smoothly (instant under reduced motion). */
+.tab,
+.icon {
+  transition: color var(--duration-fast) ease;
 }

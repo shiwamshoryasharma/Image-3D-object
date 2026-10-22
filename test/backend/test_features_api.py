@@ -132,8 +132,8 @@ def test_features_reports_the_real_states_of_this_machine(start_app):
         "grounding_dino_base": ("installed", "ok"),
         "sam2_1_hiera_large": ("installed", "ok"),
         "florence2_large": ("installed", "ok"),
-        "see_through_l2d": ("unavailable", "vendored_source_missing"),
-        "sapiens2_seg_0_4b": ("unavailable", "vendored_source_missing"),
+        "see_through_l2d": ("installed", "ok"),  # S6: vendored submodules + local weights
+        "sapiens2_seg_0_4b": ("installed", "ok"),
         "raster_lifter": ("installed", "ok"),
     }
     assert all(not model["local_path"] or not Path(model["local_path"]).is_absolute() for model in body["models"])
@@ -156,12 +156,10 @@ def test_features_reports_the_real_states_of_this_machine(start_app):
     assert (segmentation["available"], segmentation["code"]) == (True, "ok")
     assert [(p["id"], p["available"], p["code"]) for p in segmentation["profiles"]] == [
         ("baseline", True, "ok"),
-        ("anime", False, "vendored_source_missing"),
-        ("realistic", False, "vendored_source_missing"),
+        ("anime", True, "ok"),  # S6: See-through and Sapiens2 are vendored and installed
+        ("realistic", True, "ok"),
     ]
-    assert segmentation["profiles"][1]["reason"] == (
-        "See-through code is not vendored under backend/third_party/see-through"
-    )
+    assert segmentation["profiles"][1]["reason"] is None
     parts = body["pipeline"]["part_extraction"]
     assert [(s["id"], s["available"], s["code"]) for s in parts["strategies"]] == [
         ("components", True, "ok"),
@@ -320,7 +318,9 @@ def test_load_conflicts_while_loading_and_while_a_run_uses_the_kind(start_app, m
     assert client.post(f"{API}/models/z_image_turbo/unload").status_code == 202  # not used by a part analysis
 
 
-def test_load_refuses_unusable_models_and_reports_load_errors(start_app):
+def test_load_refuses_unusable_models_and_reports_load_errors(start_app, monkeypatch):
+    # S6 vendored See-through for real; stub its source tree as missing so the refusal path stays covered.
+    monkeypatch.setattr(registry_module, "_has_python_sources", lambda root: False)
     fake = FakeModelProvider(GROUNDING_DINO_BASE, fail_load=RuntimeError("weights are corrupt"))
     client, _part_aware = start_app(providers={GROUNDING_DINO_BASE.id: fake})
     for model_id, reason_code in (("p3sam", "unsupported"), ("see_through_l2d", "vendored_source_missing")):

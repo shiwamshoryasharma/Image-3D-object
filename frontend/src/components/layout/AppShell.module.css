@@ -1,3 +1,8 @@
+/*
+ * Default layouts (UI_DESIGN §4.2). Polish: P9 tablet portrait, P10 viewer heights, P14 tab fade, P18 rhythm
+ * (`--layout-gap` everywhere, stable scrollbar gutters), P19 safe areas. `env()` insets are 0 without a notch.
+ */
+
 /* Shared column primitives */
 .column {
   display: flex;
@@ -15,6 +20,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding-right: 2px;
 }
 
@@ -26,6 +32,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding-right: 2px;
 }
 
@@ -37,7 +44,8 @@
   gap: var(--layout-gap);
   flex: 1;
   min-height: 0;
-  padding: var(--layout-gap);
+  padding: var(--layout-gap) max(var(--layout-gap), env(safe-area-inset-right, 0px))
+    max(var(--layout-gap), env(safe-area-inset-bottom, 0px)) max(var(--layout-gap), env(safe-area-inset-left, 0px));
 }
 
 .viewerColumn {
@@ -55,13 +63,59 @@
   gap: var(--layout-gap);
   flex: 1;
   min-height: 0;
-  padding: var(--layout-gap);
+  padding: var(--layout-gap) max(var(--layout-gap), env(safe-area-inset-right, 0px))
+    max(var(--layout-gap), env(safe-area-inset-bottom, 0px)) max(var(--layout-gap), env(safe-area-inset-left, 0px));
 }
 
+/* P10 */
 .tabletViewer {
   flex: none;
-  height: min(62vh, 640px);
-  min-height: 340px;
+  height: clamp(240px, 58dvh, 640px);
+}
+
+/* Landscape: no box of its own, the cards stay items of the right column. */
+.tabletCards {
+  display: contents;
+}
+
+/*
+ * P9 tablet portrait: the viewer spans the top at full width; below it, the inputs column (with its generate card)
+ * and the result cards sit side by side, each scrolling on its own. DOM order is unchanged.
+ */
+@media (orientation: portrait) and (min-width: 768px) and (max-width: 1279.98px) {
+  .tablet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .tablet > .scrollColumn {
+    display: contents;
+  }
+
+  .tabletViewer {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    height: clamp(280px, 42dvh, 560px);
+  }
+
+  .tablet > .column {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .tabletCards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--layout-gap);
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-right: 2px;
+  }
 }
 
 /* Mobile: one tab panel at a time */
@@ -74,18 +128,29 @@
 .mobilePanel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--layout-gap);
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  padding: var(--space-2) var(--space-2) var(--space-4);
+  padding: var(--space-2) max(var(--space-2), env(safe-area-inset-right, 0px)) var(--space-4)
+    max(var(--space-2), env(safe-area-inset-left, 0px));
+  /* Focus/scroll targets keep clear of the panel's bottom edge (the generate bar is a sibling below it). */
+  scroll-padding-bottom: var(--space-4);
+  /* P14: the shown tab fades in (instant under reduced motion: --duration-fast is 0 there). */
+  transition: opacity var(--duration-fast) var(--ease-out);
 }
 
+@starting-style {
+  .mobilePanel {
+    opacity: 0;
+  }
+}
+
+/* P10: never taller than the phone's viewport share, ≥ 220px for the toolbar and a usable canvas. */
 .mobileViewer {
   flex: none;
-  height: min(58vh, 520px);
-  min-height: 300px;
+  height: clamp(220px, 55dvh, 520px);
 }
 
 .mobileHistory {

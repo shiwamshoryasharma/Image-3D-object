@@ -9,7 +9,9 @@ import { ProgressBar } from '../common/ProgressBar'
 import { Spinner } from '../common/Spinner'
 import styles from './EngineStatus.module.css'
 
-const STATE_LABEL: Record<EngineState, string> = {
+/** Engine-state words (also used by the shared shell chrome, so the wording stays in one place). */
+// oxlint-disable-next-line react/only-export-components -- one shared table; costs only a dev-time full HMR reload
+export const STATE_LABEL: Record<EngineState, string> = {
   not_loaded: 'Model not loaded',
   loading: 'Loading model',
   ready: 'Model ready',

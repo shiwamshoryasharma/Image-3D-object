@@ -332,7 +332,6 @@ def test_image_job_bytes_and_keys_are_unchanged(make_app, runtime_dir, tmp_runti
 # --------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="un-skipped by S10")
 def test_part_analysis_leaves_the_job_files_untouched(make_app, runtime_dir):
     job_dir = _install_legacy_job(runtime_dir)
     job_id = LEGACY_JOB["id"]
@@ -340,7 +339,9 @@ def test_part_analysis_leaves_the_job_files_untouched(make_app, runtime_dir):
     before = {name: _sha256(job_dir / name) for name in protected}
 
     h = make_app()
-    response = h.client.post(f"/api/v1/jobs/{job_id}/part-analyses", json={"strategy": "components"})
+    response = h.client.post(
+        f"/api/v1/jobs/{job_id}/part-analyses", json={"strategy": "components", "export": {"previews": False}}
+    )
     assert response.status_code == 202, response.text
     analysis_id = response.json()["id"]
 

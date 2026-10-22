@@ -1,12 +1,17 @@
-import { ArrowRightLeft, EllipsisVertical, ImageOff, ImagePlus, Replace, Star, Trash, X } from 'lucide-react'
+import { ArrowRightLeft, EllipsisVertical, ImageOff, ImagePlus, Replace, Sparkles, Star, Trash, X } from 'lucide-react'
 import { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 
 import { referenceThumbnailUrl } from '../../api/references'
-import { REFERENCE_SLOTS, type ReferenceImage, type ReferenceSlot } from '../../api/types'
+import { REFERENCE_SLOTS, type ImageSourceOut, type ReferenceImage, type ReferenceSlot } from '../../api/types'
+import { useFeatures } from '../../hooks/useFeatures'
 import { formatBytes } from '../../lib/format'
+import { effectiveSource } from '../../lib/generatePlan.ts'
 import { SLOT_META, isSingleSlot } from '../../lib/slots'
+import { useInputStore } from '../../store/inputStore'
+import { useNavigationStore } from '../../store/navigationStore'
 import { useReferenceStore, type UploadEntry } from '../../store/referenceStore'
+import { useRunStore } from '../../store/runStore'
 import { IconButton } from '../common/Button'
 import { Menu, type MenuItem } from '../common/Menu'
 import { Spinner } from '../common/Spinner'
@@ -34,6 +39,42 @@ function imageName(image: ReferenceImage): string {
 
 function describeImage(image: ReferenceImage): string {
   return `${image.original_filename ?? imageName(image)} — ${image.width}×${image.height}px · ${formatBytes(image.size_bytes)}${image.has_alpha ? ' · alpha' : ''}`
+}
+
+/**
+ * "From prompt" chip of an image adopted from a text-to-image candidate (UI_DESIGN §5.5, `source.kind === 't2i'`).
+ * While that generation is the one in the review panel (and prompt-to-3D is available) the chip links there: it
+ * switches the input to the prompt and reveals the review card. Otherwise it is a plain label. A part-aware
+ * addition (never rendered for a legacy backend, which sends no `source`).
+ */
+function FromPromptChip({ source }: { source: ImageSourceOut }) {
+  const features = useFeatures()
+  const linked = useRunStore((s) => s.reviewGenerationId === source.image_generation_id)
+  const title = `Generated from a prompt (seed ${source.seed})`
+  if (!linked || effectiveSource('prompt', features) !== 'prompt') {
+    return (
+      <span className={styles.promptChip} title={title} data-ui-addition="from-prompt">
+        <Sparkles size={11} aria-hidden />
+        <span className={styles.promptChipText}>From prompt</span>
+      </span>
+    )
+  }
+  return (
+    <button
+      type="button"
+      className={`${styles.promptChip} ${styles.promptChipLink}`}
+      title={`${title}: show the generated images`}
+      aria-label="From prompt: show the generated images"
+      data-ui-addition="from-prompt"
+      onClick={() => {
+        useInputStore.getState().setSource('prompt')
+        useNavigationStore.getState().requestReveal('review')
+      }}
+    >
+      <Sparkles size={11} aria-hidden />
+      <span className={styles.promptChipText}>From prompt</span>
+    </button>
+  )
 }
 
 /**
@@ -183,6 +224,7 @@ export function ReferenceTile({
             {imageName(image)}
           </span>
         )}
+        {image?.source?.kind === 't2i' && !showUpload && <FromPromptChip source={image.source} />}
 
         {busy && (
           <div className={styles.busy}>

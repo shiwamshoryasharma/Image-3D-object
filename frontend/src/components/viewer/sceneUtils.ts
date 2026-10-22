@@ -1,6 +1,7 @@
 /**
  * three.js helpers for the viewer: layout/fit computation, view-mode material swapping, wireframe overlay
- * and resource disposal.
+ * and resource disposal. Part overlays (`PART_OVERLAY_FLAG`, owned by `PartsModel`) are skipped by every helper here,
+ * so they keep their colours in PBR, clay and normals and never get a wire overlay (UI_DESIGN §6.6).
  */
 import {
   Box3,
@@ -14,8 +15,36 @@ import {
   type Object3D,
   type PerspectiveCamera,
 } from 'three'
+import type { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
 import type { ViewMode } from '../../store/uiStore'
+
+export function configureLoader(loader: GLTFLoader): void {
+  // Meshopt decoder is bundled (wasm inlined) — no network access. Draco is intentionally not configured.
+  loader.setMeshoptDecoder(MeshoptDecoder)
+}
+
+// Deferred disposal survives React StrictMode's mount → unmount → mount simulation in development.
+const pendingDisposals = new Map<string, number>()
+
+export function scheduleDisposal(url: string, dispose: () => void): void {
+  pendingDisposals.set(
+    url,
+    window.setTimeout(() => {
+      pendingDisposals.delete(url)
+      dispose()
+    }, 250),
+  )
+}
+
+export function cancelDisposal(url: string): void {
+  const timer = pendingDisposals.get(url)
+  if (timer !== undefined) {
+    window.clearTimeout(timer)
+    pendingDisposals.delete(url)
+  }
+}
 
 export interface ModelLayout {
   /** Translation that centers the model on X/Z and puts its base on y = 0. */
@@ -66,6 +95,29 @@ export function fitCameraToLayout(camera: PerspectiveCamera, controls: OrbitCont
     controls.update()
   } else {
     camera.lookAt(target)
+  }
+}
+
+/** Fit the camera to a world-space box, keeping the current viewing direction (`focusPart`, UI_DESIGN §6.6). */
+export function fitCameraToBox(camera: PerspectiveCamera, controls: OrbitControlsLike | null, box: Box3): void {
+  if (box.isEmpty()) return
+  const center = box.getCenter(new Vector3())
+  const radius = Math.max(box.getSize(new Vector3()).length() / 2, 1e-3)
+  const verticalFov = (camera.fov * Math.PI) / 180
+  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * Math.max(camera.aspect, 0.1))
+  const distance = (radius / Math.sin(Math.min(verticalFov, horizontalFov) / 2)) * 1.3
+  const direction = camera.position.clone().sub(controls ? controls.target : center)
+  if (direction.lengthSq() < 1e-12) direction.set(0.85, 0.5, 1.15)
+  direction.normalize()
+  camera.position.copy(center).addScaledVector(direction, distance)
+  camera.near = Math.min(camera.near, Math.max(distance / 200, 1e-4))
+  camera.updateProjectionMatrix()
+  if (controls) {
+    controls.target.copy(center)
+    controls.minDistance = Math.min(controls.minDistance, radius * 0.5)
+    controls.update()
+  } else {
+    camera.lookAt(center)
   }
 }
 
@@ -124,10 +176,14 @@ export function createViewMaterials(): ViewMaterials {
 
 const originalMaterials = new WeakMap<Mesh, MaterialSlot>()
 const WIRE_OVERLAY_FLAG = '__img3dWireOverlay'
+/** Marks the highlight / select / colorize overlays and outlines of the parts view (owned and disposed by `PartsModel`). */
+export const PART_OVERLAY_FLAG = '__img3dPartOverlay'
+
+const isOverlay = (object: Object3D): boolean => !!object.userData[WIRE_OVERLAY_FLAG] || !!object.userData[PART_OVERLAY_FLAG]
 
 function forEachMesh(root: Object3D, visit: (mesh: Mesh) => void): void {
   root.traverse((object) => {
-    if ((object as Mesh).isMesh && !object.userData[WIRE_OVERLAY_FLAG]) visit(object as Mesh)
+    if ((object as Mesh).isMesh && !isOverlay(object)) visit(object as Mesh)
   })
 }
 
@@ -192,7 +248,7 @@ export function disposeScene(root: Object3D): void {
   const materials = new Set<Material>()
   root.traverse((object) => {
     const mesh = object as Mesh
-    if (!mesh.isMesh) return
+    if (!mesh.isMesh || object.userData[PART_OVERLAY_FLAG]) return
     if (!object.userData[WIRE_OVERLAY_FLAG]) mesh.geometry?.dispose()
     const original = originalMaterials.get(mesh) ?? mesh.material
     for (const material of asArray(original)) materials.add(material)

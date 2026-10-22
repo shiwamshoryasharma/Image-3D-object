@@ -1,0 +1,353 @@
+/* Shared shell chrome (UI_DESIGN §4.1, §4.4, §4.5.2). Every target ≥ var(--hit-min); no global keyframes. */
+
+/* ---------------------------------------------------------------- top bar */
+.topBar {
+  container-type: inline-size;
+  position: relative;
+  z-index: var(--z-header);
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  block-size: calc(var(--top-bar-height) + env(safe-area-inset-top, 0px));
+  padding-block-start: env(safe-area-inset-top, 0px);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px)) max(var(--space-4), env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-end: auto;
+}
+
+.brandName {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+@container (max-width: 359px) {
+  .brandName {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- status pill */
+.statusPill {
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.statusButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  max-inline-size: 100%;
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-3) calc(var(--space-3) + 22px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.statusButton:hover {
+  background: var(--color-surface-3);
+}
+
+.statusDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-subtle);
+}
+
+.statusButton[data-tone='ready'] .statusDot {
+  background: var(--color-success);
+}
+
+.statusButton[data-tone='error'] .statusDot,
+.statusButton[data-tone='unavailable'] .statusDot,
+.statusButton[data-tone='offline'] .statusDot {
+  background: var(--color-danger);
+}
+
+.statusText {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusChevron {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+/* The realtime dot sits over the button's end padding; clicks go through to the button. */
+.statusConnection {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: var(--space-2);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- status sheet */
+.statusSheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.statusLabel {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* ---------------------------------------------------------------- phone layout */
+.phoneMain {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: var(--shell-inset-bottom);
+  scroll-padding-bottom: var(--shell-inset-bottom);
+  outline: none;
+}
+
+.phoneMain > :first-child {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------- progress pill */
+.pillSlot {
+  position: absolute;
+  top: var(--progress-pill-top, var(--space-3));
+  left: 50%;
+  z-index: var(--z-sticky);
+  display: flex;
+  justify-content: center;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.progressPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-inline-size: min(360px, calc(100vw - 2 * var(--space-4)));
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  pointer-events: auto;
+  backdrop-filter: blur(16px);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .progressPill {
+    background: var(--color-surface-2);
+  }
+}
+
+.pillRing,
+.pillIcon {
+  display: inline-flex;
+  flex: none;
+}
+
+.pillText {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progressPill[data-state='completed'] .pillIcon {
+  color: var(--color-success);
+}
+
+.progressPill[data-state='failed'] .pillIcon {
+  color: var(--color-danger);
+}
+
+.progressPill[data-state='cancelled'] .pillIcon {
+  color: var(--color-warning);
+}
+
+/* ---------------------------------------------------------------- sections */
+.section {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.sectionFallback {
+  padding: var(--space-2) 0;
+}
+
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.tab {
+  min-block-size: var(--hit-min);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--color-surface-4);
+  color: var(--color-text);
+}
+
+.tabPanel {
+  min-width: 0;
+}
+
+.disclosure {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+}
+
+.disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-4);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.disclosure[open] > summary {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.disclosure > :not(summary) {
+  margin: var(--space-3) var(--space-4);
+}
+
+/* ---------------------------------------------------------------- blocked / progress sheets */
+.blocked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.blockedReason,
+.blockedNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+.blockedReason > svg,
+.blockedNote > svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.blockedReason > svg {
+  color: var(--color-warning);
+}
+
+.blockedNote {
+  color: var(--color-text-muted);
+}
+
+.blockedProblem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.blockedDetails > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--hit-min);
+  cursor: pointer;
+}
+
+.blockedDetails pre {
+  overflow: auto;
+  max-height: 40dvh;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+}
+
+.blockedActions,
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cancelRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.confirm p {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+}

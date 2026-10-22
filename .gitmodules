@@ -14,3 +14,11 @@
 	path = backend/third_party/extensions/nvdiffrast
 	url = https://github.com/NVlabs/nvdiffrast.git
 	ignore = dirty
+[submodule "backend/third_party/see-through"]
+	path = backend/third_party/see-through
+	url = https://github.com/shitagaki-lab/see-through.git
+	ignore = dirty
+[submodule "backend/third_party/sapiens2"]
+	path = backend/third_party/sapiens2
+	url = https://github.com/facebookresearch/sapiens2.git
+	ignore = dirty

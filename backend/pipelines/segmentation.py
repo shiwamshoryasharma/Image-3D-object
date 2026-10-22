@@ -79,7 +79,8 @@ PROFILE_FOR_SUBJECT: Final[Mapping[str, str]] = {
     "realistic_human": "realistic",
     "object": "baseline",
 }
-ANIME_WORDS: Final = re.compile(r"\b(anime|manga|cartoon|chibi|illustration|drawing)\b")
+ANIME_WORDS: Final = re.compile(r"\b(anime|animated|manga|cartoon|chibi|illustration|drawing)\b")
+"""Section 4.5.3 list plus ``animated`` (Florence-2 ``<DETAILED_CAPTION>`` says "an animated girl" for anime art)."""
 HUMAN_WORDS: Final = re.compile(r"\b(person|man|woman|boy|girl|photo)\b")
 
 TEXT_THRESHOLD: Final = 0.25

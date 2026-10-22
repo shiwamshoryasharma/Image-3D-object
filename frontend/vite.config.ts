@@ -65,6 +65,8 @@ export default defineConfig({
   build: {
     // three.js alone is ~700 kB minified; it is split out and only loaded with the viewer.
     chunkSizeWarningLimit: 900,
+    // dist/.vite/manifest.json: lazy-chunk attribution for test/frontend/review/bundle_budget.mjs (not served).
+    manifest: true,
     rolldownOptions: {
       output: {
         // Rolldown (Vite 8) manual chunking: `output.codeSplitting.groups` (replaces Rollup's manualChunks).
@@ -74,7 +76,21 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 50 },
-            { name: 'vendor', test: /node_modules[\\/](zustand|use-sync-external-store)[\\/]/, priority: 40 },
+            // Top-level zustand ONLY (UI_DESIGN §8.2): the module id has exactly one node_modules segment, so the
+            // nested zustand 4 copies (tunnel-rat for drei, @xyflow/react) never land in the initial chunk.
+            {
+              name: 'vendor',
+              test: /^(?!.*[\\/]node_modules[\\/].*[\\/]node_modules[\\/]).*[\\/]node_modules[\\/]zustand[\\/]/,
+              priority: 40,
+            },
+            // `use-sync-external-store` is not listed: the app's zustand 5 `create` does not use it. (It still lands in
+            // `vendor` with `zustand/traditional`, which @react-three/fiber imports from the top-level zustand 5.)
+            // Node UI canvas vendor code; lazy, only `shells/node/canvas/*` imports @xyflow (UI7).
+            {
+              name: 'nodeui',
+              test: /[\\/]node_modules[\\/](@xyflow[\\/]|d3-(color|dispatch|drag|ease|interpolate|selection|timer|transition|zoom)[\\/]|classcat[\\/])/,
+              priority: 35,
+            },
             { name: 'three', test: /node_modules[\\/]three[\\/]/, priority: 30 },
             {
               name: 'r3f',

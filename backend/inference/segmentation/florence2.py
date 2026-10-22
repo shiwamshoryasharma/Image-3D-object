@@ -5,7 +5,10 @@ Provider rules (section 5.6; enforced by review): the transformers-native ``Flor
 network call; ``load()`` on a CPU thread, role methods on the ``gpu-worker`` thread under :attr:`lock`;
 torch/transformers imported inside functions only.
 
-* ``caption()`` runs the ``<CAPTION>`` task (used by ``subject: auto``).
+* ``caption()`` runs the ``<DETAILED_CAPTION>`` task (used by ``subject: auto``). Measured on the ALICE and
+  ANIME_CHARACTER_01 samples (2026-10-22): ``<CAPTION>`` never names the drawing style ("A woman in a blue and white
+  dress ..."), so the section 4.5.3 keyword rules classified every anime sample as ``realistic_human``;
+  ``<DETAILED_CAPTION>`` says "an animated girl ..." on all of them.
 * ``ground()`` runs ``<CAPTION_TO_PHRASE_GROUNDING>`` once per phrase. Florence-2 has no box scores, so the score of
   every box of a phrase is the beam's length-normalised sequence probability (``exp(sequences_scores)``).
 """
@@ -24,10 +27,10 @@ from inference.segmentation.gdino import TransformersSegmentationProvider, open_
 
 logger = logging.getLogger(__name__)
 
-CAPTION_TASK: Final = "<CAPTION>"
+CAPTION_TASK: Final = "<DETAILED_CAPTION>"
 GROUNDING_TASK: Final = "<CAPTION_TO_PHRASE_GROUNDING>"
 NUM_BEAMS: Final = 3
-CAPTION_MAX_TOKENS: Final = 64
+CAPTION_MAX_TOKENS: Final = 96
 GROUNDING_MAX_TOKENS: Final = 256
 
 

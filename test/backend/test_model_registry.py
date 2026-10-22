@@ -2,8 +2,8 @@
 
 * the catalog: the six DECISIONS.md models are approved by default, the lifter needs no approval, the 3D seams are
   unsupported and hidden;
-* the real on-disk states of this machine (Z-Image, GDINO, SAM 2.1, Florence-2 and the lifter installed; See-through
-  and Sapiens2 ``vendored_source_missing``), resolved without importing any heavy package;
+* the real on-disk states of this machine (Z-Image, GDINO, SAM 2.1, Florence-2, See-through, Sapiens2 (vendored by S6)
+  and the lifter installed), resolved without importing any heavy package;
 * every state rule in order, the 5 s cache of the on-disk checks, live states, lazy provider construction with the
   ``UnavailableProvider`` substitution and the HF environment order, overrides, the static and live VRAM checks,
   ``offload``, role resolution, defaults and idle providers.
@@ -246,17 +246,16 @@ def test_real_on_disk_states_of_this_machine(make_settings: Callable[..., Settin
         "grounding_dino_base": ("installed", "ok"),
         "sam2_1_hiera_large": ("installed", "ok"),
         "florence2_large": ("installed", "ok"),
-        "see_through_l2d": ("unavailable", "vendored_source_missing"),
-        "sapiens2_seg_0_4b": ("unavailable", "vendored_source_missing"),
+        "see_through_l2d": ("installed", "ok"),  # S6: vendored submodule + local checkpoint
+        "sapiens2_seg_0_4b": ("installed", "ok"),
         "raster_lifter": ("installed", "ok"),
         "p3sam": ("unavailable", "unsupported"),
         "partfield": ("unavailable", "unsupported"),
         "holopart": ("unavailable", "unsupported"),
         "x_part": ("unavailable", "unsupported"),
     }
-    assert registry.status("see_through_l2d").reason == (
-        "See-through code is not vendored under backend/third_party/see-through"
-    )
+    assert registry.status("see_through_l2d").reason is None
+    assert registry.status("sapiens2_seg_0_4b").reason is None
     # segmentation revisions come from backend/.model/seg/download_manifest.json
     assert registry.status("grounding_dino_base").revision == "12bdfa3120f3e7ec7b434d90674b3396eccf88eb"
     assert {name for name in HEAVY if name in sys.modules} == already_loaded

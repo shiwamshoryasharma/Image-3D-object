@@ -1,0 +1,5 @@
+/* `#main-content` takes programmatic focus after a mode switch and from the skip link (tabIndex -1); a container
+   needs no focus ring of its own. */
+.main:focus {
+  outline: none;
+}

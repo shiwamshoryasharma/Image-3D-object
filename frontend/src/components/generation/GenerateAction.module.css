@@ -1,0 +1,132 @@
+/* GenerateAction variants without a Default counterpart (UI_DESIGN §4.1): FAB, rail button and Node toolbar.
+   `card` / `bar` keep using GenerateCard.module.css (same DOM and CSS as before). */
+.round {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.fab {
+  width: var(--fab-size);
+  height: var(--fab-size);
+}
+
+.rail {
+  width: 56px;
+  height: 56px;
+}
+
+.round:hover {
+  background: var(--color-primary-hover);
+}
+
+.round:active {
+  background: var(--color-primary-pressed);
+  transform: scale(0.97);
+}
+
+.round:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--shadow-md);
+}
+
+.round[data-phase='blocked'] {
+  background: var(--color-surface-4);
+  color: var(--color-text-muted);
+}
+
+.round[data-phase='queued'],
+.round[data-phase='running'] {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
+.round[data-phase='submitting'],
+.round[data-phase='cancelling'] {
+  cursor: progress;
+}
+
+.roundIcon {
+  position: relative;
+  display: inline-flex;
+}
+
+.roundLabel {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+
+.blockedBadge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  display: inline-flex;
+  padding: 1px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  color: var(--color-text-inverse);
+}
+
+.toolbar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.softDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.issueBadge {
+  margin-left: var(--space-1);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: var(--color-on-primary);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.6;
+}
+
+.reasonPopover {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  top: calc(100% + var(--space-2));
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: min(320px, 80vw);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+}
+
+.reasonPopover svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--color-warning);
+}

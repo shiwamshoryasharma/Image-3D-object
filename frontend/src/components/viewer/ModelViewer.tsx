@@ -48,9 +48,19 @@ function LoadingOverlay() {
   )
 }
 
-export default function ModelViewer({ url, secondaryUrl = null, showSecondary = false, options, active, onApi }: ModelViewerProps) {
+export default function ModelViewer({
+  url,
+  secondaryUrl = null,
+  showSecondary = false,
+  options,
+  active,
+  onApi,
+  parts = null,
+}: ModelViewerProps) {
   const [retryKey, setRetryKey] = useState(0)
   const [secondaryRetryKey, setSecondaryRetryKey] = useState(0)
+  const [partsRetryKey, setPartsRetryKey] = useState(0)
+  const partsUrl = parts?.url ?? null
   const status = useViewerRuntime((s) => s.status)
   const error = useViewerRuntime((s) => s.error)
 
@@ -75,9 +85,26 @@ export default function ModelViewer({ url, secondaryUrl = null, showSecondary = 
     return () => useViewerRuntime.getState().setRetrySecondary(null)
   }, [secondaryUrl])
 
+  // The parts model (UI_DESIGN §6.6) has its own load status and retry, like the secondary one. "loading" is set by
+  // its Suspense fallback (only while it really suspends), "ready" by the model itself.
+  useLayoutEffect(() => {
+    if (!partsUrl) useViewerRuntime.getState().resetParts()
+  }, [partsUrl])
+  useLayoutEffect(() => () => useViewerRuntime.getState().resetParts(), [])
+
+  useEffect(() => {
+    if (!partsUrl) return
+    useViewerRuntime.getState().setRetryParts(() => {
+      useLoader.clear(GLTFLoader, partsUrl)
+      setPartsRetryKey((key) => key + 1)
+    })
+    return () => useViewerRuntime.getState().setRetryParts(null)
+  }, [partsUrl])
+
   const retry = () => {
     useLoader.clear(GLTFLoader, url)
     if (secondaryUrl) useLoader.clear(GLTFLoader, secondaryUrl)
+    if (partsUrl) useLoader.clear(GLTFLoader, partsUrl)
     setRetryKey((key) => key + 1)
   }
 
@@ -99,6 +126,8 @@ export default function ModelViewer({ url, secondaryUrl = null, showSecondary = 
           retryKey={retryKey}
           secondaryRetryKey={secondaryRetryKey}
           onApi={onApi}
+          parts={parts}
+          partsRetryKey={partsRetryKey}
         />
       </Canvas>
 

@@ -1,0 +1,236 @@
+/* Input source, prompt form, review candidates, cold-start notice and segmentation preview (UI_DESIGN §5). */
+.root {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.additions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap);
+  min-width: 0;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.warningNote {
+  composes: note;
+  color: var(--color-warning);
+}
+
+.textarea {
+  inline-size: 100%;
+  min-block-size: 96px;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+.textarea:focus-visible,
+.select:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.textarea[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.counterRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-subtle);
+}
+
+.counter {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.counterNear {
+  color: var(--color-warning);
+}
+
+.error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  line-height: 1.45;
+}
+
+.select {
+  inline-size: 100%;
+  min-block-size: max(32px, var(--hit-min));
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  font-size: var(--text-sm);
+}
+
+.disclosure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: max(24px, var(--hit-min));
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.disclosure[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
+/* Cold-start notice */
+.cold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius-sm);
+  background: var(--color-info-soft);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+}
+
+.coldRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Review candidates */
+.candidates {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container (min-width: 380px) {
+  .candidates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.candidate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  min-width: 0;
+}
+
+.thumb {
+  aspect-ratio: 1;
+  inline-size: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--color-viewer-bg);
+  object-fit: contain;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.reviewTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+/* Segmentation preview */
+.overlay {
+  inline-size: 100%;
+  max-block-size: 280px;
+  border-radius: var(--radius-sm);
+  background: var(--color-viewer-bg);
+  object-fit: contain;
+}
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-xs);
+}
+
+.labelRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.labelName {
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,51 @@
+/*
+ * Mobile shell (UI_DESIGN §4.4). The root is a `display: contents` wrapper, so the layouts stay direct flex items of
+ * the app column; it only carries the variables and the full-bleed viewer rule shared by both postures.
+ */
+.root {
+  display: contents;
+  /* The viewer toolbar's top row sits at the top of the viewer: the progress pill goes right below it. */
+  --progress-pill-top: calc(var(--space-3) + var(--control-h-md) + var(--space-2));
+}
+
+/* The viewer area is a size container, so the pill can follow the toolbar's P6 wrap (view modes on their own row). */
+.root main {
+  container: shell-main / inline-size;
+}
+
+@container shell-main (max-width: 359px) {
+  .root main > * {
+    --progress-pill-top: calc(var(--space-3) + 2 * var(--control-h-md) + 2 * var(--space-2));
+  }
+}
+
+/* Full-bleed viewer: edge to edge under the floating chrome, no card frame. */
+.root main > :first-child {
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------------- landscape (rail) */
+.railBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-left: var(--shell-inset-left);
+}
+
+.railMain {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  scroll-padding-left: var(--shell-inset-left);
+  outline: none;
+}
+
+.railMain > :first-child {
+  flex: 1;
+  min-height: 0;
+}

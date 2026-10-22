@@ -110,3 +110,55 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* P19: the phone layout's bar keeps clear of a landscape notch (0 elsewhere). */
+.bar {
+  padding-inline: max(var(--space-3), env(safe-area-inset-left, 0px)) max(var(--space-3), env(safe-area-inset-right, 0px));
+}
+
+/* P12: the diagnostics disclosure is a full touch target under a coarse pointer. */
+:global(:root[data-density='touch']) .problemDetails summary {
+  line-height: var(--hit-min);
+}
+
+/*
+ * P8 short viewports (phone landscape): the bar is one row, ≤ 56px tall — the large button (44px here, still the
+ * touch minimum) beside the status text clamped to one line (full text stays in the DOM for assistive technology).
+ */
+@media (max-height: 500px) {
+  .bar {
+    --control-h-lg: 44px;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-1);
+  }
+
+  .bar > button {
+    flex: 1 1 55%;
+    width: auto;
+    min-width: 0;
+  }
+
+  .bar > .status,
+  .bar > .problem {
+    flex: 1 1 45%;
+    min-width: 0;
+  }
+
+  .bar > .problem {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding-block: 2px;
+  }
+
+  .bar .status span,
+  .bar .problemSummary span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    overflow: hidden;
+  }
+}

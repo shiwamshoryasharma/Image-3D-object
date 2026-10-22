@@ -5,9 +5,11 @@ import { useJobStore } from '../../store/jobStore'
 import { useSystemStore } from '../../store/systemStore'
 import { Button } from '../common/Button'
 import { EmptyState } from '../common/EmptyState'
-import { Spinner } from '../common/Spinner'
+import { Skeleton } from '../common/Skeleton'
 import { HistoryItem } from './HistoryItem'
 import styles from './HistoryList.module.css'
+
+const SKELETON_ROWS = [0, 1, 2] as const
 
 /** Recent jobs (GET /jobs) with loading / error / empty states. */
 export function HistoryList({ onOpened }: { onOpened?: () => void }) {
@@ -21,9 +23,12 @@ export function HistoryList({ onOpened }: { onOpened?: () => void }) {
 
   if ((status === 'idle' || status === 'loading') && order.length === 0) {
     return (
-      <div className={styles.center}>
-        <Spinner size={18} />
-        <span>Loading history…</span>
+      // P17: three 64 px skeleton rows instead of a spinner (static under reduced motion); the text stays for AT.
+      <div className={styles.list} aria-busy="true">
+        <span className="visually-hidden">Loading history…</span>
+        {SKELETON_ROWS.map((row) => (
+          <Skeleton key={row} shape="block" height={64} />
+        ))}
       </div>
     )
   }

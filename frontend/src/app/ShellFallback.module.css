@@ -1,0 +1,116 @@
+/* Shell loading skeleton and load-failure screen (UI_DESIGN §3.7); static under reduced motion. */
+.fallback {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-3);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+}
+
+.topBar,
+.side,
+.viewer,
+.nav {
+  border-radius: var(--radius-lg);
+  background: var(--skeleton-base);
+  animation: shell-pulse 1.4s ease-in-out infinite;
+}
+
+.topBar {
+  flex: none;
+  height: var(--top-bar-height);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.side {
+  display: none;
+  flex: none;
+  width: var(--rail-width);
+}
+
+.viewer {
+  flex: 1;
+  background: var(--color-viewer-bg);
+}
+
+.nav {
+  flex: none;
+  align-self: center;
+  width: min(560px, 100%);
+  height: var(--floating-nav-height);
+}
+
+.fallback[data-shell='tablet'] .side,
+.fallback[data-shell='node'] .side {
+  display: block;
+}
+
+.fallback[data-shell='tablet'] .nav,
+.fallback[data-shell='node'] .nav {
+  display: none;
+}
+
+.failed {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.failed:focus {
+  outline: none;
+}
+
+.failedTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.failedText {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.failedActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+@keyframes shell-pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topBar,
+  .side,
+  .viewer,
+  .nav {
+    animation: none;
+  }
+}
+
+:global(:root[data-motion='reduce']) .topBar,
+:global(:root[data-motion='reduce']) .side,
+:global(:root[data-motion='reduce']) .viewer,
+:global(:root[data-motion='reduce']) .nav {
+  animation: none;
+}

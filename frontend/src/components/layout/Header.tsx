@@ -1,11 +1,16 @@
-import { GalleryVerticalEnd, LogOut } from 'lucide-react'
+import { GalleryVerticalEnd, LogOut, Settings2 } from 'lucide-react'
+import { Suspense } from 'react'
 
 import type { Breakpoint } from '../../hooks/useBreakpoint'
+import { useTunerLocked } from '../../hooks/useTunerLocked'
+import { useTunerVisible } from '../../hooks/useTunerVisible'
 import { useAuthStore } from '../../store/authStore'
 import { useJobStore } from '../../store/jobStore'
+import { useNavigationStore } from '../../store/navigationStore'
 import { useUiStore } from '../../store/uiStore'
 import { Button, IconButton } from '../common/Button'
-import { BlenderRuntimeStatus } from '../meshTuner/BlenderRuntimeStatus'
+import { LazyBlenderRuntimeStatus } from '../tunerLock/lazyTuner.ts'
+import { TunerLockFrame } from '../tunerLock/TunerLockFrame'
 import { ConnectionIndicator } from './ConnectionIndicator'
 import { EngineStatus } from './EngineStatus'
 import { GpuMeter } from './GpuMeter'
@@ -20,6 +25,10 @@ export function Header({ breakpoint }: { breakpoint: Breakpoint }) {
   const historyCount = useJobStore((s) => s.order.length)
   const historyOpen = useUiStore((s) => s.historyOpen)
   const setHistoryOpen = useUiStore((s) => s.setHistoryOpen)
+  const appSettingsOpen = useNavigationStore((s) => s.appSettingsOpen)
+  const setAppSettingsOpen = useNavigationStore((s) => s.setAppSettingsOpen)
+  const tunerVisible = useTunerVisible()
+  const tunerLocked = useTunerLocked()
   const isMobile = breakpoint === 'mobile'
 
   return (
@@ -37,7 +46,14 @@ export function Header({ breakpoint }: { breakpoint: Breakpoint }) {
         {(phase === 'ready' || phase === 'unreachable') && (
           <>
             <EngineStatus compact={isMobile} />
-            {phase === 'ready' && <BlenderRuntimeStatus compact={isMobile} />}
+            {phase === 'ready' && tunerVisible && (
+              // Paused tuner (UI_DESIGN §3.9): live read-only status while locked; the popover cannot open.
+              <TunerLockFrame variant="pill" locked={tunerLocked}>
+                <Suspense fallback={null}>
+                  <LazyBlenderRuntimeStatus compact={isMobile} />
+                </Suspense>
+              </TunerLockFrame>
+            )}
             {breakpoint === 'desktop' && <GpuMeter />}
             <ConnectionIndicator showLabel={!isMobile} />
           </>
@@ -65,6 +81,14 @@ export function Header({ breakpoint }: { breakpoint: Breakpoint }) {
             onClick={() => void logout()}
           />
         )}
+        <IconButton
+          label="App settings"
+          icon={<Settings2 size={16} />}
+          size="sm"
+          aria-haspopup="dialog"
+          aria-expanded={appSettingsOpen}
+          onClick={() => setAppSettingsOpen(true, 'interface')}
+        />
       </div>
     </header>
   )

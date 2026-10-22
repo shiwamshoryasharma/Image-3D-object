@@ -75,3 +75,34 @@
 .spin {
   animation: img3d-spin 1s linear infinite;
 }
+
+/* P19: the drawer sits against the right edge: keep its content clear of a notch / home indicator (0 elsewhere). */
+.drawer {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.header {
+  height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.body {
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
+}
+
+/* P14: the drawer and its backdrop also animate out (the panel keeps its visibility until the slide ends). */
+.drawer,
+.backdrop {
+  transition-behavior: allow-discrete;
+}
+
+/* P14/P17: the refresh spinner stops under reduced motion (the row skeletons are static there too). */
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+:global(:root[data-motion='reduce']) .spin {
+  animation: none;
+}

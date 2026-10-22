@@ -21,6 +21,8 @@
   gap: var(--space-3);
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+  /* P19: clear of a landscape notch (0 elsewhere). */
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
 }
 
 .skipLink {
@@ -38,4 +40,18 @@
 
 .skipLink:focus-visible {
   transform: none;
+}
+
+/*
+ * P8 short viewports (phone landscape, small windows): a slimmer header, and the Default phone layout's generate bar
+ * is laid out in one row (GenerateCard.module.css), so the bottom chrome reserved for toasts shrinks with it.
+ */
+@media (max-height: 500px) {
+  .app {
+    --header-height: 48px;
+  }
+
+  :global(:root[data-default-bar]) {
+    --default-bar-height: 56px;
+  }
 }

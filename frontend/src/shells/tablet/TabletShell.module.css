@@ -1,0 +1,121 @@
+/*
+ * Tablet shell (UI_DESIGN §4.5.2). The root is a `display: contents` wrapper (the layouts stay direct flex items of
+ * the app column) carrying the variables and the full-bleed viewer rule of every posture.
+ */
+.root {
+  display: contents;
+  /* The viewer toolbar's top row sits at the top of the viewer: the progress pill goes right below it. */
+  --progress-pill-top: calc(var(--space-3) + var(--control-h-md) + var(--space-2));
+}
+
+/* The viewer area is a size container, so the pill can follow the toolbar's P6 wrap (view modes on their own row). */
+.root main {
+  container: shell-main / inline-size;
+}
+
+@container shell-main (max-width: 359px) {
+  .root main > * {
+    --progress-pill-top: calc(var(--space-3) + 2 * var(--control-h-md) + 2 * var(--space-2));
+  }
+}
+
+/* Full-bleed viewer: no card frame. */
+.root main > :first-child {
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------------- rail */
+.railBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-left: var(--shell-inset-left);
+}
+
+.railRow {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidePanel {
+  container: panel / inline-size;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: clamp(320px, 34vw, 420px);
+  margin: var(--floating-gap) var(--floating-gap) var(--floating-gap) 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-md);
+}
+
+.sidePanel[hidden] {
+  display: none;
+}
+
+.panelHeader {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panelTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.viewerMain {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  outline: none;
+}
+
+.viewerMain > :first-child {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------- bottom */
+/*
+ * §4.5.2: viewer height = 100dvh − top bar − safe top − sheet peek − bottom chrome. As a flex item below the top bar
+ * (and the backend banner while it shows) that is the remaining height minus the peek and the floating nav.
+ */
+.bottomMain {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: calc(var(--sheet-peek) + var(--shell-inset-bottom));
+  scroll-padding-bottom: var(--shell-inset-bottom);
+  outline: none;
+}
+
+.bottomMain > :first-child {
+  flex: 1;
+  min-height: 0;
+}

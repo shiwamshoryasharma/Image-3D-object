@@ -194,13 +194,18 @@ def plan_parts(
     split_shells: bool = True,
     face_flags: np.ndarray | None = None,
     donor: np.ndarray | None = None,
+    partners: np.ndarray | None = None,
 ) -> PartPlan:
     """Build the partition plan (section 2.4 rules 1-5 and section 4.6.5 step 6).
 
     ``min_part_faces`` is the effective value (:func:`effective_min_part_faces`). ``face_flags``/``donor`` come from
     the label assignment: a face with ``face_flags`` bit 0 took its label from face ``donor[f]`` and follows that
-    face's owner when both lie in the same welded shell.
+    face's owner when both lie in the same welded shell. ``partners`` (``pair_opposite_faces``) links the two walls of
+    a thin sheet: same-class faces linked by a partner pair always fall into one instance (section 2.3), so an
+    instance never takes only one wall of a double-walled sheet.
     """
+    if partners is not None and np.shape(partners) != (topology.face_count,):
+        raise ValueError(f"partners must have shape ({topology.face_count},)")
     if strategy == "per_part_regeneration":
         raise ValueError("per_part_regeneration is reserved and cannot be planned")
     face_count = topology.face_count
@@ -274,7 +279,7 @@ def plan_parts(
         if faces.size == 0:
             continue
         consumed.add(value)
-        pieces = _instances(topology, faces, face_root, roots, cls, min_part_faces)
+        pieces = _instances(topology, faces, face_root, roots, cls, min_part_faces, partners)
         for instance, (piece_faces, piece_count, piece_roots) in enumerate(pieces, start=1):
             candidate = _Candidate(cls, value, instance, piece_faces, piece_count, "lifted", piece_roots)
             candidate.kind, candidate.reason = decide_kind(cls, selected, int(piece_faces.size), min_part_faces)
@@ -332,6 +337,16 @@ def plan_parts(
         remap[kept_indices] = np.arange(1, len(kept_indices) + 1)
         owner = remap[owner]
         candidates = [candidates[index - 1] for index in kept_indices]
+    if candidates and not np.any(owner == BASE_MESH_INDEX):
+        # Every face would be cut away: the largest part stays on the base as a region (the base node must exist).
+        sizes = np.bincount(owner, minlength=len(candidates) + 1)
+        largest = int(np.argmax(sizes[1:])) + 1
+        demoted = candidates.pop(largest - 1)
+        demoted.kind, demoted.reason = "region", None
+        owner[owner == largest] = BASE_MESH_INDEX
+        owner[owner > largest] -= 1
+        overflow.append(demoted)
+    node_values = np.asarray([BODY.value, *(candidate.value for candidate in candidates)], dtype=np.int64)
 
     face_owner = owner.astype(np.uint16)
     parts: list[PlannedPart] = []
@@ -370,17 +385,17 @@ def plan_parts(
 
     # Deferred records, overflow regions and plain regions live on the node that owns most of their faces.
     for candidate in sorted(deferred, key=lambda c: (c.value, c.instance)):
-        parts.append(_hosted(candidate, candidate.faces, owner, labels, face_component, cuts))
+        parts.append(_hosted(candidate, candidate.faces, owner, labels, face_component, cuts, node_values))
     regions: list[PlannedPart] = []
     for candidate in overflow:
-        regions.append(_hosted(candidate, candidate.faces, owner, labels, face_component, cuts))
+        regions.append(_hosted(candidate, candidate.faces, owner, labels, face_component, cuts, node_values))
     for value in present:
         if value in consumed:
             continue
         cls = BY_VALUE[value]
         faces = np.flatnonzero(labels == value)
         candidate = _Candidate(cls, value, 1, faces, 0, "lifted", (), part_id=cls.id, kind="region")
-        regions.append(_hosted(candidate, faces, owner, labels, face_component, cuts))
+        regions.append(_hosted(candidate, faces, owner, labels, face_component, cuts, node_values))
     regions.sort(key=lambda p: (p.value, p.instance, p.part_id))
     parts.extend(regions)
 
@@ -429,10 +444,12 @@ def _instances(
     roots: tuple[int, ...],
     cls: PartClass,
     min_part_faces: int,
+    partners: np.ndarray | None = None,
 ) -> list[tuple[np.ndarray, int, tuple[int, ...]]]:
     """Split the faces of one class into instances (section 2.3).
 
-    Connected pieces are taken over the welded adjacency restricted to ``faces``; a whole separate shell (with its
+    Connected pieces are taken over the welded adjacency restricted to ``faces`` plus the opposite-sheet partner links
+    between two faces of ``faces`` (both walls of a thin sheet are one piece); a whole separate shell (with its
     detached inner sheets) counts as one piece. ``instance_split`` classes make every piece with at least
     ``min_part_faces`` faces its own instance (largest first) and join the smaller pieces to the largest one; every
     other class is one instance. Returns ``(faces, welded component count, shell roots)`` per instance.
@@ -444,6 +461,14 @@ def _instances(
     keep = (local[adjacency.row] >= 0) & (local[adjacency.col] >= 0)
     rows = [local[adjacency.row[keep]]]
     cols = [local[adjacency.col[keep]]]
+    if partners is not None:
+        partner = np.asarray(partners, dtype=np.int64)[faces]
+        linked = np.full(faces.size, -1, dtype=np.int64)
+        has = partner >= 0
+        linked[has] = local[partner[has]]
+        pairs = np.flatnonzero(linked >= 0)
+        rows.append(pairs)
+        cols.append(linked[pairs])
     piece_roots = face_root[faces]
     root_set = np.zeros(int(face_root.max(initial=0)) + 1, dtype=bool)
     root_set[list(roots)] = True
@@ -514,9 +539,16 @@ def _hosted(
     labels: np.ndarray,
     face_component: np.ndarray,
     cuts: bool,
+    node_values: np.ndarray,
 ) -> PlannedPart:
-    """A region or deferred record on the node owning most of its faces (ties: the lower mesh index)."""
+    """A region or deferred record on the node owning most of its faces (ties: the lower mesh index).
+
+    Faces that lie on a mesh-owning part of the same class value already belong to that part's record (its region
+    is every face of its node carrying its value), so they are never counted twice: ``region.face_count`` always
+    equals the record's ``face_part`` count.
+    """
     faces = np.asarray(faces, dtype=np.int64)
+    faces = faces[node_values[owner[faces]] != candidate.value]
     host = int(np.bincount(owner[faces]).argmax()) if faces.size else BASE_MESH_INDEX
     covered = faces[(owner[faces] == host) & (labels[faces] == candidate.value)]
     kind: Kind = candidate.kind if cuts else "region"

@@ -15,6 +15,8 @@ git submodule update --init --recursive
 | `extensions/CuMesh/` | [JeffreyXiang/CuMesh](https://github.com/JeffreyXiang/CuMesh) | `12289e1` | MIT | CUDA mesh processing (`cumesh`) |
 | `extensions/FlexGEMM/` | [JeffreyXiang/FlexGEMM](https://github.com/JeffreyXiang/FlexGEMM) | `6dd94a8` | MIT | Sparse convolution kernels (`flex_gemm`, Triton) |
 | `extensions/nvdiffrast/` | [NVlabs/nvdiffrast](https://github.com/NVlabs/nvdiffrast) | `v0.4.0` (`253ac4f`) | NVIDIA Source Code License (1-Way Commercial) — **non-commercial** | Rasterization for texture baking / GLB export |
+| `see-through/` | [shitagaki-lab/see-through](https://github.com/shitagaki-lab/see-through) | `df019de` | Apache-2.0 | Anime part parser model code (`common/modules/semanticsam.py` + SAM-HQ modelling) for the part-aware `anime` profile |
+| `sapiens2/` | [facebookresearch/sapiens2](https://github.com/facebookresearch/sapiens2) | `7e5bae8` | Sapiens2 License (custom; conditions: no biometric identification, no deepfakes/impersonation, no military use) | Standalone backbone (`sapiens/backbones/standalone/sapiens2.py`) for the part-aware `realistic` profile |
 
 Nested submodules come along with `--recursive`: Eigen (in `TRELLIS.2/o-voxel/third_party/eigen`, MPL-2.0) and
 cubvh (in `CuMesh/third_party/cubvh`, MIT).
@@ -34,6 +36,24 @@ cubvh (in `CuMesh/third_party/cubvh`, MIT).
   ```
 
 The build targets `TORCH_CUDA_ARCH_LIST=12.0` (RTX 50-series). Set another value for other GPUs.
+
+## Vendored segmentation parsers (part-aware milestone)
+
+`see-through/` and `sapiens2/` are model-code sources only. Nothing from them is built or installed, and their
+`requirements*.txt` / `pyproject.toml` dependencies are **never** installed. Img3D imports them through
+`backend/inference/providers/vendor_import.py`, which loads them under the private module namespace
+`img3d_vendor.<name>` (their `import utils` / `from models import …` are rewritten in memory), so `sys.path` and
+Img3D's own `models`, `utils`, … packages are never touched and no `__pycache__` is written into the submodules.
+
+- See-through: source root `common/` (`modules`, `utils`, `live2d`); only `modules.semanticsam` and what it
+  imports are executed (model definitions). Weights: `backend/.model/seg/l2d_sam_iter2/checkpoint-18000.pt`,
+  read with `torch.load(weights_only=True)`.
+- Sapiens2: source root `sapiens/backbones/standalone/` (pure torch). The full `sapiens` package is not imported
+  (its training engine needs termcolor, rich, matplotlib, iopath, …). Weights:
+  `backend/.model/seg/sapiens2-seg-0.4b/model.safetensors`.
+
+The model registry reports a parser `vendored_source_missing` while its submodule is not checked out
+(`git submodule update --init backend/third_party/see-through backend/third_party/sapiens2`).
 
 ## Licenses I follow
 

@@ -186,14 +186,14 @@ Every dependency with version and license: [**THIRD_PARTY_NOTICES.md**](THIRD_PA
 | React UI (references, settings, progress, viewer, history, login) | ✅ Done |
 | Blender runtime detection / selection / portable download | ✅ Done — tested |
 | Auto Mesh Tuner steps (repair, face/eye refinement, topology) | ⏸️ Paused — experimental; new tuning runs are switched off until the part-aware layer is approved |
-| Part-aware layer: run framework, feature flags, model registry + `/features`, part taxonomy + manifest `img3d.parts/1`, mesh geometry core | 🧪 In progress — backend pieces landed and tested, not wired into the UI yet |
-| Prompt-to-3D (Z-Image-Turbo → TRELLIS.2), 2D segmentation (Grounding DINO + SAM 2.1 + Florence-2), label lifting, part extraction, workflows | 🧪 In progress |
-| Four UI modes (Default, Node, Mobile, Tablet) selectable in Settings | 🧪 In progress — shared API/state layer, workflow engine and touch primitives landed; the mode shells are not built yet |
+| Part-aware layer (Tripo-style): split a generated model into physical parts (hair, clothes, eyes, accessories) and labelled body regions, manifest `img3d.parts/1`, per-part GLBs | 🧪 Built, awaiting final review — real GPU runs on the sample images pass all gates; "Split into parts" in the viewer |
+| Prompt-to-3D (Z-Image-Turbo → TRELLIS.2), 2D segmentation (Grounding DINO + SAM 2.1 + Florence-2 + See-through + Sapiens2), label lifting, part extraction, workflows | 🧪 Built, awaiting final review — one real prompt → 3D → parts workflow completed |
+| Four UI modes (Default, Node, Mobile, Tablet) selectable in Settings | 🧪 Built, awaiting final review and browser verification |
 | True multi-view conditioning | 🗺️ Planned (data model and API already support it) |
 
 > **Work in progress (part-aware milestone).** The current image-to-3D path is unchanged and protected by hash-pinned
-> tests; everything new sits behind feature flags (`IMG3D_PART_AWARE_ENABLED`, …) and additive API routes. The UI you
-> run today is still the Default UI. Design notes: `.claude/skills/img3d-part-aware/`.
+> tests; everything new sits behind feature flags (`IMG3D_PART_AWARE_ENABLED`, …) and additive API routes. The UI mode
+> (Default, Node, Mobile, Tablet) is chosen in App settings. Design notes: `.claude/skills/img3d-part-aware/`.
 
 ---
 

@@ -86,9 +86,9 @@ test('import_boundaries: allowlist entries suppress their edge; an entry that no
   assert.match(stale.out, /stale allowlist entry: delete it \(components\/meshTuner\/\*\* → api\/tunings\)/)
 })
 
-test('import_allowlist.json: the two seeded entries of §1.4, each with a reason', () => {
+test('import_allowlist.json: the remaining seeded entry of §1.4 (F7 deleted ModelStatsCard.tsx), with a reason', () => {
   const allowlist = JSON.parse(readFileSync(join(REVIEW, 'import_allowlist.json'), 'utf8'))
-  assert.deepEqual(allowlist.entries.map((entry) => entry.from), ['components/meshTuner/**', 'components/viewer/ModelStatsCard.tsx'])
+  assert.deepEqual(allowlist.entries.map((entry) => entry.from), ['components/meshTuner/**'])
   assert.ok(allowlist.entries.every((entry) => entry.reason && Array.isArray(entry.to) && entry.to.length))
 })
 

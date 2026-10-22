@@ -58,10 +58,7 @@ EMPTY_ROUTER_PATHS = [
     ("GET", "/api/v1/jobs/job_0123456789ab/part-analyses/latest"),
     ("GET", "/api/v1/part-analyses/pa_0123456789ab"),
     ("GET", "/api/v1/part-analyses/pa_0123456789ab/manifest"),
-    ("GET", "/api/v1/workflows"),
-    ("GET", "/api/v1/workflows/catalog"),
-    ("POST", "/api/v1/workflows/validate"),
-    ("POST", "/api/v1/workflows"),
+    # The /api/v1/workflows* routes left this list when S11 filled them (list, catalog and validate answer 200/422).
 ]
 
 

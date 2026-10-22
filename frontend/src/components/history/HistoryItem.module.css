@@ -108,3 +108,12 @@
   gap: var(--space-2);
   margin-top: 2px;
 }
+
+/* P12: under a coarse pointer every row is at least one touch target tall, and its (44px) buttons wrap. */
+:global(:root[data-density='touch']) .item {
+  min-block-size: var(--hit-min);
+}
+
+:global(:root[data-density='touch']) .actions {
+  flex-wrap: wrap;
+}

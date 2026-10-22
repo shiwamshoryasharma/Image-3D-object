@@ -1,10 +1,12 @@
 .viewer {
   position: relative;
   container-type: inline-size;
+  container-name: viewer-toolbar;
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 320px;
+  /* P10: never taller than the slot the shell gives the viewer. */
+  min-height: min(320px, 100%);
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -134,7 +136,8 @@
 /* Original | Tuned toggle: below the view-mode row (the top row is already full on phones). */
 .variantBar {
   position: absolute;
-  top: calc(var(--space-3) + 40px);
+  /* Below the top toolbar row (40px at the default density; follows the touch control height). */
+  top: calc(var(--space-3) + var(--control-h-md) + 6px);
   left: var(--space-3);
   display: flex;
   flex-wrap: wrap;
@@ -187,4 +190,31 @@
   .caption {
     display: none;
   }
+}
+
+/* Parts model chips (UI_DESIGN §6.6): loading / error / "Parts view · N parts", top right below the actions. */
+.partsBar {
+  position: absolute;
+  top: calc(var(--space-3) + var(--control-h-md) + 6px);
+  right: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(50% - var(--space-3));
+  z-index: 2;
+}
+
+/* P6: the view-mode control wraps to its own row (ViewerToolbar.module.css); the chip rows move below both rows. */
+@container viewer-toolbar (max-width: 359px) {
+  .variantBar,
+  .partsBar {
+    top: calc(var(--space-3) + 2 * var(--control-h-md) + var(--space-2) + 6px);
+  }
+}
+
+:global(:root[data-density='touch']) .variantRetry {
+  min-block-size: var(--hit-min);
+  min-inline-size: var(--hit-min);
 }

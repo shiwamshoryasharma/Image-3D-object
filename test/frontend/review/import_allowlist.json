@@ -6,12 +6,6 @@
       "to": ["api/tunings", "api/client"],
       "names": ["*"],
       "reason": "Paused Auto Mesh Tuner components (sha256-pinned, never edited): TunedDownloadButton → downloadTunedGlb, TuningReport → tuningFileUrl/tuningPreviewUrl and API_PREFIX."
-    },
-    {
-      "from": "components/viewer/ModelStatsCard.tsx",
-      "to": ["api/jobs"],
-      "names": ["downloadJobGlb"],
-      "reason": "Until F7 routes the download through actions/downloads.ts (F7 deletes this entry)."
     }
   ]
 }

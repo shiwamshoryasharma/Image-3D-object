@@ -1,7 +1,12 @@
-import { Camera, Focus, Grid3x3, Maximize, Minimize, Rotate3d, SunDim, Sun, Triangle } from 'lucide-react'
+import { Camera, Focus, Grid3x3, Layers, Maximize, Minimize, Palette, Puzzle, Rotate3d, SunDim, Sun, Triangle } from 'lucide-react'
 
+import { analyzePartsForViewedJob } from '../../actions/parts'
+import { useFeatures } from '../../hooks/useFeatures'
+import { isTerminalRunStatus } from '../../lib/runSteps.ts'
+import { useJobStore } from '../../store/jobStore'
+import { usePartStore } from '../../store/partStore'
 import { useUiStore, type ViewMode } from '../../store/uiStore'
-import { IconButton } from '../common/Button'
+import { Button, IconButton } from '../common/Button'
 import { SegmentedControl } from '../common/SegmentedControl'
 import styles from './ViewerToolbar.module.css'
 
@@ -18,6 +23,70 @@ export interface ViewerToolbarProps {
   onResetCamera: () => void
   onScreenshot: () => void
   onToggleFullscreen: () => void
+  /** Parts in the viewed job's ready part set; `null` = no part set (no parts toggles, UI_DESIGN §6.6). */
+  partsCount?: number | null
+}
+
+/** "Parts" and (while the parts view is on) "Colorize" toggles: a marked part-aware addition (§4.2). */
+function PartsToggles({ disabled }: { disabled: boolean }) {
+  const show = usePartStore((s) => s.view.show)
+  const colorize = usePartStore((s) => s.view.colorize)
+  const setShow = usePartStore((s) => s.setShow)
+  const setColorize = usePartStore((s) => s.setColorize)
+  return (
+    <span className={styles.partsGroup} data-ui-addition>
+      <IconButton
+        label="Parts view"
+        icon={<Layers size={16} />}
+        variant="solid"
+        active={show}
+        aria-pressed={show}
+        disabled={disabled}
+        onClick={() => setShow(!show)}
+      />
+      {show && (
+        <IconButton
+          label="Colorize parts"
+          icon={<Palette size={16} />}
+          variant="solid"
+          active={colorize}
+          aria-pressed={colorize}
+          disabled={disabled}
+          onClick={() => setColorize(!colorize)}
+        />
+      )}
+    </span>
+  )
+}
+
+/**
+ * "Split into parts" while the viewed, finished model has no part set yet (a marked part-aware addition, §4.2): the
+ * same command as the Parts card's "Analyse parts", one click from the model. Hidden when the backend cannot analyse
+ * finished models (legacy backends included).
+ */
+function SplitPartsButton({ disabled }: { disabled: boolean }) {
+  const { parts } = useFeatures()
+  const jobId = useJobStore((s) => s.viewedJobId)
+  const busy = usePartStore((s) => {
+    if (!jobId) return false
+    const latest = s.byJob[jobId]?.analyses[0]
+    return s.requestingJobIds.includes(jobId) || (latest !== undefined && !isTerminalRunStatus(latest.status))
+  })
+  if (!parts.available || !parts.rebuild) return null
+  return (
+    <span className={styles.partsGroup} data-ui-addition>
+      <Button
+        size="sm"
+        variant="secondary"
+        icon={<Puzzle size={14} />}
+        loading={busy}
+        disabled={disabled || busy}
+        onClick={() => void analyzePartsForViewedJob()}
+      >
+        {busy ? 'Splitting…' : 'Split into parts'}
+      </Button>
+    </span>
+  )
 }
 
 /** Overlay controls for the viewer: view mode, display toggles and camera/screenshot/fullscreen actions. */
@@ -28,6 +97,7 @@ export function ViewerToolbar({
   onResetCamera,
   onScreenshot,
   onToggleFullscreen,
+  partsCount = null,
 }: ViewerToolbarProps) {
   const options = useUiStore((s) => s.viewer)
   const setOption = useUiStore((s) => s.setViewerOption)
@@ -79,6 +149,7 @@ export function ViewerToolbar({
             onClick={() => setOption(toggle.key, !options[toggle.key])}
           />
         ))}
+        {partsCount !== null ? <PartsToggles disabled={disabled} /> : <SplitPartsButton disabled={disabled} />}
       </div>
     </>
   )
