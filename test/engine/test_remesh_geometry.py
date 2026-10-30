@@ -1,7 +1,7 @@
 """Fast GPU reproduction of the generation export's CuMesh geometry path.
 
-Known closed inputs are passed through initial fill_holes, unsigned narrow-band
-dual contouring, and simplify with the production band, followed by the production cleanup.
+Known closed inputs are passed directly through unsigned narrow-band dual
+contouring and simplify with the production band, followed by the production cleanup.
 Raw native defects are recorded; final repaired topology is asserted.
 These synthetic fixtures have no intended open boundaries. This does NOT impose
 a watertightness requirement on general TRELLIS output.
@@ -131,10 +131,9 @@ def run_case(kind: str, *, resolution: int = 128, target: int = 10000,
 
     mesh = cumesh.CuMesh()
     mesh.init(vertices, faces)
-    mesh.fill_holes(max_hole_perimeter=3e-2)
     vertices, faces = mesh.read()
     bvh = cumesh.cuBVH(vertices, faces)
-    stages["initial_fill_holes"] = _metrics(kind, vertices, faces, bvh)
+    stages["native_source"] = _metrics(kind, vertices, faces, bvh)
     started = time.perf_counter()
     new_vertices, new_faces = remesh_narrow_band_dc(
         vertices, faces, center=center, scale=scale, resolution=resolution,
@@ -175,9 +174,9 @@ def run_case(kind: str, *, resolution: int = 128, target: int = 10000,
         torch.tensor(np.asarray(clean.faces), dtype=torch.int32, device="cuda"), bvh,
     )
     result["raw_stage_defects"] = {name: _defects(stages[name])
-                                  for name in ("initial_fill_holes", "remeshed", "simplified")}
+                                  for name in ("native_source", "remeshed", "simplified")}
     failures = []
-    for name in ("initial_fill_holes", "remeshed", "simplified", "cleaned"):
+    for name in ("native_source", "remeshed", "simplified", "cleaned"):
         metrics = stages[name]
         defects = _defects(metrics)
         if defects and name == "cleaned":

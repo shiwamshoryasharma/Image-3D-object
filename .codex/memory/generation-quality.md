@@ -1,5 +1,9 @@
 # Generation quality checkpoint — 2026-10-29
 
+> Superseded for high-resolution holes and semantic-part requests by
+> [the 2026-10-30 follow-up](generation-quality-followup.md). The earlier live
+> validation used resolution1024, 500K faces and 1K textures.
+
 The user requested a fix for complex-image generation defects, especially anime
 eyes/faces and holes, followed by animal and house validation. That request
 authorized the targeted generation/export changes and paired protected hashes.

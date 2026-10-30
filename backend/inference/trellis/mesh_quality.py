@@ -257,3 +257,210 @@ def fill_small_triangle_holes(mesh: Any, resolution: int) -> dict[str, int]:
     mesh.face_normals = np.concatenate((original_face_normals, np.asarray(added_face_normals)))
     mesh.vertex_normals = np.concatenate((original_vertex_normals, *added_normals))
     return counts
+
+
+def _triangulate_boundary(points: np.ndarray) -> list[tuple[int, int, int]] | None:
+    """Ear-clip a simple planar polygon; reject crossings and ambiguous ears."""
+    centered = points - points.mean(axis=0)
+    _, _, axes = np.linalg.svd(centered, full_matrices=False)
+    projected = centered @ axes[:2].T
+    scale_squared = float(np.sum(np.ptp(projected, axis=0) ** 2))
+    epsilon = 1e-12 * scale_squared
+    def cross(a, b, c):
+        ab, ac = b - a, c - a
+        return float(ab[0] * ac[1] - ab[1] * ac[0])
+    twice_area = float(np.sum(projected[:, 0] * np.roll(projected[:, 1], -1)
+                              - projected[:, 1] * np.roll(projected[:, 0], -1)))
+    if abs(twice_area) <= epsilon:
+        return None
+    sign = 1 if twice_area > 0 else -1
+    count = len(points)
+    # Intersections, including non-adjacent touching edges, are unsafe to cap.
+    for i in range(count):
+        for j in range(i + 1, count):
+            if j == i + 1 or (i == 0 and j == count - 1):
+                continue
+            a, b = projected[i], projected[(i + 1) % count]
+            c, d = projected[j], projected[(j + 1) % count]
+            if (np.maximum(np.minimum(a, b), np.minimum(c, d))
+                    <= np.minimum(np.maximum(a, b), np.maximum(c, d))).all():
+                if cross(a, b, c) * cross(a, b, d) <= 0 and cross(c, d, a) * cross(c, d, b) <= 0:
+                    return None
+    remaining = list(range(count))
+    triangles = []
+    while len(remaining) > 3:
+        for at, middle in enumerate(remaining):
+            before, after = remaining[at - 1], remaining[(at + 1) % len(remaining)]
+            a, b, c = projected[[before, middle, after]]
+            if sign * cross(a, b, c) <= epsilon:
+                continue
+            others = [k for k in remaining if k not in (before, middle, after)]
+            if any(min(sign * cross(a, b, projected[k]), sign * cross(b, c, projected[k]),
+                       sign * cross(c, a, projected[k])) >= -epsilon for k in others):
+                continue
+            triangles.append((before, middle, after))
+            remaining.pop(at)
+            break
+        else:
+            return None
+    if sign * cross(*projected[remaining]) <= epsilon:
+        return None
+    return [*triangles, tuple(remaining)]
+
+
+def repair_small_boundary_loops(mesh: Any, resolution: int) -> dict[str, int]:
+    """Cap isolated planar micro-gaps with 4-64 edges, without touching UV seams.
+
+    A gap spans at most eight voxels, has at most 32 voxels of perimeter,
+    and deviates from its fitted plane by at most a quarter voxel. Larger,
+    branched, crossing or nonplanar openings are retained. This geometric bound
+    cannot infer the intended anatomy or reconstruct hidden part surfaces.
+    """
+    if resolution <= 0:
+        raise ValueError("resolution must be positive")
+    stats = {"filled_polygon_holes": 0, "filled_polygon_faces": 0}
+    uv = getattr(mesh.visual, "uv", None)
+    vertices, faces = np.asarray(mesh.vertices), np.asarray(mesh.faces)
+    if uv is None or len(uv) != len(vertices) or not len(faces):
+        return stats
+    points, inverse = np.unique(vertices, axis=0, return_inverse=True)
+    welded = inverse[faces]
+    a, b = welded.reshape(-1), np.roll(welded, -1, axis=1).reshape(-1)
+    keys = np.minimum(a, b) * len(points) + np.maximum(a, b)
+    edge_keys, edge_ids, counts = np.unique(keys, return_inverse=True, return_counts=True)
+    boundary = np.flatnonzero(counts[edge_ids] == 1)
+    outgoing_count = np.bincount(a[boundary], minlength=len(points))
+    incoming_count = np.bincount(b[boundary], minlength=len(points))
+    outgoing = {int(a[edge]): int(edge) for edge in boundary}
+    visited: set[int] = set()
+    plans = []
+    for edge in boundary:
+        start = int(a[edge])
+        if start in visited:
+            continue
+        loop, loop_edges = [], []
+        current = start
+        while current not in loop and len(loop) <= 64:
+            if outgoing_count[current] != 1 or incoming_count[current] != 1:
+                break
+            loop.append(current)
+            loop_edges.append(outgoing[current])
+            current = int(b[outgoing[current]])
+        visited.update(loop)
+        if current != start or not 4 <= len(loop) <= 64:
+            continue
+        polygon = points[loop[::-1]]  # opposite the adjacent face boundary
+        if np.linalg.norm(np.ptp(polygon, axis=0)) > 8.0 / resolution:
+            continue
+        perimeter = np.linalg.norm(polygon - np.roll(polygon, -1, axis=0), axis=1).sum()
+        if perimeter > 32.0 / resolution:
+            continue
+        centered = polygon - polygon.mean(axis=0)
+        _, _, axes = np.linalg.svd(centered, full_matrices=False)
+        if np.max(np.abs(centered @ axes[-1])) > 0.25 / resolution:
+            continue
+        triangles = _triangulate_boundary(polygon)
+        if triangles is None:
+            continue
+        cap = np.asarray(triangles)
+        cap_welded = np.asarray(loop[::-1])[cap]
+        cap_a, cap_b = cap_welded.reshape(-1), np.roll(cap_welded, -1, axis=1).reshape(-1)
+        cap_keys, cap_counts = np.unique(np.minimum(cap_a, cap_b) * len(points)
+                                         + np.maximum(cap_a, cap_b), return_counts=True)
+        if np.isin(cap_keys[cap_counts == 2], edge_keys).any():
+            continue  # a new diagonal must not cross an existing mesh edge
+        plans.append((polygon[cap], int(edge // 3)))
+    if not plans:
+        return stats
+    old_uv = np.asarray(uv).copy()
+    old_normals = np.asarray(mesh.vertex_normals).copy()
+    old_face_normals = np.asarray(mesh.face_normals).copy()
+    face_materials = getattr(mesh.visual, "face_materials", None)
+    if face_materials is not None:
+        face_materials = np.asarray(face_materials).copy()
+    added_points, added_uv, added_normals, added_materials = [], [], [], []
+    for caps, source in plans:
+        normals = np.cross(caps[:, 1] - caps[:, 0], caps[:, 2] - caps[:, 0])
+        normals /= np.linalg.norm(normals, axis=1)[:, None]
+        added_points.append(caps.reshape(-1, 3))
+        sample_uv = old_uv[faces[source]].mean(axis=0)
+        added_uv.append(np.tile(sample_uv, (len(caps) * 3, 1)))
+        added_normals.append(normals)
+        if face_materials is not None:
+            added_materials.extend([face_materials[source]] * len(caps))
+    new_points = np.concatenate(added_points)
+    new_normals = np.concatenate(added_normals)
+    new_faces = np.arange(len(vertices), len(vertices) + len(new_points)).reshape(-1, 3)
+    mesh.vertices = np.concatenate((vertices, new_points))
+    mesh.faces = np.concatenate((faces, new_faces))
+    mesh.visual.uv = np.concatenate((old_uv, *added_uv))
+    if face_materials is not None:
+        mesh.visual.face_materials = np.concatenate((face_materials, np.asarray(added_materials)))
+    mesh.face_normals = np.concatenate((old_face_normals, new_normals))
+    mesh.vertex_normals = np.concatenate((old_normals, np.repeat(new_normals, 3, axis=0)))
+    return {"filled_polygon_holes": len(plans), "filled_polygon_faces": len(new_faces)}
+
+def count_unsupported_vertices(mesh: Any, support_points: np.ndarray, resolution: int) -> int:
+    """Count geometry farther than eight voxels from decoded surface support.
+
+    Points are already in the exported GLB frame. The eight-voxel bound includes
+    the UDF offset and the small gaps filled by upstream cleanup at 1536. This
+    is a validation gate, never a rule for deleting thin hair or small parts.
+    """
+    from scipy.spatial import cKDTree
+
+    if not np.isfinite(resolution) or resolution <= 0:
+        raise ValueError("resolution must be finite and positive")
+    support = np.asarray(support_points, dtype=np.float64)
+    if support.ndim != 2 or support.shape[1] != 3 or not len(support) or not np.isfinite(support).all():
+        raise ValueError("source support must contain finite (N, 3) points")
+    vertices = np.asarray(mesh.vertices)
+    if vertices.ndim != 2 or vertices.shape[1] != 3 or not np.isfinite(vertices).all():
+        raise ValueError("export mesh must contain finite (N, 3) vertices")
+    tree = cKDTree(support)
+    # cKDTree's bound is exclusive; include exactly eight voxels but reject the
+    # next representable distance above it.
+    limit = np.nextafter(8.0 / resolution, np.inf)
+    unsupported = 0
+    for start in range(0, len(vertices), 1 << 18):
+        distances, _ = tree.query(vertices[start:start + (1 << 18)], distance_upper_bound=limit)
+        unsupported += int(np.count_nonzero(~np.isfinite(distances)))
+    return unsupported
+
+def count_uncovered_source(mesh: Any, support_points: np.ndarray, resolution: int, device: Any) -> tuple[int, int]:
+    """Measure source-surface coverage with independently checked triangle distances.
+
+    A deterministic sample bounds cost. Native BVH distances can manufacture zero
+    on a failed traversal, so only its candidate face IDs are used; float64 CPU
+    closest-point math verifies those triangles. This also supports coarse meshes
+    whose face interiors are valid even when their vertices are far apart.
+    """
+    import trimesh
+
+    support = np.asarray(support_points, dtype=np.float64)
+    if not np.isfinite(resolution) or resolution <= 0:
+        raise ValueError("resolution must be finite and positive")
+    if support.ndim != 2 or support.shape[1] != 3 or not len(support) or not np.isfinite(support).all():
+        raise ValueError("source support must contain finite (N, 3) points")
+    count = min(len(support), 65536)
+    samples = support[np.linspace(0, len(support) - 1, count, dtype=np.int64)]
+    if not len(mesh.faces):
+        raise ValueError("export mesh has no triangles")
+    if len(mesh.faces) <= 8:
+        closest, _, _ = trimesh.proximity.closest_point_naive(mesh, samples)
+    else:
+        import torch
+        import cumesh
+
+        vertices = torch.as_tensor(np.asarray(mesh.vertices).copy(), dtype=torch.float32, device=device)
+        faces = torch.as_tensor(np.asarray(mesh.faces).copy(), dtype=torch.int32, device=device)
+        queries = torch.as_tensor(samples, dtype=torch.float32, device=device)
+        bvh = cumesh.cuBVH(vertices, faces)
+        _, face_ids, _ = bvh.unsigned_distance(queries)
+        ids = face_ids.detach().cpu().numpy()
+        if ids.min() < 0 or ids.max() >= len(mesh.faces):
+            raise ValueError("native BVH returned an invalid triangle index")
+        triangles = np.asarray(mesh.vertices)[np.asarray(mesh.faces)[ids]]
+        closest = trimesh.triangles.closest_point(triangles, samples)
+    distances = np.linalg.norm(samples - closest, axis=1)
+    return int(np.count_nonzero(~np.isfinite(distances) | (distances > 8.0 / resolution))), count

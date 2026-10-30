@@ -73,3 +73,18 @@ Exact collinear boundary loops are T-junction seams, not missing surface area.
 A UV-split mesh needs authored smooth normals retained through topology edits.
 Zero open boundary edges alone does not establish anatomical accuracy or
 manifoldness.
+
+## Live generation and export quality
+
+Offline decoded-mesh replay does not establish live-generation export safety.
+Run the live path with the model resident, inspect actual textures and clay,
+and compare output geometry against source support in both directions. Zero
+open boundaries does not prove a model is valid: rods may be closed, and a
+collapsed output may discard most source surfaces. Record decoded and actual
+remesh-grid resolutions separately. Individual-part intent requires explicit
+semantic_parts; geometry components alone do not identify hair, clothes or eyes.
+
+Read [the native hole-fill bypass follow-up](../../memory/generation-quality-followup.md)
+for the high-resolution regression. The decoder and exporter must both bypass
+CuMesh.fill_holes on this runtime; original FDG geometry is retained. Do not
+replace source validation with a blanket low-resolution downgrade or broad caps.

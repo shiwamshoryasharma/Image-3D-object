@@ -136,6 +136,11 @@ function inputBlocker(i: AvailabilityInputs): Blocker | null {
     if (!f.workflow.available) {
       return { reason: `Part-aware output needs workflows: ${reasonClause(f.workflow)}. Turn it off to generate.`, code: 'workflows_unavailable' }
     }
+    const strategy = f.parts.strategies.find((item) => item.id === (i.plan.parts.strategy ?? 'semantic_parts'))
+    if (!strategy?.available) {
+      const reason = strategy ? reasonClause(strategy) : 'semantic segmentation models are unavailable'
+      return { reason: `Part-aware output is unavailable: ${reason}. Turn it off to generate.`, code: 'parts_unavailable' }
+    }
   }
   return null
 }

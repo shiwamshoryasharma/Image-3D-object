@@ -46,7 +46,7 @@ export function PartOptionsSection({ headingLevel = 3, mode = 'all' }: PartOptio
       ? PLAN_TEXT.partsNeedWorkflows(workflow)
       : null
   const separate = resolveSeparate(form, features)
-  const strategyValue = form.strategy ?? parts.defaultStrategy ?? ''
+  const strategyValue = form.strategy ?? 'semantic_parts'
   const strategy = parts.strategies.find((s) => s.id === strategyValue) ?? null
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
 
@@ -120,7 +120,7 @@ export function PartOptionsSection({ headingLevel = 3, mode = 'all' }: PartOptio
                 className={styles.select}
                 value={strategyValue}
                 onChange={(event) =>
-                  update({ strategy: event.target.value === parts.defaultStrategy ? null : event.target.value })
+                  update({ strategy: event.target.value })
                 }
               >
                 {parts.strategies.map((option) => (

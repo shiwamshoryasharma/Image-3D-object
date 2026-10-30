@@ -127,6 +127,14 @@ export function planGeneration(i: PlanInputs): GenerationPlan {
   }
   if (partsOn && !f.parts.available) return blocked('parts_unavailable', PLAN_TEXT.partsUnavailable(f.parts))
   if (partsOn && !f.workflow.available) return blocked('workflows_unavailable', PLAN_TEXT.partsNeedWorkflows(f.workflow))
+  if (partsOn) {
+    const strategy = f.parts.strategies.find((item) => item.id === (i.parts.strategy ?? 'semantic_parts'))
+    if (!strategy?.available) {
+      return blocked('parts_unavailable', PLAN_TEXT.partsUnavailable(strategy ?? {
+        available: false, code: 'missing', reason: 'Semantic segmentation models are unavailable',
+      }))
+    }
+  }
 
   const ctx = { features: f }
   if (source === 'prompt') {

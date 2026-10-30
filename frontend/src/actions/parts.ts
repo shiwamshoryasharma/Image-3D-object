@@ -20,7 +20,13 @@ export async function analyzePartsForViewedJob(): Promise<boolean> {
     return false
   }
   const features = useFeaturesStore.getState().snapshot
-  const options = buildPartAnalysisOptions(usePartOptionsStore.getState().form, { features })
+  const form = usePartOptionsStore.getState().form
+  const strategy = features.parts.strategies.find((item) => item.id === (form.strategy ?? 'semantic_parts'))
+  if (!features.parts.available || !strategy?.available) {
+    toast.warning('Part splitting unavailable', strategy?.reason ?? features.parts.reason ?? 'Semantic segmentation models are unavailable. Check Models in settings.')
+    return false
+  }
+  const options = buildPartAnalysisOptions(form, { features })
   return usePartStore.getState().requestAnalysis(job.id, options)
 }
 

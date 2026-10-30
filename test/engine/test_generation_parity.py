@@ -1,12 +1,14 @@
 """Parity of the staged engine run with upstream ``Trellis2ImageTo3DPipeline.run`` (no weights, no GPU needed).
 
 A *recording* test double subclasses the real upstream pipeline class and overrides only the heavy stage methods
-(``preprocess_image``, ``get_cond``, ``sample_*``, ``decode_latent``). Each override records its arguments plus a
+(``preprocess_image``, ``get_cond``, ``sample_*``, ``decode_shape_slat`` / ``decode_tex_slat``). Each override records its arguments plus a
 fingerprint of the torch RNG state at call time and then consumes randomness (like the real sampling noise does).
 The real upstream ``run()`` and :class:`inference.trellis.generation.TrellisGenerationRun` are executed against
 identical doubles and must produce the *same* call sequence, arguments and RNG states. This pins seed placement,
 conditioning resolutions, ``ss_res`` mapping, cascade arguments/token cap, model selection and the decode
-resolution to upstream semantics.
+resolution to upstream semantics. The project decoder intentionally skips upstream native hole filling;
+this double makes the upstream fill a no-op while recording both real decoder boundaries. Geometry safety is
+independently asserted by ``test_decode_geometry.py``.
 
 Engine-level tests on the same double check progress/cancellation, sampler-hook restoration, low-VRAM model
 placement after cancel/error and the OOM mapping.
@@ -187,9 +189,18 @@ class RecordingPipeline(Trellis2ImageTo3DPipeline):
         self._run_steps(self.tex_slat_sampler, merged["steps"], device_model=flow_model)
         return SimpleNamespace(tag="tex_slat")
 
-    def decode_latent(self, shape_slat: Any, tex_slat: Any, resolution: int) -> list[Any]:
-        self._record("decode_latent", shape_slat.tag, tex_slat.tag, resolution)
-        return [SimpleNamespace(vertices=torch.zeros(10, 3), faces=torch.zeros(12, 3), tag="mesh")]
+    def decode_shape_slat(self, shape_slat: Any, resolution: int) -> tuple[list[Any], list[Any]]:
+        self._record("decode_shape_slat", shape_slat.tag, resolution)
+        self._decode_resolution = resolution
+        mesh = SimpleNamespace(vertices=torch.zeros(10, 3), faces=torch.zeros(12, 3, dtype=torch.int32),
+                               fill_holes=lambda: None)
+        return [mesh], [SimpleNamespace(tag="decoded_substructure")]
+
+    def decode_tex_slat(self, tex_slat: Any, subs: list[Any]) -> list[Any]:
+        self._record("decode_tex_slat", tex_slat.tag, subs[0].tag)
+        return [SimpleNamespace(coords=torch.tensor([[0, 1, 2, 3]], dtype=torch.int32),
+                                feats=torch.zeros(1, 6), shape=torch.Size([1, 6]),
+                                spatial_shape=torch.Size([self._decode_resolution] * 3))]
 
 
 class RecordingReporter:
@@ -222,7 +233,7 @@ def fake_export(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
 
     def export(mesh, pipeline, resolution, params, out_path, reporter, cancel):  # noqa: ANN001
         cancel.raise_if_cancelled()
-        calls.append({"mesh": mesh.tag, "resolution": resolution, "polygon_target": params.polygon_target,
+        calls.append({"mesh": type(mesh).__name__, "resolution": resolution, "polygon_target": params.polygon_target,
                       "texture_size": params.texture_size, "layout": pipeline.pbr_attr_layout})
         Path(out_path).write_bytes(b"glTF-test-double")
         reporter.step(2, 2, "written")
@@ -343,7 +354,8 @@ def test_reduced_cascade_resolution_is_reported_and_used(tmp_path: Path, fake_ex
     request = _request(tmp_path, image_path, resolution=1536, seed=3)
     output = TrellisGenerationRun(ours, request, RecordingReporter(), CancellationToken()).execute()
     assert ours.calls == expected
-    assert expected[-1] == ("decode_latent", expected[-1][1], "shape_slat", "tex_slat", 1280)
+    assert expected[-2] == ("decode_shape_slat", expected[-2][1], "shape_slat", 1280)
+    assert expected[-1] == ("decode_tex_slat", expected[-1][1], "tex_slat", "decoded_substructure")
     assert output.effective_resolution == 1280
     assert output.metadata["requested_resolution"] == 1536
     assert fake_export[0]["resolution"] == 1280
@@ -411,7 +423,7 @@ def test_out_of_memory_maps_to_engine_error(tmp_path: Path, fake_export) -> None
 
 
 def test_unexpected_error_maps_to_engine_error(tmp_path: Path, fake_export) -> None:
-    pipeline = RecordingPipeline(low_vram=True, fail={"decode_latent": ValueError("boom")})
+    pipeline = RecordingPipeline(low_vram=True, fail={"decode_shape_slat": ValueError("boom")})
     engine = _ready_engine(tmp_path, pipeline)
     with pytest.raises(EngineError, match="Generation failed during decoding: ValueError: boom"):
         engine.generate(_request(tmp_path, _image(tmp_path), resolution=512, seed=5), RecordingReporter(),
@@ -427,3 +439,16 @@ def test_cancel_before_start_runs_nothing(tmp_path: Path, fake_export) -> None:
     with pytest.raises(JobCancelledError, match="early"):
         engine.generate(_request(tmp_path, _image(tmp_path), resolution=512), RecordingReporter(), cancel)
     assert pipeline.calls == []
+
+
+
+def test_staged_generation_bypasses_upstream_decode_that_performs_native_hole_filling(tmp_path, fake_export):
+    pipeline = RecordingPipeline()
+    def unsafe_upstream_decode(*args, **kwargs):
+        raise AssertionError("unsafe upstream decode_latent was called")
+    pipeline.decode_latent = unsafe_upstream_decode
+    request = _request(tmp_path, _image(tmp_path), resolution=512, seed=42)
+    output = TrellisGenerationRun(pipeline, request, RecordingReporter(), CancellationToken()).execute()
+    assert output.effective_resolution == 512
+    assert [entry[0] for entry in pipeline.calls][-2:] == ["decode_shape_slat", "decode_tex_slat"]
+    assert fake_export[0]["mesh"] == "MeshWithVoxel"

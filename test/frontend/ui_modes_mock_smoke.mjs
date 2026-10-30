@@ -163,7 +163,7 @@ function expectedStatus(id, scenario) {
   if (scenario === 'legacy404') return 404
   if (scenario === 'disabled') return 503
   if (scenario === 'no-t2i' && ['G3', 'G4', 'G5'].includes(id)) return 503
-  if (scenario === 'no-seg' && id === 'G2a') return 503
+  if (scenario === 'no-seg' && ['G2', 'G2a', 'G4', 'G7', 'G8', 'G8a'].includes(id)) return 503
   return id === 'G6' ? 201 : 202
 }
 

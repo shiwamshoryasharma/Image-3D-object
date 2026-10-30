@@ -181,7 +181,7 @@ test('extra terms: trimmed, deduplicated, at most 40 chars each and at most maxE
 test('PartAnalysisOptions key order and omissions', () => {
   const full = buildPartAnalysisOptions(parts({ strategy: 'components', subject: 'object', views: 12, perPartGlbs: true }), ctx)
   assert.deepEqual(Object.keys(full), ['strategy', 'segmentation', 'separate', 'views', 'export'])
-  assert.deepEqual(Object.keys(buildPartAnalysisOptions(parts(), ctx)), ['separate'])
+  assert.deepEqual(Object.keys(buildPartAnalysisOptions(parts(), ctx)), ['strategy', 'separate'])
   for (const never of ['segmentation_id', 'min_part_faces', 'max_parts', 'split_shells']) assert.equal(never in full, false)
   assert.deepEqual(full.export, { per_part_glbs: true })
   assert.equal(buildPartAnalysisOptions(parts({ views: 99 }), ctx).views, FULL.parts.maxViews)
@@ -196,7 +196,7 @@ test('separate: stored choice filtered to known groups, in /features order; null
   for (const group of someDefaults.pipeline.part_extraction.separable_groups) group.default_selected = group.id === 'hair' || group.id === 'eyes'
   assert.deepEqual(resolveSeparate(parts(), normalizeFeatures(someDefaults)), ['eyes', 'hair'])
   // `separate` is required, so it is sent even when empty.
-  assert.deepEqual(buildPartAnalysisOptions(parts({ separate: [] }), ctx), { separate: [] })
+  assert.deepEqual(buildPartAnalysisOptions(parts({ separate: [] }), ctx), { strategy: 'semantic_parts', separate: [] })
 })
 
 test('WorkflowRequest key order: source · segmentation · reconstruction · parts', () => {

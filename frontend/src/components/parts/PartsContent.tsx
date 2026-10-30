@@ -119,6 +119,16 @@ function ReadyView({ set, view, note }: { set: PartSetView; view: PartViewState;
           <Info size={12} aria-hidden /> {note}
         </p>
       )}
+      {set.strategy === 'components' && (
+        <div className={styles.banner} role="note">
+          <p>Geometry components only. Hair, clothing and eyes were not identified. Select Semantic parts in Method to separate them.</p>
+        </div>
+      )}
+      {set.strategy !== 'components' && set.quality.unlabelledFaceRatio > 0.1 && (
+        <div className={styles.banner} role="note">
+          <p>Part identification is incomplete: {percentText(set.quality.unlabelledFaceRatio)} of the surface is unlabelled.</p>
+        </div>
+      )}
       {set.status === 'partial' && (
         <div className={styles.banner} role="note">
           <p>Some parts could not be built. The rest of the analysis is usable.</p>

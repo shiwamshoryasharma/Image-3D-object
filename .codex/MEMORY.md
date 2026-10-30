@@ -63,6 +63,10 @@ older download failures; use current checks before drawing conclusions.
 
 ## Where to continue
 
+- [Generation/parts follow-up](memory/generation-quality-followup.md): latest
+  high-resolution failures, revised exporter and semantic-request fixes; check
+  its validation status before making completion claims.
+
 - [Generation quality fix](memory/generation-quality.md): latest tested export
   corrections, diagnostics, model artifacts and limits.
 

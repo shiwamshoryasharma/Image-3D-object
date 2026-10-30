@@ -38,14 +38,14 @@ def test_export_closes_small_gap_and_preserves_large_opening(
         # the real native geometry path but omitting unrelated UV/texture baking.
         handler = cumesh.CuMesh()
         handler.init(kwargs["vertices"], kwargs["faces"])
-        handler.fill_holes(max_hole_perimeter=3e-2)
         source_vertices, source_faces = handler.read()
         bvh = cumesh.cuBVH(source_vertices, source_faces)
         band = kwargs["remesh_band"]
+        remesh_resolution = kwargs["remesh_resolution"]
         handler.init(*cumesh.remeshing.remesh_narrow_band_dc(
             source_vertices, source_faces, center=torch.zeros(3, device="cuda"),
-            scale=(resolution + 3 * band) / resolution,
-            resolution=resolution, band=band, project_back=kwargs["remesh_project"], bvh=bvh,
+            scale=(remesh_resolution + 3 * band) / remesh_resolution,
+            resolution=remesh_resolution, band=band, project_back=kwargs["remesh_project"], bvh=bvh,
         ))
         handler.simplify(kwargs["decimation_target"])
         final_vertices, final_faces = handler.read()
@@ -53,7 +53,10 @@ def test_export_closes_small_gap_and_preserves_large_opening(
         captured["mesh"] = mesh
         return mesh
 
-    monkeypatch.setitem(sys.modules,"o_voxel",SimpleNamespace(postprocess=SimpleNamespace(to_glb=geometry_only_export)))
+    def forbid_upstream_export(*args, **kwargs):
+        pytest.fail("the production entry point must call the project postprocess adapter")
+    monkeypatch.setitem(sys.modules,"o_voxel",SimpleNamespace(postprocess=SimpleNamespace(to_glb=forbid_upstream_export)))
+    monkeypatch.setitem(sys.modules,"inference.trellis.postprocess",SimpleNamespace(to_glb=geometry_only_export))
     reporter = SimpleNamespace(step=lambda *args: None)
     export_glb(
         SimpleNamespace(vertices=vertices,faces=faces,attrs=None,coords=None),

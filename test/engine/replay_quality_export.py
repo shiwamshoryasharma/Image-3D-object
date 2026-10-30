@@ -36,12 +36,17 @@ sys.path[:0] = [str(ROOT / "backend"), str(ROOT / "test/engine"), str(ROOT / "ba
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
-    parser.add_argument("--variant", choices=("baseline", "standard", "band2", "projected", "cleanup", "skinny", "islands", "skinny_islands", "production"), default="baseline")
+    parser.add_argument("--variant", choices=("baseline", "standard", "band2", "projected", "cleanup", "skinny", "islands", "skinny_islands", "scaled", "scaled_standard", "production"), default="baseline")
     parser.add_argument("--texture-size", type=int, default=512)
     parser.add_argument("--polygons", type=int)
     parser.add_argument("--no-audit", action="store_true")
+    parser.add_argument("--synchronize-stages", action="store_true")
+    parser.add_argument("--no-grad", action="store_true")
+    parser.add_argument("--remesh-cap", type=int, choices=(128,256,512,1024,1536))
     parser.add_argument("--run-name")
     args = parser.parse_args()
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s")
     capture = args.capture.resolve()
     if not capture.is_relative_to(ROOT / "test/outputs"):
         parser.error("capture must be under test/outputs")
@@ -50,6 +55,7 @@ def main() -> int:
     import cumesh
     import o_voxel
     from mesh_quality_probe import analyze_mesh_arrays
+    torch.set_grad_enabled(not args.no_grad)
     data = torch.load(capture, map_location="cpu", weights_only=True)
     if args.run_name and not args.run_name.replace("-", "").replace("_", "").isalnum():
         parser.error("run-name must be alphanumeric")
@@ -63,6 +69,8 @@ def main() -> int:
     class AuditedMesh(original_class):
         def record(self, stage):
             nonlocal next_id
+            if args.synchronize_stages:
+                torch.cuda.synchronize()
             if args.no_audit:
                 return
             next_id += 1
@@ -115,7 +123,10 @@ def main() -> int:
         out_path = output / "model.glb"
         if args.variant == "production":
             from inference.base import CancellationToken, GenerationParams
-            from inference.trellis.export import export_glb
+            from inference.trellis import export as export_module
+            if args.remesh_cap is not None:
+                export_module.MAX_REMESH_RESOLUTION = args.remesh_cap
+            export_glb = export_module.export_glb
             class Reporter:
                 def step(self, *values): print("[production]", *values, flush=True)
             params = GenerationParams(polygon_target=args.polygons or data["polygon_target"], texture_size=args.texture_size, glb_webp_textures=data["webp_textures"])
@@ -123,11 +134,18 @@ def main() -> int:
             import trimesh
             glb = trimesh.load_scene(out_path,process=False).to_mesh()
         else:
-            glb = o_voxel.postprocess.to_glb(vertices=vertices,faces=faces,attr_volume=attrs,coords=coords,
-                attr_layout=layout,grid_size=data["resolution"],aabb=[[-.5,-.5,-.5],[.5,.5,.5]],
+            scale = 1024.0 if args.variant in ("scaled", "scaled_standard") else 1.0
+            glb = o_voxel.postprocess.to_glb(vertices=vertices * scale,faces=faces,attr_volume=attrs,coords=coords,
+                attr_layout=layout,grid_size=data["resolution"],aabb=[[-.5*scale]*3,[.5*scale]*3],
                 decimation_target=args.polygons or data["polygon_target"],texture_size=args.texture_size,
-                remesh=args.variant != "standard",remesh_band=2 if args.variant=="band2" else 1,
+                remesh=args.variant not in ("standard", "scaled_standard"),remesh_band=2 if args.variant in ("band2", "scaled") else 1,
                 remesh_project=.9 if args.variant=="projected" else 0,verbose=True,use_tqdm=False)
+            authored_normals = np.asarray(glb.vertex_normals).copy()
+            glb.vertices /= scale
+            glb.vertex_normals = authored_normals
+            from inference.trellis.mesh_quality import clean_export_mesh, fill_small_triangle_holes, repair_small_boundary_loops
+            if args.variant in ("scaled", "standard", "scaled_standard"):
+                clean_export_mesh(glb,data["resolution"]); fill_small_triangle_holes(glb,data["resolution"]);repair_small_boundary_loops(glb,data["resolution"])
             glb.export(str(out_path),file_type="glb",extension_webp=data["webp_textures"])
         metrics=analyze_mesh_arrays(np.asarray(glb.vertices),np.asarray(glb.faces))
         report={"variant":args.variant,"capture":str(capture),"seconds":round(time.perf_counter()-started,3),

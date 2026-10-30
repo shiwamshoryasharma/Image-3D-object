@@ -86,7 +86,8 @@ export function resolveSeparate(f: PartOptionsForm, features: FeaturesSnapshot):
  */
 export function buildPartAnalysisOptions(f: PartOptionsForm, c: BuildContext): PartAnalysisOptions {
   const options: PartAnalysisOptions = {}
-  if (f.strategy !== null) options.strategy = f.strategy
+  // Individual parts require semantic identification; geometry-only splitting is an explicit choice.
+  options.strategy = f.strategy ?? 'semantic_parts'
   const segmentation = buildSegmentationOptions(f, c)
   if (segmentation !== null) options.segmentation = segmentation
   options.separate = resolveSeparate(f, c.features)

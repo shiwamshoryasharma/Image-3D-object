@@ -37,3 +37,20 @@ All test code lives here, never in `backend/` or `frontend/`. Run everything wit
 - Exploration probes under `mesh_tuner/probe`, `mesh_tuner/*/explore` and `mesh_tuner/*/probes` were written for
   one development machine and may contain absolute paths; adjust them before reuse.
 - Tests marked `blender` need Blender ≥ 5.1; `gpu` tests need the real GPU and model weights.
+
+## Generation and part-quality validation
+
+`engine/run_quality_batch.py` runs the real engine on the anime, cat and house fixtures
+under `images/`, captures the decoded source mesh, and records both source-support and
+surface-coverage checks. Run it through `part_aware/gpu_lock.py`; use a new `--label`
+for each run. For the high-resolution regression, pass `--resolution 1536
+--texture-size 4096 --polygons 2000000 --seed 1719986157`. The model may reduce the
+effective resolution when its token limit is reached; the report records that value.
+
+`engine/render_quality_models.py` runs inside Blender under the same GPU lock and
+renders the resulting batch (`--label`), including anime eye closeups in texture and
+clay. `engine/probe_hole_fill_centers.py` audits native-added fan centers in saved
+legacy decoded captures. `engine/run_reported_parts_validation.py` checks real
+semantic extraction on a test reconstruction using the reported-job fixture copied
+under `outputs/parts_quality_regression/reported/`; all job copies and exported parts
+remain in an isolated test runtime. These diagnostic inputs and outputs are ignored.

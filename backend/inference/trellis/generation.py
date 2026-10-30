@@ -29,6 +29,7 @@ from inference.base import (
     SamplerOverrides,
 )
 from inference.trellis.compat import hook_sampler_steps
+from inference.trellis.decoding import decode_latent
 from inference.trellis.export import EXPORT_STEPS, export_glb
 from inference.trellis.imaging import (
     has_alpha_foreground,
@@ -292,7 +293,7 @@ class TrellisGenerationRun:
 
             # -- decoding ------------------------------------------------------------------------------
             with self._stage(JobStage.DECODING, f"Decoding mesh and PBR voxels at {resolution}^3"):
-                mesh = pipeline.decode_latent(shape_slat, tex_slat, resolution)[0]
+                mesh = decode_latent(pipeline, shape_slat, tex_slat, resolution)[0]
                 del shape_slat, tex_slat
                 decoded_vertices = int(mesh.vertices.shape[0])
                 decoded_faces = int(mesh.faces.shape[0])

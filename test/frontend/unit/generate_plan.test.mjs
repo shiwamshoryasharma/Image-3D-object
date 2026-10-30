@@ -225,10 +225,10 @@ test('image source without images → no_references', () => {
   assert.equal(planGeneration(inputs({ references: null, features: DISABLED, parts: partsOn() })).code, 'no_references')
 })
 
-test('parts on + no-seg (components only) → still a workflow plan', () => {
-  const plan = planGeneration(inputs({ features: NO_SEG, parts: partsOn() }))
+test('explicit components + no-seg stays a geometry-only workflow plan', () => {
+  const plan = planGeneration(inputs({ features: NO_SEG, parts: partsOn({ strategy: 'components' }) }))
   assert.equal(plan.kind, 'workflow')
-  assert.deepEqual(plan.request.parts, { separate: ['eyes', 'eyebrows', 'eyelashes', 'hair', 'clothes', 'accessories', 'detachable'] })
+  assert.deepEqual(plan.request.parts, { strategy: 'components', separate: ['eyes', 'eyebrows', 'eyelashes', 'hair', 'clothes', 'accessories', 'detachable'] })
 })
 
 test('parts on + disabled → parts_unavailable with the backend reason', () => {

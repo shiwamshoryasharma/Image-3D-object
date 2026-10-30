@@ -12,9 +12,9 @@ export function PartsEmpty({ requesting }: { requesting: boolean }) {
   const features = useFeatures()
   const strategyId = usePartOptionsStore((s) => s.form.strategy)
   const { parts } = features
-  const canAnalyse = parts.available && parts.rebuild
-  const strategyLabel =
-    parts.strategies.find((s) => s.id === (strategyId ?? parts.defaultStrategy))?.label ?? null
+  const strategy = parts.strategies.find((s) => s.id === (strategyId ?? 'semantic_parts'))
+  const canAnalyse = parts.available && parts.rebuild && strategy?.available
+  const strategyLabel = strategy?.label ?? null
 
   return (
     <EmptyState
@@ -24,8 +24,10 @@ export function PartsEmpty({ requesting }: { requesting: boolean }) {
       description={
         canAnalyse
           ? `Split this model into parts with the current part options${strategyLabel ? ` (method: ${strategyLabel})` : ''}.`
-          : parts.available
-            ? 'This backend does not analyse finished models. Turn on part-aware output before generating.'
+          : parts.available && parts.rebuild
+            ? `Individual part splitting is unavailable: ${strategy ? reasonClause(strategy) : 'semantic segmentation models are unavailable'}.`
+            : parts.available
+              ? 'This backend does not analyse finished models. Turn on part-aware output before generating.'
             : `Part analysis is unavailable: ${reasonClause(parts)}.`
       }
       action={

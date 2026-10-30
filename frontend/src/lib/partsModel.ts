@@ -85,6 +85,7 @@ export interface PartSetView {
   readonly analysisId: string
   readonly jobId: string
   readonly status: 'completed' | 'partial'
+  readonly strategy: string | null
   readonly regionAttribute: string
   /** Payload order (`result.parts`); use `displayOrder` / `groupsForDisplay` for the list order. */
   readonly parts: readonly PartView[]
@@ -341,6 +342,8 @@ export function normalizePartResult(run: PartAnalysisOut, manifest: unknown | nu
       analysisId: str(runJson.id) ?? '',
       jobId: str(runJson.job_id) ?? (manifestJson ? str(manifestJson.job_id) : null) ?? '',
       status,
+      strategy: (isObject(runJson.options) ? nonEmpty(runJson.options.strategy) : null)
+        ?? (manifestJson && isObject(manifestJson.strategy) ? nonEmpty(manifestJson.strategy.id) : null),
       regionAttribute,
       parts,
       byId,
